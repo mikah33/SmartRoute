@@ -1,0 +1,4608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SmartRoute</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252542;
+            --bg-elevated: #2f2f4a;
+            --accent-primary: #6c5ce7;
+            --accent-secondary: #a29bfe;
+            --accent-success: #00cec9;
+            --accent-warning: #fdcb6e;
+            --accent-danger: #ff7675;
+            --accent-info: #74b9ff;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6c6c80;
+            --border-color: #3d3d5c;
+            --shadow-color: rgba(108, 92, 231, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            letter-spacing: -0.01em;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px;
+            padding-bottom: 100px; /* Space for bottom nav */
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 72px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 12px;
+            gap: 4px;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .nav-btn.active {
+            color: var(--accent-primary);
+        }
+
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-btn.nav-add-btn {
+            padding: 0;
+            position: relative;
+            background: transparent;
+            border-radius: 0;
+            width: auto;
+        }
+
+        .add-btn-circle {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #8b7cf7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -28px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .add-btn-circle:active {
+            transform: scale(0.95);
+        }
+
+        .add-btn-circle svg {
+            color: white;
+        }
+
+        /* Hide any background on the add button container */
+        .nav-btn.nav-add-btn::before,
+        .nav-btn.nav-add-btn::after {
+            display: none;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        /* List Selector */
+        .list-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .list-dropdown {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--accent-primary);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--accent-secondary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236c5ce7'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+        }
+
+        .list-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .list-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        /* List Management Modal */
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .list-item-name {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .list-item-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .list-action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .list-action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .list-action-btn.edit {
+            background: var(--accent-info);
+            color: var(--bg-primary);
+        }
+
+        .list-action-btn.delete {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .new-list-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .new-list-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .new-list-form button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-success);
+            color: var(--bg-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Route View - Current Stop */
+        .current-stop {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 2px solid var(--accent-primary);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px var(--shadow-color);
+        }
+
+        .stop-number {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stop-address {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+
+        .stop-name {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .stop-notes {
+            font-size: 13px;
+            color: var(--accent-warning);
+            background: rgba(253, 203, 110, 0.1);
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+            border-left: 3px solid var(--accent-warning);
+        }
+
+        .navigate-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent-success) 0%, #00b894 100%);
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 206, 201, 0.3);
+        }
+
+        .navigate-btn:active {
+            transform: scale(0.98);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .done-btn {
+            background: linear-gradient(135deg, var(--accent-info) 0%, #5d9cec 100%);
+            color: white;
+        }
+
+        .skip-btn {
+            background: linear-gradient(135deg, var(--accent-danger) 0%, #d63031 100%);
+            color: white;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-success), var(--accent-primary));
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* Address List */
+        .address-item {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.2s;
+        }
+
+        .address-item.done {
+            background: rgba(0, 206, 201, 0.1);
+            border: 1px solid var(--accent-success);
+        }
+
+        .address-item.skipped {
+            background: rgba(255, 118, 117, 0.1);
+            border: 1px solid var(--accent-danger);
+        }
+
+        .address-item.current {
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+
+        .address-order {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .address-item.done .address-order {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .address-item.skipped .address-order {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .address-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .address-info h3 {
+            margin: 0 0 3px 0;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .address-info p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .address-status {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-done {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .status-skipped {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        /* Manage View */
+        .add-form {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-primary);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .add-btn:active {
+            transform: scale(0.98);
+        }
+
+        .manage-item {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .manage-item .address-info {
+            flex: 1;
+        }
+
+        /* Drag and drop styles */
+        .manage-item {
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        .manage-item:active {
+            cursor: grabbing;
+        }
+
+        .manage-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .manage-item.drag-over {
+            border-top: 3px solid var(--accent-primary);
+            margin-top: -3px;
+        }
+
+        .drag-handle {
+            color: var(--text-muted);
+            font-size: 18px;
+            padding: 0 8px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .order-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .delete-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent-danger);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Import Section */
+        .import-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .import-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+        }
+
+        .import-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .import-tab {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .import-tab.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .import-content {
+            display: none;
+        }
+
+        .import-content.active {
+            display: block;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-primary);
+            background: rgba(108, 92, 231, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .file-upload-area input {
+            display: none;
+        }
+
+        .file-upload-area p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .file-upload-area .upload-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .paste-area textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .import-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-success);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .import-btn:active {
+            transform: scale(0.98);
+        }
+
+        .import-help {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .import-preview {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .import-preview h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+        }
+
+        .preview-item {
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+
+        .preview-address {
+            color: var(--text-primary);
+        }
+
+        .preview-name {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .clear-all-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-danger);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            font-family: inherit;
+        }
+
+        /* Notes Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 15, 26, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent-secondary);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-address {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .modal textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .modal-btn:active {
+            transform: scale(0.98);
+        }
+
+        .modal-btn.save {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .quick-notes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .quick-note {
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .quick-note:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        /* Summary View */
+        .summary-header {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .stat-done .stat-value { color: var(--accent-success); }
+        .stat-skipped .stat-value { color: var(--accent-danger); }
+        .stat-pending .stat-value { color: var(--accent-info); }
+
+        .summary-list h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 20px 0 10px 0;
+        }
+
+        .summary-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .session-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .session-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .session-btn:active {
+            transform: scale(0.98);
+        }
+
+        .reset-btn {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .export-btn {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .optimize-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #8b7cf7 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-family: inherit;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: transform 0.2s;
+        }
+
+        .optimize-btn:active {
+            transform: scale(0.98);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h2 {
+            color: var(--accent-secondary);
+        }
+
+        /* Start location input */
+        .start-location {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .start-location label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .start-location input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .start-location input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SmartRoute</h1>
+            <p id="current-list-name" style="margin: 5px 0 0 0; font-size: 14px; color: var(--text-secondary);"></p>
+            <!-- Hidden elements for compatibility -->
+            <select class="list-dropdown" id="list-select" onchange="switchList()" style="display: none;"></select>
+        </header>
+
+        <!-- Old tabs hidden, replaced by bottom nav -->
+        <div class="tabs" style="display: none;">
+            <button class="tab" data-tab="files">Files</button>
+            <button class="tab active" data-tab="route">Route</button>
+            <button class="tab" data-tab="map">Map</button>
+            <button class="tab" data-tab="manage">Addresses</button>
+            <button class="tab" data-tab="summary">Summary</button>
+        </div>
+
+        <!-- Home View (Overview Dashboard) -->
+        <div id="home-view" class="view active">
+            <!-- Quick Stats -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div style="background: linear-gradient(135deg, rgba(0, 206, 201, 0.2) 0%, var(--bg-card) 100%); border-radius: 12px; padding: 10px 8px; text-align: center;">
+                    <p style="margin: 0; font-size: 20px; font-weight: 700; color: var(--accent-success);" id="home-total-lists">0</p>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: var(--text-secondary);">Lists</p>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(116, 185, 255, 0.2) 0%, var(--bg-card) 100%); border-radius: 12px; padding: 10px 8px; text-align: center;">
+                    <p style="margin: 0; font-size: 20px; font-weight: 700; color: var(--accent-info);" id="home-total-addresses">0</p>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: var(--text-secondary);">Addresses</p>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(108, 92, 231, 0.2) 0%, var(--bg-card) 100%); border-radius: 12px; padding: 10px 8px; text-align: center;">
+                    <p style="margin: 0; font-size: 20px; font-weight: 700; color: var(--accent-primary);" id="home-completed-today">0</p>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: var(--text-secondary);">Done Today</p>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(253, 203, 110, 0.2) 0%, var(--bg-card) 100%); border-radius: 12px; padding: 10px 8px; text-align: center;">
+                    <p style="margin: 0; font-size: 20px; font-weight: 700; color: var(--accent-warning);" id="home-pending">0</p>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: var(--text-secondary);">Pending</p>
+                </div>
+            </div>
+
+            <!-- My Lists -->
+            <div style="background: var(--bg-card); border-radius: 14px; padding: 15px; margin-bottom: 15px;">
+                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">MY LISTS</p>
+                <div id="home-recent-lists">
+                    <p style="color: var(--text-muted); font-size: 13px;">No lists yet. Tap + to create one!</p>
+                </div>
+            </div>
+
+            <!-- Current Route Card -->
+            <div id="home-current-route" style="background: var(--bg-card); border-radius: 14px; padding: 15px; margin-bottom: 15px;">
+                <p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">CURRENT ROUTE</p>
+                <h3 id="home-route-name" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-primary);">No route selected</h3>
+                <p id="home-route-progress" style="margin: 5px 0 0 0; font-size: 14px; color: var(--accent-info);">--</p>
+                <p id="home-current-stop" style="margin: 8px 0 0 0; font-size: 13px; color: var(--accent-warning);"></p>
+                <button onclick="switchToTab('route')" style="margin-top: 12px; width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--accent-primary) 0%, #8b7cf7 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">Continue Route</button>
+            </div>
+
+            <!-- Map Preview -->
+            <div id="home-map-preview" onclick="switchToTab('map')" style="background: var(--bg-card); border-radius: 14px; padding: 15px; margin-bottom: 15px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">ROUTE MAP</p>
+                    <span style="font-size: 12px; color: var(--accent-secondary);">Tap to expand →</span>
+                </div>
+                <div id="preview-map-container" style="position: relative; width: 100%; height: 180px; border-radius: 12px; overflow: hidden; background: var(--bg-secondary);">
+                    <div id="preview-map" style="width: 100%; height: 100%;"></div>
+                    <div id="preview-map-placeholder" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center;">
+                        <p style="font-size: 32px; margin: 0 0 8px 0;">🗺️</p>
+                        <p style="margin: 0; font-size: 12px;">Optimize route to see map</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files View (List Management) -->
+        <div id="files-view" class="view">
+            <!-- List Selector -->
+            <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">EDITING LIST</p>
+                <select id="edit-list-selector" onchange="switchEditList(this.value)" style="width: 100%; padding: 14px; border: 1px solid var(--accent-primary); border-radius: 12px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit;">
+                </select>
+            </div>
+
+            <!-- List Actions -->
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <button onclick="showRenameListModal()" style="flex: 1; padding: 12px; border: 1px solid var(--accent-info); border-radius: 10px; background: transparent; color: var(--accent-info); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;">Rename</button>
+                <button onclick="showNewListModal()" style="flex: 1; padding: 12px; border: 1px solid var(--accent-success); border-radius: 10px; background: transparent; color: var(--accent-success); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;">+ New</button>
+                <button onclick="deleteCurrentListPrompt()" style="flex: 1; padding: 12px; border: 1px solid var(--accent-danger); border-radius: 10px; background: transparent; color: var(--accent-danger); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;">Delete</button>
+            </div>
+
+            <!-- Import Section -->
+            <div style="background: var(--bg-card); border-radius: 14px; padding: 15px; margin-bottom: 15px;">
+                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">IMPORT ADDRESSES</p>
+                <button onclick="showImportModal()" style="width: 100%; padding: 14px; border: 2px dashed var(--accent-primary); border-radius: 12px; background: transparent; color: var(--accent-secondary); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">Import from File or Paste</button>
+            </div>
+
+            <!-- Addresses in this list -->
+            <div style="background: var(--bg-card); border-radius: 14px; padding: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <p style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">ADDRESSES IN LIST</p>
+                    <button onclick="showAddAddressModal()" style="padding: 8px 14px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">+ Add</button>
+                </div>
+                <div id="edit-addresses-container">
+                    <p style="color: var(--text-muted); font-size: 13px;">No addresses yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route View -->
+        <div id="route-view" class="view">
+            <div id="route-stats" style="display: none; background: linear-gradient(135deg, rgba(0, 206, 201, 0.15) 0%, var(--bg-card) 100%); border-radius: 14px; padding: 14px 18px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="margin: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Total Drive Time</p>
+                        <p id="total-drive-time" style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: var(--accent-success);">--</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Stops</p>
+                        <p id="total-stops" style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: var(--accent-info);">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-text">
+                    <span id="progress-label">0 of 0 completed</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="current-stop-container">
+                <!-- Current stop will be rendered here -->
+            </div>
+
+            <!-- Full Address List -->
+            <div id="route-address-list" style="margin-top: 20px;">
+                <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--text-secondary);">ALL STOPS</p>
+                <div id="route-addresses-container">
+                    <!-- Addresses will be rendered here -->
+                </div>
+            </div>
+
+            <button onclick="resetSession()" style="margin-top: 20px; width: 100%; padding: 14px; border: 1px solid var(--accent-danger); border-radius: 12px; background: transparent; color: var(--accent-danger); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">Reset Session</button>
+        </div>
+
+        <!-- Map View -->
+        <div id="map-view" class="view">
+            <div id="route-map-container" style="position: relative; width: 100%; height: 500px; border-radius: 16px; overflow: hidden; background: var(--bg-card);">
+                <div id="route-map" style="width: 100%; height: 100%;"></div>
+                <div id="map-placeholder" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 20px;">
+                    <p style="font-size: 40px; margin: 0 0 15px 0;">🗺️</p>
+                    <p style="margin: 0; font-size: 14px;">Enter your MapBox API key and optimize your route to see the map</p>
+                </div>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="fitMapToBounds()" style="flex: 1; padding: 12px; border: 1px solid var(--accent-info); border-radius: 12px; background: transparent; color: var(--accent-info); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">Fit All Pins</button>
+                <button onclick="toggleRouteLines()" id="toggle-route-btn" style="flex: 1; padding: 12px; border: 1px solid var(--accent-primary); border-radius: 12px; background: transparent; color: var(--accent-primary); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">Hide Route</button>
+            </div>
+            <div style="margin-top: 15px; background: var(--bg-card); border-radius: 14px; padding: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: var(--accent-secondary); font-size: 14px; font-weight: 600;">Legend</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: var(--text-secondary);">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 12px; background: var(--accent-success); border-radius: 50%;"></span>
+                        <span>Start</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 12px; background: var(--accent-info); border-radius: 50%;"></span>
+                        <span>Pending</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 12px; background: var(--accent-danger); border-radius: 50%;"></span>
+                        <span>Current</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 12px; height: 12px; background: var(--text-muted); border-radius: 50%;"></span>
+                        <span>Done</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage View -->
+        <div id="manage-view" class="view">
+            <!-- Collapsible Add Section -->
+            <div class="add-section-header" onclick="toggleAddSection()" style="background: var(--bg-card); border-radius: 14px; padding: 15px; margin-bottom: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--accent-secondary);">+ Add Addresses</h3>
+                <span id="add-section-arrow" style="color: var(--accent-secondary); font-size: 18px;">▼</span>
+            </div>
+
+            <div id="add-section-content" style="display: none;">
+                <!-- Import Section -->
+                <div class="import-section">
+                    <h3>Import Addresses</h3>
+                    <div class="import-tabs">
+                        <button class="import-tab active" data-import="file">Upload File</button>
+                        <button class="import-tab" data-import="paste">Paste Text</button>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div id="import-file" class="import-content active">
+                        <div class="file-upload-area" id="drop-zone">
+                            <div class="upload-icon">📁</div>
+                            <p>Tap to select file or drag & drop</p>
+                            <p style="font-size: 12px; margin-top: 8px;">.txt, .csv, .doc exports</p>
+                            <input type="file" id="file-input" accept=".txt,.csv,.tsv,.doc,.docx">
+                        </div>
+                        <div class="import-help">
+                            Supports: One address per line, or CSV with Name, Address columns
+                        </div>
+                    </div>
+
+                    <!-- Paste Text -->
+                    <div id="import-paste" class="import-content">
+                        <div class="paste-area">
+                            <textarea id="paste-input" placeholder="Paste your addresses here...
+
+Example formats:
+John Smith, 123 Main St, City SC
+123 Main St, City SC
+Jane Doe - 456 Oak Ave, Town SC"></textarea>
+                        </div>
+                        <button class="import-btn" onclick="importFromPaste()">Import Addresses</button>
+                        <div class="import-help">
+                            One address per line. Can include name before address (comma or dash separated).
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div id="import-preview" class="import-preview" style="display: none;">
+                        <h4>Preview (<span id="preview-count">0</span> addresses found)</h4>
+                        <div id="preview-list"></div>
+                        <button class="import-btn" onclick="confirmImport()">Add All to Route</button>
+                    </div>
+                </div>
+
+                <!-- Manual Add -->
+                <div class="add-form">
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: var(--text-secondary);">Or Add Manually</h3>
+                    <div class="form-group">
+                        <label>Client Name</label>
+                        <input type="text" id="client-name" placeholder="John Smith">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="client-address" placeholder="123 Main St, City, State">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes (optional)</label>
+                        <textarea id="client-notes" placeholder="Driveway only, watch for dog, etc."></textarea>
+                    </div>
+                    <button class="add-btn" onclick="addAddress()">Add Address</button>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: var(--text-secondary); font-size: 14px; font-weight: 600; margin: 0;">All Addresses (<span id="total-count">0</span>)</h3>
+                <button class="delete-btn" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="clearAllAddresses()">Clear All</button>
+            </div>
+            <div id="manage-list" style="margin-top: 10px;">
+                <!-- Manage list will be rendered here -->
+            </div>
+
+            <!-- Route Settings -->
+            <div class="add-form" style="margin-top: 20px;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: var(--text-secondary);">Route Settings</h3>
+                <div class="form-group">
+                    <label>MapBox API Key (<a href="https://account.mapbox.com/access-tokens/" target="_blank" style="color: var(--accent-info);">get free key</a>)</label>
+                    <input type="text" id="mapbox-key" placeholder="pk.xxxxx..." style="font-size: 12px;">
+                </div>
+                <div class="form-group">
+                    <label>Start Location (your shop/home)</label>
+                    <input type="text" id="start-location-input" placeholder="Enter starting address...">
+                </div>
+                <button class="optimize-btn" style="margin-bottom: 0;" onclick="optimizeRoute()">Optimize Route Order</button>
+            </div>
+        </div>
+
+        <!-- Summary View -->
+        <div id="summary-view" class="view">
+            <div class="summary-header">
+                <h2 style="margin: 0 0 5px 0;">Session Summary</h2>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 14px;" id="session-date"></p>
+                <div class="summary-stats">
+                    <div class="stat stat-done">
+                        <div class="stat-value" id="done-count">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat stat-skipped">
+                        <div class="stat-value" id="skipped-count">0</div>
+                        <div class="stat-label">Skipped</div>
+                    </div>
+                    <div class="stat stat-pending">
+                        <div class="stat-value" id="pending-count">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-list" id="summary-list">
+                <!-- Summary list will be rendered here -->
+            </div>
+
+            <div class="session-controls">
+                <button class="session-btn reset-btn" onclick="resetSession()">Reset Session</button>
+                <button class="session-btn export-btn" onclick="exportSummary()">Copy Text</button>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;">Export for Billing:</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="exportCSV()" style="flex: 1; min-width: 100px; padding: 12px; border: none; border-radius: 12px; background: var(--accent-info); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">Export CSV</button>
+                    <button onclick="exportExcel()" style="flex: 1; min-width: 100px; padding: 12px; border: none; border-radius: 12px; background: var(--accent-success); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">Export Excel</button>
+                    <button onclick="emailReport()" style="flex: 1; min-width: 100px; padding: 12px; border: none; border-radius: 12px; background: var(--accent-warning); color: var(--bg-primary); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">Email Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Modal -->
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal">
+            <h3>Notes for Crew</h3>
+            <p class="modal-address" id="modal-address"></p>
+
+            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 8px;">Quick add:</p>
+            <div class="quick-notes">
+                <button class="quick-note" onclick="addQuickNote('Driveway only')">Driveway only</button>
+                <button class="quick-note" onclick="addQuickNote('Walkway + driveway')">Walkway + driveway</button>
+                <button class="quick-note" onclick="addQuickNote('Salt walkway')">Salt walkway</button>
+                <button class="quick-note" onclick="addQuickNote('Watch for dog')">Watch for dog</button>
+                <button class="quick-note" onclick="addQuickNote('Back entrance')">Back entrance</button>
+                <button class="quick-note" onclick="addQuickNote('Use back driveway')">Use back driveway</button>
+                <button class="quick-note" onclick="addQuickNote('Call before arrival')">Call before arrival</button>
+                <button class="quick-note" onclick="addQuickNote('Gate code required')">Gate code required</button>
+            </div>
+
+            <textarea id="notes-textarea" placeholder="Add notes for this address...&#10;&#10;Examples:&#10;- Driveway only, skip walkway&#10;- Use salt on front steps&#10;- Park on street, tight driveway"></textarea>
+
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeNotesModal()">Cancel</button>
+                <button class="modal-btn save" onclick="saveNotes()">Save Notes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List Management Modal -->
+    <div class="modal-overlay" id="list-modal">
+        <div class="modal">
+            <h3>Manage Lists</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Create separate lists for each crew member or route type</p>
+
+            <div id="lists-container">
+                <!-- Lists populated by JS -->
+            </div>
+
+            <div class="new-list-form">
+                <input type="text" id="new-list-name" placeholder="New list name (e.g. Anthony's Route)">
+                <button onclick="createList()">Add</button>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="closeListModal()" style="flex: 1;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename List Modal -->
+    <div class="modal-overlay" id="rename-modal">
+        <div class="modal">
+            <h3>Rename List</h3>
+            <input type="text" id="rename-input" style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin: 15px 0; font-family: inherit;">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeRenameModal()">Cancel</button>
+                <button class="modal-btn save" onclick="confirmRename()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move to List Modal -->
+    <div class="modal-overlay" id="move-modal">
+        <div class="modal">
+            <h3>Move Address</h3>
+            <p class="modal-address" id="move-address"></p>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Select destination list:</p>
+
+            <div id="move-list-options">
+                <!-- List options populated by JS -->
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="closeMoveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unrealistic Drive Time Modal -->
+    <div class="modal-overlay" id="drivetime-modal">
+        <div class="modal">
+            <h3 style="color: var(--accent-warning);">Unusual Drive Time Detected</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">The route between these addresses seems unusually long:</p>
+
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                <p style="color: var(--accent-info); font-size: 13px; margin: 0 0 8px 0;">From:</p>
+                <p style="color: var(--text-primary); font-size: 14px; margin: 0 0 15px 0;" id="drivetime-from"></p>
+                <p style="color: var(--accent-info); font-size: 13px; margin: 0 0 8px 0;">To:</p>
+                <p style="color: var(--text-primary); font-size: 14px; margin: 0;" id="drivetime-to"></p>
+            </div>
+
+            <div style="background: rgba(253, 203, 110, 0.1); border: 1px solid var(--accent-warning); border-radius: 12px; padding: 12px; margin-bottom: 20px; text-align: center;">
+                <p style="color: var(--accent-warning); font-size: 18px; font-weight: 700; margin: 0;" id="drivetime-time"></p>
+                <p style="color: var(--text-secondary); font-size: 12px; margin: 5px 0 0 0;">estimated drive time</p>
+            </div>
+
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">This could mean:</p>
+            <ul style="color: var(--text-secondary); font-size: 13px; margin: 0 0 20px 0; padding-left: 20px;">
+                <li>One of the addresses has a typo</li>
+                <li>The address couldn't be located correctly</li>
+                <li>It really is a long drive</li>
+            </ul>
+
+            <div class="modal-buttons" style="flex-direction: column; gap: 10px;">
+                <button class="modal-btn" style="background: var(--accent-danger); color: white;" onclick="showFixAddressForm()">Fix Address</button>
+                <button class="modal-btn" style="background: var(--accent-success); color: white;" onclick="confirmDriveTime()">It's Correct, Continue</button>
+                <button class="modal-btn cancel" onclick="skipDriveTimeCheck()">Skip All Checks</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fix Address Modal -->
+    <div class="modal-overlay" id="fix-address-modal">
+        <div class="modal">
+            <h3 style="color: var(--accent-secondary);">Fix Address</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Edit the address below to correct any typos:</p>
+
+            <div id="fix-address-options"></div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="closeFixAddressModal()">Cancel</button>
+                <button class="modal-btn save" onclick="saveFixedAddresses()">Save & Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Folder Modal -->
+    <div class="modal-overlay" id="new-folder-modal">
+        <div class="modal">
+            <h3 style="color: var(--accent-secondary);">New Folder</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Create a folder to organize your route lists:</p>
+            <input type="text" id="new-folder-name" placeholder="Folder name (e.g., Commercial, Residential)"
+                style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin-bottom: 15px; font-family: inherit;">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeNewFolderModal()">Cancel</button>
+                <button class="modal-btn save" onclick="createFolder()">Create Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New List Modal -->
+    <div class="modal-overlay" id="new-list-modal">
+        <div class="modal">
+            <h3 style="color: var(--accent-success);">New List</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Create a new route list:</p>
+            <input type="text" id="new-list-name-input" placeholder="List name (e.g., Anthony's Route)"
+                style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin-bottom: 15px; font-family: inherit;">
+            <label style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Save in folder:</label>
+            <select id="new-list-folder" style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin-bottom: 15px; font-family: inherit;">
+                <option value="">My Routes (root)</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeNewListModal()">Cancel</button>
+                <button class="modal-btn save" onclick="createNewList()">Create List</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="home" onclick="switchToTab('home')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Home</span>
+        </button>
+        <button class="nav-btn" data-tab="files" onclick="switchToTab('files')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Files</span>
+        </button>
+        <button class="nav-btn nav-add-btn" onclick="showAddMenu()">
+            <div class="add-btn-circle">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+        </button>
+        <button class="nav-btn" data-tab="route" onclick="switchToTab('route')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="10" r="3"></circle>
+                <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"></path>
+            </svg>
+            <span>Route</span>
+        </button>
+        <button class="nav-btn" data-tab="summary" onclick="switchToTab('summary')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Report</span>
+        </button>
+    </nav>
+
+    <!-- Add Menu Modal -->
+    <div class="modal-overlay" id="add-menu-modal">
+        <div class="modal" style="padding-bottom: 100px;">
+            <h3 style="text-align: center; margin-bottom: 20px;">Create New</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button onclick="closeAddMenu(); showNewListModal();" style="padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-success) 0%, #00b894 100%); color: white; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-family: inherit;">
+                    <span style="font-size: 24px;">📋</span>
+                    <div style="text-align: left;">
+                        <p style="margin: 0; font-size: 16px;">New List</p>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.8;">Create a new route list</p>
+                    </div>
+                </button>
+                <button onclick="closeAddMenu(); showNewFolderModal();" style="padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-info) 0%, #5d9cec 100%); color: white; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-family: inherit;">
+                    <span style="font-size: 24px;">📁</span>
+                    <div style="text-align: left;">
+                        <p style="margin: 0; font-size: 16px;">New Folder</p>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.8;">Organize your lists</p>
+                    </div>
+                </button>
+                <button onclick="closeAddMenu(); switchToTab('manage'); setTimeout(toggleAddSection, 100);" style="padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-warning) 0%, #e17055 100%); color: var(--bg-primary); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-family: inherit;">
+                    <span style="font-size: 24px;">📥</span>
+                    <div style="text-align: left;">
+                        <p style="margin: 0; font-size: 16px;">Import Addresses</p>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.8;">From file or paste text</p>
+                    </div>
+                </button>
+            </div>
+            <button onclick="closeAddMenu()" style="margin-top: 20px; width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Import Name List Modal -->
+    <div class="modal-overlay" id="import-name-modal">
+        <div class="modal">
+            <h3 style="color: var(--accent-success);">Name Your List</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Give this imported list a name:</p>
+            <input type="text" id="import-list-name" placeholder="List name (e.g., Snow Route 1)"
+                style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin-bottom: 15px; font-family: inherit;">
+            <label style="display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Save in folder:</label>
+            <select id="import-list-folder" style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; margin-bottom: 15px; font-family: inherit;">
+                <option value="">My Routes (root)</option>
+            </select>
+            <p style="color: var(--accent-info); font-size: 13px; margin-bottom: 15px;"><span id="import-address-count">0</span> addresses will be imported</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeImportNameModal()">Cancel</button>
+                <button class="modal-btn save" onclick="confirmImportWithName()">Import List</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure - now supports multiple lists and folders
+        let allLists = {};
+        let allFolders = {};
+        let currentListId = 'default';
+        let currentFolderId = null; // null = root
+        let addresses = [];
+        let currentIndex = 0;
+        let startLocation = '';
+
+        // Load from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('plowRouteDataV2');
+            if (saved) {
+                const data = JSON.parse(saved);
+                allLists = data.lists || { default: { name: 'Main Route', addresses: [], currentIndex: 0, startLocation: '', folderId: null } };
+                allFolders = data.folders || {};
+                currentListId = data.currentListId || 'default';
+                currentFolderId = data.currentFolderId || null;
+            } else {
+                // Migrate from old format
+                const oldData = localStorage.getItem('plowRouteData');
+                if (oldData) {
+                    const old = JSON.parse(oldData);
+                    allLists = {
+                        default: {
+                            name: 'Main Route',
+                            addresses: old.addresses || [],
+                            currentIndex: old.currentIndex || 0,
+                            startLocation: old.startLocation || '',
+                            folderId: null
+                        }
+                    };
+                } else {
+                    allLists = { default: { name: 'Main Route', addresses: [], currentIndex: 0, startLocation: '', folderId: null } };
+                }
+                allFolders = {};
+                currentListId = 'default';
+                currentFolderId = null;
+            }
+
+            // Load current list data
+            loadCurrentList();
+            renderListDropdown();
+        }
+
+        function loadCurrentList() {
+            const list = allLists[currentListId];
+            if (list) {
+                addresses = list.addresses || [];
+                currentIndex = list.currentIndex || 0;
+                startLocation = list.startLocation || '';
+                document.getElementById('start-location-input').value = startLocation;
+            }
+            // Load saved MapBox key
+            const savedKey = localStorage.getItem('mapboxKey');
+            if (savedKey) {
+                document.getElementById('mapbox-key').value = savedKey;
+            }
+        }
+
+        // Save to localStorage
+        function saveData() {
+            startLocation = document.getElementById('start-location-input').value;
+
+            // Save current list data back
+            allLists[currentListId] = {
+                name: allLists[currentListId].name,
+                addresses: addresses,
+                currentIndex: currentIndex,
+                startLocation: startLocation
+            };
+
+            localStorage.setItem('plowRouteDataV2', JSON.stringify({
+                lists: allLists,
+                folders: allFolders,
+                currentListId: currentListId,
+                currentFolderId: currentFolderId
+            }));
+        }
+
+        // Render list dropdown
+        function renderListDropdown() {
+            const select = document.getElementById('list-select');
+            select.innerHTML = Object.keys(allLists).map(id => {
+                const list = allLists[id];
+                const count = list.addresses ? list.addresses.length : 0;
+                return `<option value="${id}" ${id === currentListId ? 'selected' : ''}>${list.name} (${count})</option>`;
+            }).join('');
+        }
+
+        // Switch to different list
+        function switchList() {
+            // Save current list first
+            saveData();
+
+            // Switch to new list
+            currentListId = document.getElementById('list-select').value;
+            loadCurrentList();
+            renderAll();
+            renderListDropdown();
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-view`).classList.add('active');
+                renderAll();
+
+                // Initialize map when switching to map tab
+                if (tab.dataset.tab === 'map') {
+                    setTimeout(() => {
+                        initializeMap();
+                    }, 100);
+                }
+
+                // Render files view when switching to files tab
+                if (tab.dataset.tab === 'files') {
+                    renderFilesView();
+                }
+            });
+        });
+
+        // Add new address
+        function addAddress() {
+            const name = document.getElementById('client-name').value.trim();
+            const address = document.getElementById('client-address').value.trim();
+            const notes = document.getElementById('client-notes').value.trim();
+
+            if (!address) {
+                alert('Please enter an address');
+                return;
+            }
+
+            addresses.push({
+                id: Date.now(),
+                name: name || 'Unknown',
+                address,
+                notes,
+                status: 'pending' // pending, done, skipped
+            });
+
+            document.getElementById('client-name').value = '';
+            document.getElementById('client-address').value = '';
+            document.getElementById('client-notes').value = '';
+
+            saveData();
+            renderAll();
+        }
+
+        // Delete address
+        function deleteAddress(id) {
+            if (confirm('Delete this address?')) {
+                addresses = addresses.filter(a => a.id !== id);
+                if (currentIndex >= addresses.length) {
+                    currentIndex = Math.max(0, addresses.length - 1);
+                }
+                saveData();
+                renderAll();
+            }
+        }
+
+        // Mark current as done
+        function markDone() {
+            if (addresses[currentIndex]) {
+                addresses[currentIndex].status = 'done';
+                addresses[currentIndex].completedAt = new Date().toISOString();
+                moveToNext();
+            }
+        }
+
+        // Skip current
+        function markSkip() {
+            if (addresses[currentIndex]) {
+                addresses[currentIndex].status = 'skipped';
+                addresses[currentIndex].completedAt = new Date().toISOString();
+                moveToNext();
+            }
+        }
+
+        // Move to next pending
+        function moveToNext() {
+            saveData();
+            // Find next pending
+            for (let i = currentIndex + 1; i < addresses.length; i++) {
+                if (addresses[i].status === 'pending') {
+                    currentIndex = i;
+                    renderAll();
+                    return;
+                }
+            }
+            // Check from beginning
+            for (let i = 0; i < currentIndex; i++) {
+                if (addresses[i].status === 'pending') {
+                    currentIndex = i;
+                    renderAll();
+                    return;
+                }
+            }
+            // All done!
+            currentIndex = -1;
+            renderAll();
+        }
+
+        // Navigate to address - uses coords if available for precision
+        function navigate(address) {
+            const current = addresses[currentIndex];
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+            // If we have verified coords, use those for precise navigation
+            if (current && current.coords) {
+                if (isIOS) {
+                    window.open(`maps://maps.apple.com/?daddr=${current.coords.lat},${current.coords.lon}`, '_blank');
+                } else {
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${current.coords.lat},${current.coords.lon}`, '_blank');
+                }
+            } else {
+                const encoded = encodeURIComponent(address);
+                if (isIOS) {
+                    window.open(`maps://maps.apple.com/?daddr=${encoded}`, '_blank');
+                } else {
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`, '_blank');
+                }
+            }
+        }
+
+        // Route optimization using MapBox with driving distance matrix
+        async function optimizeRoute() {
+            if (addresses.length < 2) {
+                alert('Add at least 2 addresses to optimize');
+                return;
+            }
+
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) {
+                alert('Please enter your MapBox API key first.\n\nGet a free key at: account.mapbox.com/access-tokens/');
+                document.getElementById('mapbox-key').focus();
+                return;
+            }
+
+            const startAddr = document.getElementById('start-location-input').value.trim();
+            if (!startAddr) {
+                alert('Please enter your start location');
+                document.getElementById('start-location-input').focus();
+                return;
+            }
+
+            localStorage.setItem('mapboxKey', mapboxKey);
+
+            const btn = document.querySelector('.optimize-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+
+            try {
+                // Step 1: Geocode all addresses
+                btn.textContent = 'Finding locations...';
+
+                const startCoords = await geocodeMapbox(startAddr, mapboxKey);
+                if (!startCoords) {
+                    alert(`Could not find start address: ${startAddr}`);
+                    return;
+                }
+
+                // Filter out any address that matches the start location
+                const startAddrLower = startAddr.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                const geocoded = [];
+                for (let i = 0; i < addresses.length; i++) {
+                    // Skip if this address matches the start location
+                    const addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (addrLower === startAddrLower || addrLower.includes(startAddrLower) || startAddrLower.includes(addrLower)) {
+                        console.log(`Skipping address "${addresses[i].address}" - matches start location`);
+                        continue;
+                    }
+
+                    btn.textContent = `Locating ${i + 1}/${addresses.length}...`;
+
+                    // Use saved coords if already verified
+                    let coords;
+                    if (addresses[i].verified && addresses[i].coords) {
+                        coords = addresses[i].coords;
+                    } else {
+                        const geo = await geocodeMapbox(addresses[i].address, mapboxKey);
+                        if (geo) {
+                            coords = { lat: geo.lat, lon: geo.lon };
+                            // Auto-save verification AND update address to verified version
+                            addresses[i].originalAddress = addresses[i].address; // Keep original for reference
+                            addresses[i].address = geo.fullAddress; // Replace with verified address
+                            addresses[i].coords = coords;
+                            addresses[i].verified = true;
+                        } else {
+                            coords = null;
+                        }
+                    }
+
+                    geocoded.push({
+                        index: i,
+                        address: addresses[i],
+                        coords: coords
+                    });
+                }
+
+                // Save the verified addresses
+                saveData();
+                renderManageList();
+
+                const valid = geocoded.filter(g => g.coords !== null);
+                const invalid = geocoded.filter(g => g.coords === null);
+
+                if (invalid.length > 0) {
+                    const failedAddrs = invalid.map(g => g.address.address).join('\n');
+                    alert(`Could not find ${invalid.length} address(es):\n\n${failedAddrs}\n\nPlease fix these addresses and try again.`);
+                    return;
+                }
+
+                if (valid.length < 2) {
+                    alert('Could not locate enough addresses.');
+                    return;
+                }
+
+                btn.textContent = 'Getting driving distances...';
+
+                // Step 2: Build driving distance matrix using MapBox Matrix API
+                const allPoints = [{ coords: startCoords, isStart: true }, ...valid];
+
+                // Debug: log geocoded coordinates
+                console.log('=== GEOCODED COORDINATES ===');
+                console.log('Start:', startAddr, startCoords);
+                valid.forEach((v, i) => {
+                    console.log(`${i}: ${v.address.address}`, v.coords);
+                });
+
+                const distanceMatrix = await buildDrivingMatrix(allPoints, mapboxKey, btn);
+
+                // Debug: log distance matrix
+                console.log('=== DRIVING TIME MATRIX (seconds) ===');
+                const labels = ['START', ...valid.map(v => v.address.address.substring(0, 20))];
+                console.table(distanceMatrix.map((row, i) => {
+                    const obj = { from: labels[i] };
+                    row.forEach((val, j) => obj[labels[j]] = Math.round(val));
+                    return obj;
+                }));
+
+                // Check for unrealistic drive times
+                btn.textContent = 'Checking drive times...';
+                skipAllDriveTimeChecks = false; // Reset for new optimization
+                const driveTimeOk = await checkForUnrealisticDriveTimes(distanceMatrix, allPoints, startAddr, valid);
+
+                if (!driveTimeOk) {
+                    // User chose to fix an address
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                btn.textContent = 'Calculating best route...';
+
+                // Step 3: Solve TSP using nearest neighbor + 2-opt with DRIVING distances
+                const optimizedIndices = solveTSP(distanceMatrix, valid.length);
+
+                // Debug: show the optimized order
+                console.log('=== OPTIMIZED ROUTE ORDER ===');
+                console.log('Start:', startAddr);
+                optimizedIndices.forEach((idx, order) => {
+                    console.log(`${order + 1}. ${valid[idx].address.address}`);
+                });
+
+                // Step 4: Reorder addresses
+                const finalOrder = optimizedIndices.map(i => valid[i]);
+
+                // Preserve the address objects but reorder them
+                const reorderedAddresses = finalOrder.map(p => {
+                    // Find the original address object and copy it
+                    const original = p.address;
+                    return {
+                        ...original,
+                        status: 'pending',
+                        completedAt: undefined
+                    };
+                });
+
+                // Add invalid addresses at the end
+                const invalidAddresses = invalid.map(p => ({
+                    ...p.address,
+                    status: 'pending',
+                    completedAt: undefined
+                }));
+
+                addresses = [...reorderedAddresses, ...invalidAddresses];
+
+                currentIndex = 0;
+                saveData();
+                renderAll();
+
+                // Calculate total drive time for display
+                let totalDriveTime = 0;
+                let prevIdx = 0; // start
+                for (const addrIdx of optimizedIndices) {
+                    totalDriveTime += distanceMatrix[prevIdx][addrIdx + 1];
+                    prevIdx = addrIdx + 1;
+                }
+                const totalMins = Math.round(totalDriveTime / 60);
+                const hours = Math.floor(totalMins / 60);
+                const mins = totalMins % 60;
+                const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
+
+                // Save route stats
+                allLists[currentListId].totalDriveTime = totalDriveTime;
+                allLists[currentListId].lastOptimized = new Date().toISOString();
+
+                let msg = `Route optimized!\n\n`;
+                msg += `${valid.length} addresses reordered for minimum drive time\n`;
+                msg += `Total drive time: ${timeStr}`;
+                if (invalid.length > 0) {
+                    msg += `\n${invalid.length} couldn't be located (placed at end)`;
+                }
+                msg += `\n\nCheck the Map tab to see your route!`;
+                alert(msg);
+
+                // Update map if it's initialized
+                if (routeMap) {
+                    updateMapMarkers();
+                }
+
+            } catch (error) {
+                console.error('Optimization error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Build driving distance matrix using MapBox Matrix API
+        async function buildDrivingMatrix(points, apiKey, btn) {
+            const n = points.length;
+            const matrix = Array(n).fill(null).map(() => Array(n).fill(Infinity));
+
+            // MapBox Matrix API handles up to 25 points at once
+            // For more, we need to batch
+            const BATCH_SIZE = 25;
+
+            if (n <= BATCH_SIZE) {
+                // Single request
+                const coordsString = points.map(p => `${p.coords.lon},${p.coords.lat}`).join(';');
+                const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordsString}?access_token=${apiKey}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.code !== 'Ok') {
+                    throw new Error(data.message || 'Matrix API failed');
+                }
+
+                // data.durations is n x n matrix of travel times in seconds
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        matrix[i][j] = data.durations[i][j] || Infinity;
+                    }
+                }
+            } else {
+                // Need to batch - get distances in chunks
+                btn.textContent = 'Building distance matrix...';
+
+                // For each point, get distances to all others
+                for (let i = 0; i < n; i++) {
+                    btn.textContent = `Calculating distances ${i + 1}/${n}...`;
+
+                    // Get distances from point i to all others in batches
+                    for (let batchStart = 0; batchStart < n; batchStart += BATCH_SIZE - 1) {
+                        const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, n);
+                        const batchPoints = [points[i], ...points.slice(batchStart, batchEnd).filter((_, idx) => batchStart + idx !== i)];
+
+                        if (batchPoints.length < 2) continue;
+
+                        const coordsString = batchPoints.map(p => `${p.coords.lon},${p.coords.lat}`).join(';');
+                        const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordsString}?sources=0&access_token=${apiKey}`;
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        if (data.code === 'Ok' && data.durations) {
+                            let destIdx = 0;
+                            for (let j = batchStart; j < batchEnd; j++) {
+                                if (j !== i) {
+                                    matrix[i][j] = data.durations[0][destIdx + 1] || Infinity;
+                                    destIdx++;
+                                }
+                            }
+                        }
+                    }
+                    matrix[i][i] = 0;
+                }
+            }
+
+            return matrix;
+        }
+
+        // Solve TSP to find minimum TOTAL drive time route
+        // For small lists (<= 10), try all permutations for optimal solution
+        // For larger lists, use nearest neighbor + intensive 2-opt
+        function solveTSP(matrix, numAddresses) {
+            // matrix[0] = start location
+            // matrix[1..n] = addresses
+
+            console.log('=== TSP SOLVER DEBUG ===');
+            console.log(`Finding optimal route for ${numAddresses} addresses...`);
+
+            // Calculate total route time for a given order
+            function calcRouteTime(route) {
+                let total = matrix[0][route[0]]; // Start to first
+                for (let i = 0; i < route.length - 1; i++) {
+                    total += matrix[route[i]][route[i + 1]];
+                }
+                return total;
+            }
+
+            let bestRoute = [];
+            let bestTime = Infinity;
+
+            if (numAddresses <= 8) {
+                // For small lists, try ALL permutations to find true optimal
+                console.log('Using exhaustive search (small list)...');
+
+                const indices = [];
+                for (let i = 1; i <= numAddresses; i++) indices.push(i);
+
+                // Generate all permutations
+                function permute(arr, start = 0) {
+                    if (start === arr.length - 1) {
+                        const time = calcRouteTime(arr);
+                        if (time < bestTime) {
+                            bestTime = time;
+                            bestRoute = [...arr];
+                        }
+                        return;
+                    }
+                    for (let i = start; i < arr.length; i++) {
+                        [arr[start], arr[i]] = [arr[i], arr[start]];
+                        permute(arr, start + 1);
+                        [arr[start], arr[i]] = [arr[i], arr[start]];
+                    }
+                }
+
+                permute(indices);
+                console.log(`Checked ${factorial(numAddresses)} permutations`);
+            } else {
+                // For larger lists, use multiple starting points + aggressive 2-opt
+                console.log('Using heuristic search (large list)...');
+
+                // Try starting from each address to find best initial route
+                for (let startIdx = 1; startIdx <= numAddresses; startIdx++) {
+                    // Nearest neighbor from this starting point
+                    let current = 0; // Always start from actual start location
+                    const unvisited = [];
+                    for (let i = 1; i <= numAddresses; i++) unvisited.push(i);
+                    const route = [];
+
+                    while (unvisited.length > 0) {
+                        let nearestIdx = 0;
+                        let nearestDist = matrix[current][unvisited[0]];
+                        for (let i = 1; i < unvisited.length; i++) {
+                            if (matrix[current][unvisited[i]] < nearestDist) {
+                                nearestDist = matrix[current][unvisited[i]];
+                                nearestIdx = i;
+                            }
+                        }
+                        route.push(unvisited[nearestIdx]);
+                        current = unvisited[nearestIdx];
+                        unvisited.splice(nearestIdx, 1);
+                    }
+
+                    // Apply 2-opt until no improvement
+                    let improved = true;
+                    while (improved) {
+                        improved = false;
+                        for (let i = 0; i < route.length - 1; i++) {
+                            for (let j = i + 1; j < route.length; j++) {
+                                // Try reversing segment [i, j]
+                                const newRoute = [...route];
+                                const segment = newRoute.splice(i, j - i + 1);
+                                segment.reverse();
+                                newRoute.splice(i, 0, ...segment);
+
+                                if (calcRouteTime(newRoute) < calcRouteTime(route)) {
+                                    for (let k = 0; k < route.length; k++) route[k] = newRoute[k];
+                                    improved = true;
+                                }
+                            }
+                        }
+                    }
+
+                    const time = calcRouteTime(route);
+                    if (time < bestTime) {
+                        bestTime = time;
+                        bestRoute = [...route];
+                    }
+                }
+
+                // Also try Or-opt (moving single nodes)
+                let improved = true;
+                while (improved) {
+                    improved = false;
+                    for (let i = 0; i < bestRoute.length; i++) {
+                        for (let j = 0; j < bestRoute.length; j++) {
+                            if (i === j || i === j + 1) continue;
+                            const newRoute = [...bestRoute];
+                            const [node] = newRoute.splice(i, 1);
+                            const insertPos = j > i ? j - 1 : j;
+                            newRoute.splice(insertPos, 0, node);
+
+                            if (calcRouteTime(newRoute) < calcRouteTime(bestRoute)) {
+                                bestRoute = newRoute;
+                                bestTime = calcRouteTime(bestRoute);
+                                improved = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Log the result
+            console.log('=== OPTIMAL ROUTE FOUND ===');
+            console.log(`Total drive time: ${Math.round(bestTime / 60)} minutes`);
+            let logPrev = 0;
+            bestRoute.forEach((stop, i) => {
+                const segmentTime = matrix[logPrev][stop];
+                console.log(`${i + 1}. Stop ${stop} (${Math.round(segmentTime / 60)} min from previous)`);
+                logPrev = stop;
+            });
+
+            // Convert to 0-based address indices
+            return bestRoute.map(i => i - 1);
+        }
+
+        function factorial(n) {
+            return n <= 1 ? 1 : n * factorial(n - 1);
+        }
+
+        // Geocode using MapBox - returns full address details
+        // Uses fuzzy matching to handle typos in city names
+        async function geocodeMapbox(address, apiKey) {
+            try {
+                // Clean up the address - expand common abbreviations
+                let cleanAddress = address
+                    .replace(/\bri\b/gi, 'Rhode Island')
+                    .replace(/\bma\b/gi, 'Massachusetts')
+                    .replace(/\bct\b/gi, 'Connecticut')
+                    .replace(/\bdr\b/gi, 'Drive')
+                    .replace(/\bst\b/gi, 'Street')
+                    .replace(/\bave\b/gi, 'Avenue')
+                    .replace(/\brd\b/gi, 'Road')
+                    .replace(/\bln\b/gi, 'Lane')
+                    .replace(/\bpke?\b/gi, 'Pike');
+
+                const encoded = encodeURIComponent(cleanAddress);
+                // Remove types=address to allow fuzzy matching on city names with typos
+                // Use proximity bias for Rhode Island area
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?country=us&proximity=-71.5,41.8&limit=5&access_token=${apiKey}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.features && data.features.length > 0) {
+                    // Find the best address match (prefer actual addresses over POIs)
+                    let bestMatch = data.features[0];
+                    for (const feature of data.features) {
+                        if (feature.place_type.includes('address')) {
+                            bestMatch = feature;
+                            break;
+                        }
+                    }
+
+                    const [lon, lat] = bestMatch.center;
+                    return {
+                        lat,
+                        lon,
+                        fullAddress: bestMatch.place_name,
+                        relevance: bestMatch.relevance
+                    };
+                }
+                return null;
+            } catch (e) {
+                console.error('Geocode error:', e);
+                return null;
+            }
+        }
+
+        // Verify and update address with full details + coordinates
+        async function verifyAddress(addressId) {
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) {
+                alert('Please enter your MapBox API key first');
+                return;
+            }
+
+            const addr = addresses.find(a => a.id === addressId);
+            if (!addr) return;
+
+            const geo = await geocodeMapbox(addr.address, mapboxKey);
+
+            if (!geo) {
+                alert(`Could not find address: ${addr.address}\n\nTry adding more details like city, state, or zip.`);
+                return;
+            }
+
+            // Update address with verified info
+            addr.verifiedAddress = geo.fullAddress;
+            addr.coords = { lat: geo.lat, lon: geo.lon };
+            addr.verified = true;
+
+            saveData();
+            renderAll();
+
+            // Show confirmation with map link
+            const mapUrl = `https://www.google.com/maps?q=${geo.lat},${geo.lon}`;
+            if (confirm(`Found:\n${geo.fullAddress}\n\nClick OK to view on map and confirm, or Cancel if correct.`)) {
+                window.open(mapUrl, '_blank');
+            }
+        }
+
+        // Verify all unverified addresses
+        async function verifyAllAddresses() {
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) {
+                alert('Please enter your MapBox API key first');
+                return;
+            }
+
+            const unverified = addresses.filter(a => !a.verified);
+            if (unverified.length === 0) {
+                alert('All addresses are already verified!');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+
+            let verified = 0;
+            let failed = [];
+
+            for (let i = 0; i < unverified.length; i++) {
+                btn.textContent = `Verifying ${i + 1}/${unverified.length}...`;
+                const addr = unverified[i];
+                const geo = await geocodeMapbox(addr.address, mapboxKey);
+
+                if (geo && geo.relevance > 0.7) {
+                    addr.verifiedAddress = geo.fullAddress;
+                    addr.coords = { lat: geo.lat, lon: geo.lon };
+                    addr.verified = true;
+                    verified++;
+                } else {
+                    failed.push(addr.address);
+                }
+
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            saveData();
+            renderAll();
+
+            btn.textContent = originalText;
+            btn.disabled = false;
+
+            let msg = `Verified ${verified} addresses.`;
+            if (failed.length > 0) {
+                msg += `\n\n${failed.length} could not be verified:\n${failed.slice(0, 5).join('\n')}`;
+                if (failed.length > 5) msg += `\n...and ${failed.length - 5} more`;
+            }
+            alert(msg);
+        }
+
+        // Show map preview for an address
+        function showMapPreview(addressId) {
+            const addr = addresses.find(a => a.id === addressId);
+            if (!addr || !addr.coords) {
+                alert('Address not verified yet. Click "Verify" first.');
+                return;
+            }
+            const mapUrl = `https://www.google.com/maps?q=${addr.coords.lat},${addr.coords.lon}`;
+            window.open(mapUrl, '_blank');
+        }
+
+        // Reset session (keep addresses, reset status)
+        function resetSession() {
+            if (confirm('Reset all addresses to pending? This will clear your progress.')) {
+                addresses.forEach(a => {
+                    a.status = 'pending';
+                    delete a.completedAt;
+                });
+                currentIndex = 0;
+                saveData();
+                renderAll();
+            }
+        }
+
+        // Export summary for invoicing
+        function exportSummary() {
+            const done = addresses.filter(a => a.status === 'done');
+            const date = new Date().toLocaleDateString();
+
+            let text = `Snow Plowing - ${date}\n`;
+            text += `========================\n\n`;
+            text += `Completed Properties (${done.length}):\n`;
+            done.forEach((a, i) => {
+                text += `${i + 1}. ${a.name} - ${a.address}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Summary copied to clipboard!');
+            }).catch(() => {
+                alert('Could not copy. Summary:\n\n' + text);
+            });
+        }
+
+        // Render functions
+        function renderCurrentStop() {
+            const container = document.getElementById('current-stop-container');
+
+            if (addresses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No Addresses Yet</h2>
+                        <p>Go to "Manage" tab to add your client addresses</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const pending = addresses.filter(a => a.status === 'pending');
+            if (pending.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>All Done!</h2>
+                        <p>You've completed all addresses for this session.</p>
+                        <p>Check the Summary tab for your completed list.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Find current pending
+            if (currentIndex < 0 || currentIndex >= addresses.length || addresses[currentIndex].status !== 'pending') {
+                for (let i = 0; i < addresses.length; i++) {
+                    if (addresses[i].status === 'pending') {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            const current = addresses[currentIndex];
+            const pendingCount = addresses.filter(a => a.status === 'pending').length;
+            const stopNum = addresses.length - pendingCount + 1;
+
+            // Get MapBox key for map preview
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            const mapPreview = (current.coords && mapboxKey) ?
+                `<img src="https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+ff0000(${current.coords.lon},${current.coords.lat})/${current.coords.lon},${current.coords.lat},14,0/400x180@2x?access_token=${mapboxKey}"
+                 style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; cursor: pointer;"
+                 onclick="window.open('https://www.google.com/maps?q=${current.coords.lat},${current.coords.lon}', '_blank')"
+                 onerror="this.style.display='none'"
+                 alt="Map preview">` : '';
+
+            container.innerHTML = `
+                <div class="current-stop">
+                    <div class="stop-number">Stop ${stopNum} of ${addresses.length}</div>
+                    <div class="stop-address">${current.address}</div>
+                    <div class="stop-name">${current.name}</div>
+                    ${current.notes ? `<div class="stop-notes">${current.notes}</div>` : ''}
+                    ${mapPreview}
+                    <button class="navigate-btn" onclick="navigate('${current.address.replace(/'/g, "\\'")}')">
+                        <span>Navigate</span>
+                    </button>
+                    <div class="action-buttons">
+                        <button class="action-btn done-btn" onclick="markDone()">Done</button>
+                        <button class="action-btn skip-btn" onclick="markSkip()">Skip</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProgress() {
+            const total = addresses.length;
+            const completed = addresses.filter(a => a.status !== 'pending').length;
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('progress-label').textContent = `${completed} of ${total} completed`;
+            document.getElementById('progress-percent').textContent = `${percent}%`;
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+        }
+
+        function renderManageList() {
+            const container = document.getElementById('manage-list');
+            document.getElementById('total-count').textContent = addresses.length;
+
+            if (addresses.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No addresses added yet</p>';
+                return;
+            }
+
+            const otherLists = Object.keys(allLists).filter(id => id !== currentListId);
+
+            container.innerHTML = addresses.map((a, idx) => {
+                // Show corrected address if verified, otherwise original
+                const displayAddress = a.verified ? a.address : (a.originalAddress || a.address);
+                const showOriginal = a.originalAddress && a.originalAddress !== a.address;
+                return `
+                <div class="address-dropdown" style="background: var(--bg-card); border-radius: 12px; margin-bottom: 8px; overflow: hidden; ${a.verified ? 'border-left: 3px solid var(--accent-success);' : 'border-left: 3px solid var(--accent-warning);'}">
+                    <div onclick="toggleAddressDropdown(${idx})" style="display: flex; align-items: center; padding: 12px; cursor: pointer; gap: 12px;">
+                        <div style="width: 28px; height: 28px; background: var(--accent-info); color: var(--bg-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">${idx + 1}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayAddress}</p>
+                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">${a.name}${a.notes ? ' • Has notes' : ''}${a.verified ? ' • ✓' : ''}</p>
+                        </div>
+                        <span id="arrow-${idx}" style="color: var(--text-muted); font-size: 14px; transition: transform 0.2s;">▼</span>
+                    </div>
+                    <div id="dropdown-${idx}" style="display: none; padding: 0 12px 12px 12px; border-top: 1px solid var(--border-color);">
+                        <div style="padding-top: 12px;">
+                            ${showOriginal ? `<p style="color: var(--text-muted); font-size: 11px; margin: 0 0 4px 0; text-decoration: line-through;">Original: ${a.originalAddress}</p>` : ''}
+                            ${a.verified ? `<p style="color: var(--accent-success); font-size: 12px; margin: 0 0 8px 0;">✓ Verified & corrected</p>` : '<p style="color: var(--accent-warning); font-size: 12px; margin: 0 0 8px 0;">⚠ Not verified yet - will auto-fix on optimize</p>'}
+                            ${a.notes ? `<p style="color: var(--accent-warning); font-size: 12px; margin: 0 0 12px 0; padding: 8px; background: rgba(253,203,110,0.1); border-radius: 8px;">${a.notes}</p>` : ''}
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${a.coords ? `<button onclick="goToMapPin(${idx})" style="flex: 1; min-width: 70px; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">View on Map</button>` : ''}
+                                <button onclick="editNotes(${a.id})" style="flex: 1; min-width: 70px; padding: 10px; border: none; border-radius: 8px; background: var(--accent-info); color: var(--bg-primary); font-size: 12px; font-weight: 600; cursor: pointer;">${a.notes ? 'Edit Notes' : 'Add Notes'}</button>
+                                ${otherLists.length > 0 ? `<button onclick="openMoveModal(${a.id})" style="flex: 1; min-width: 70px; padding: 10px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Move</button>` : ''}
+                                ${a.verified ? `<button onclick="reverifyAddress(${a.id})" style="flex: 1; min-width: 70px; padding: 10px; border: none; border-radius: 8px; background: var(--accent-warning); color: var(--bg-primary); font-size: 12px; font-weight: 600; cursor: pointer;">Re-verify</button>` : ''}
+                                <button onclick="deleteAddress(${a.id})" style="flex: 1; min-width: 70px; padding: 10px; border: none; border-radius: 8px; background: var(--accent-danger); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function renderSummary() {
+            const done = addresses.filter(a => a.status === 'done');
+            const skipped = addresses.filter(a => a.status === 'skipped');
+            const pending = addresses.filter(a => a.status === 'pending');
+
+            document.getElementById('done-count').textContent = done.length;
+            document.getElementById('skipped-count').textContent = skipped.length;
+            document.getElementById('pending-count').textContent = pending.length;
+            document.getElementById('session-date').textContent = new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const container = document.getElementById('summary-list');
+            let html = '';
+
+            if (done.length > 0) {
+                html += '<h3>Completed</h3>';
+                done.forEach(a => {
+                    html += `<div class="summary-item" style="border-left: 3px solid var(--accent-success);">${a.name} - ${a.address}</div>`;
+                });
+            }
+
+            if (skipped.length > 0) {
+                html += '<h3>Skipped</h3>';
+                skipped.forEach(a => {
+                    html += `<div class="summary-item" style="border-left: 3px solid var(--accent-danger);">${a.name} - ${a.address}</div>`;
+                });
+            }
+
+            if (pending.length > 0) {
+                html += '<h3>Still Pending</h3>';
+                pending.forEach(a => {
+                    html += `<div class="summary-item" style="border-left: 3px solid var(--accent-info);">${a.name} - ${a.address}</div>`;
+                });
+            }
+
+            container.innerHTML = html || '<p style="color: var(--text-muted); text-align: center;">No activity yet</p>';
+        }
+
+        function renderAll() {
+            renderCurrentStop();
+            renderProgress();
+            renderManageList();
+            renderSummary();
+            renderRouteAddressList();
+
+            // Update current list name in header
+            const currentList = allLists[currentListId];
+            if (currentList) {
+                document.getElementById('current-list-name').textContent = currentList.name;
+
+                // Show route stats if optimized
+                const statsEl = document.getElementById('route-stats');
+                if (currentList.totalDriveTime && addresses.length > 0) {
+                    const totalMins = Math.round(currentList.totalDriveTime / 60);
+                    const hours = Math.floor(totalMins / 60);
+                    const mins = totalMins % 60;
+                    const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
+
+                    document.getElementById('total-drive-time').textContent = timeStr;
+                    document.getElementById('total-stops').textContent = addresses.length;
+                    statsEl.style.display = 'block';
+                } else {
+                    statsEl.style.display = 'none';
+                }
+            }
+        }
+
+        function renderRouteAddressList() {
+            const container = document.getElementById('route-addresses-container');
+            if (!container) return;
+
+            if (addresses.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No addresses yet. Add some in the Addresses tab.</p>';
+                return;
+            }
+
+            container.innerHTML = addresses.map((a, index) => {
+                const displayAddress = a.verified ? a.address : (a.originalAddress || a.address);
+                let statusColor = 'var(--accent-info)'; // pending
+                let statusIcon = '○';
+                if (a.status === 'done') {
+                    statusColor = 'var(--accent-success)';
+                    statusIcon = '✓';
+                } else if (a.status === 'skipped') {
+                    statusColor = 'var(--accent-danger)';
+                    statusIcon = '⊘';
+                }
+                if (index === currentIndex && a.status === 'pending') {
+                    statusColor = 'var(--accent-danger)';
+                    statusIcon = '►';
+                }
+
+                return `
+                    <div style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 8px; overflow: hidden; border-left: 3px solid ${statusColor};">
+                        <div onclick="toggleRouteDropdown(${index})" style="display: flex; align-items: center; padding: 12px; cursor: pointer;">
+                            <span style="width: 28px; height: 28px; background: ${statusColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; margin-right: 12px;">${index + 1}</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${a.name || 'Stop ' + (index + 1)}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayAddress}</p>
+                            </div>
+                            <span style="color: ${statusColor}; font-size: 16px; margin-left: 8px;">${statusIcon}</span>
+                            <span id="route-arrow-${index}" style="color: var(--text-muted); margin-left: 8px; transition: transform 0.2s;">▼</span>
+                        </div>
+                        <div id="route-dropdown-${index}" style="display: none; padding: 0 12px 12px 52px; border-top: 1px solid var(--border-color);">
+                            <p style="margin: 10px 0 5px 0; font-size: 12px; color: var(--text-secondary);">Full Address:</p>
+                            <p style="margin: 0; font-size: 13px; color: var(--text-primary);">${displayAddress}</p>
+                            ${a.notes ? `<p style="margin: 10px 0 5px 0; font-size: 12px; color: var(--text-secondary);">Notes:</p><p style="margin: 0; font-size: 13px; color: var(--accent-warning);">${a.notes}</p>` : ''}
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button onclick="navigateToAddress(${index})" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: var(--accent-info); color: var(--bg-primary); font-size: 12px; font-weight: 600; cursor: pointer;">Navigate</button>
+                                ${a.status === 'pending' ? `
+                                    <button onclick="markDone(${index})" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Done</button>
+                                    <button onclick="markSkipped(${index})" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: var(--accent-danger); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Skip</button>
+                                ` : `
+                                    <button onclick="markPending(${index})" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-secondary); font-size: 12px; cursor: pointer;">Undo</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleRouteDropdown(index) {
+            const dropdown = document.getElementById(`route-dropdown-${index}`);
+            const arrow = document.getElementById(`route-arrow-${index}`);
+            if (dropdown.style.display === 'none') {
+                dropdown.style.display = 'block';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function markPending(index) {
+            addresses[index].status = 'pending';
+            delete addresses[index].completedAt;
+            saveData();
+            renderAll();
+            renderHomeView();
+        }
+
+        // Save start location on change
+        document.getElementById('start-location-input').addEventListener('change', saveData);
+
+        // ============ IMPORT FUNCTIONALITY ============
+
+        let pendingImport = [];
+
+        // Import tab switching
+        document.querySelectorAll('.import-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.import-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.import-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`import-${tab.dataset.import}`).classList.add('active');
+            });
+        });
+
+        // File upload handling
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        // Process uploaded file
+        function processFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                parseAddresses(content, file.name);
+            };
+            reader.readAsText(file);
+        }
+
+        // Parse addresses from text content
+        function parseAddresses(content, filename = '') {
+            const lines = content.split(/[\r\n]+/).filter(line => line.trim());
+            const isCSV = filename.endsWith('.csv') || content.includes(',') && lines[0].toLowerCase().includes('name');
+
+            pendingImport = [];
+
+            // Check if first line is a header
+            const firstLine = lines[0].toLowerCase();
+            const hasHeader = firstLine.includes('name') || firstLine.includes('address') ||
+                              firstLine.includes('client') || firstLine.includes('street');
+            const startIndex = hasHeader ? 1 : 0;
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                let name = '';
+                let address = '';
+
+                if (isCSV) {
+                    // CSV parsing - handle quoted values
+                    const parts = parseCSVLine(line);
+                    if (parts.length >= 2) {
+                        // Try to figure out which column is name vs address
+                        // Address usually has numbers, name usually doesn't start with number
+                        if (/^\d/.test(parts[1]) || parts[1].match(/\d+\s+\w/)) {
+                            name = parts[0].trim();
+                            address = parts.slice(1).join(', ').trim();
+                        } else if (/^\d/.test(parts[0]) || parts[0].match(/\d+\s+\w/)) {
+                            address = parts[0].trim();
+                            name = parts[1].trim();
+                        } else {
+                            // Assume first is name, rest is address
+                            name = parts[0].trim();
+                            address = parts.slice(1).join(', ').trim();
+                        }
+                    } else {
+                        address = parts[0].trim();
+                    }
+                } else {
+                    // Plain text - try to detect name vs address
+                    // Common patterns: "Name - Address" or "Name, Address" or just "Address"
+
+                    if (line.includes(' - ')) {
+                        const parts = line.split(' - ');
+                        // Check if first part looks like a name (no numbers at start)
+                        if (!/^\d/.test(parts[0])) {
+                            name = parts[0].trim();
+                            address = parts.slice(1).join(' - ').trim();
+                        } else {
+                            address = line;
+                        }
+                    } else if (line.includes(',')) {
+                        const parts = line.split(',');
+                        // If first part has no numbers, it's probably a name
+                        if (!/\d/.test(parts[0]) && parts.length > 2) {
+                            name = parts[0].trim();
+                            address = parts.slice(1).join(',').trim();
+                        } else {
+                            address = line;
+                        }
+                    } else {
+                        address = line;
+                    }
+                }
+
+                // Clean up address
+                address = address.replace(/^["']|["']$/g, '').trim();
+                name = name.replace(/^["']|["']$/g, '').trim();
+
+                // Skip if no valid address
+                if (!address || address.length < 5) continue;
+
+                // Skip obvious non-address lines
+                if (address.toLowerCase().includes('total') ||
+                    address.toLowerCase().includes('count') ||
+                    address.match(/^[\d\s\.\$]+$/)) continue;
+
+                pendingImport.push({
+                    name: name || 'Client',
+                    address: address
+                });
+            }
+
+            showPreview();
+        }
+
+        // Parse CSV line handling quoted values
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if ((char === ',' || char === '\t') && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        // Import from paste area
+        function importFromPaste() {
+            const content = document.getElementById('paste-input').value;
+            if (!content.trim()) {
+                alert('Please paste some addresses first');
+                return;
+            }
+            parseAddresses(content);
+        }
+
+        // Show preview of parsed addresses
+        function showPreview() {
+            const preview = document.getElementById('import-preview');
+            const list = document.getElementById('preview-list');
+            const count = document.getElementById('preview-count');
+
+            if (pendingImport.length === 0) {
+                alert('No valid addresses found. Make sure each address is on its own line.');
+                preview.style.display = 'none';
+                return;
+            }
+
+            count.textContent = pendingImport.length;
+            list.innerHTML = pendingImport.map(item => `
+                <div class="preview-item">
+                    <span class="preview-address">${item.address}</span>
+                    <span class="preview-name">${item.name}</span>
+                </div>
+            `).join('');
+
+            preview.style.display = 'block';
+        }
+
+        // Confirm and add imported addresses - now shows naming modal
+        function confirmImport() {
+            if (pendingImport.length === 0) return;
+            showImportNameModal();
+        }
+
+        // Clear all addresses
+        function clearAllAddresses() {
+            if (confirm('Delete ALL addresses? This cannot be undone.')) {
+                addresses = [];
+                currentIndex = 0;
+                saveData();
+                renderAll();
+            }
+        }
+
+        // ============ NOTES MODAL ============
+
+        let editingAddressId = null;
+
+        function editNotes(id) {
+            const address = addresses.find(a => a.id === id);
+            if (!address) return;
+
+            editingAddressId = id;
+            document.getElementById('modal-address').textContent = address.address;
+            document.getElementById('notes-textarea').value = address.notes || '';
+            document.getElementById('notes-modal').classList.add('active');
+        }
+
+        function closeNotesModal() {
+            editingAddressId = null;
+            document.getElementById('notes-modal').classList.remove('active');
+        }
+
+        function addQuickNote(note) {
+            const textarea = document.getElementById('notes-textarea');
+            if (textarea.value && !textarea.value.endsWith('\n') && !textarea.value.endsWith(' ')) {
+                textarea.value += ', ';
+            }
+            textarea.value += note;
+            textarea.focus();
+        }
+
+        function saveNotes() {
+            if (!editingAddressId) return;
+
+            const address = addresses.find(a => a.id === editingAddressId);
+            if (address) {
+                address.notes = document.getElementById('notes-textarea').value.trim();
+                saveData();
+                renderAll();
+            }
+
+            closeNotesModal();
+        }
+
+        // Close modal on overlay click
+        document.getElementById('notes-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'notes-modal') {
+                closeNotesModal();
+            }
+        });
+
+        // ============ LIST MANAGEMENT ============
+
+        let renamingListId = null;
+
+        function openListModal() {
+            renderListsInModal();
+            document.getElementById('list-modal').classList.add('active');
+        }
+
+        function closeListModal() {
+            document.getElementById('list-modal').classList.remove('active');
+            document.getElementById('new-list-name').value = '';
+        }
+
+        function renderListsInModal() {
+            const container = document.getElementById('lists-container');
+            const listIds = Object.keys(allLists);
+
+            container.innerHTML = listIds.map(id => {
+                const list = allLists[id];
+                const count = list.addresses ? list.addresses.length : 0;
+                const isDefault = id === 'default';
+                const isCurrent = id === currentListId;
+
+                return `
+                    <div class="list-item" style="${isCurrent ? 'border: 1px solid var(--accent-primary);' : ''}">
+                        <div class="list-item-name">${list.name}</div>
+                        <div class="list-item-count">${count} addresses</div>
+                        <div class="list-item-actions">
+                            <button class="list-action-btn edit" onclick="renameList('${id}')" title="Rename">✎</button>
+                            ${!isDefault ? `<button class="list-action-btn delete" onclick="deleteList('${id}')" title="Delete">×</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function createList() {
+            const name = document.getElementById('new-list-name').value.trim();
+            if (!name) {
+                alert('Please enter a list name');
+                return;
+            }
+
+            const id = 'list_' + Date.now();
+            allLists[id] = {
+                name: name,
+                addresses: [],
+                currentIndex: 0,
+                startLocation: ''
+            };
+
+            saveData();
+            renderListsInModal();
+            renderListDropdown();
+            document.getElementById('new-list-name').value = '';
+
+            // Switch to the new list
+            currentListId = id;
+            loadCurrentList();
+            renderAll();
+            renderListDropdown();
+        }
+
+        function deleteList(id) {
+            if (id === 'default') {
+                alert('Cannot delete the main route');
+                return;
+            }
+
+            const list = allLists[id];
+            if (!confirm(`Delete "${list.name}" and all its addresses? This cannot be undone.`)) {
+                return;
+            }
+
+            delete allLists[id];
+
+            // If we deleted the current list, switch to default
+            if (currentListId === id) {
+                currentListId = 'default';
+                loadCurrentList();
+                renderAll();
+            }
+
+            saveData();
+            renderListsInModal();
+            renderListDropdown();
+        }
+
+        function renameList(id) {
+            renamingListId = id;
+            document.getElementById('rename-input').value = allLists[id].name;
+            document.getElementById('rename-modal').classList.add('active');
+        }
+
+        function closeRenameModal() {
+            renamingListId = null;
+            document.getElementById('rename-modal').classList.remove('active');
+        }
+
+        function confirmRename() {
+            const newName = document.getElementById('rename-input').value.trim();
+            if (!newName) {
+                alert('Please enter a name');
+                return;
+            }
+
+            if (renamingListId && allLists[renamingListId]) {
+                allLists[renamingListId].name = newName;
+                saveData();
+                renderListsInModal();
+                renderListDropdown();
+            }
+
+            closeRenameModal();
+        }
+
+        // Close modals on overlay click
+        document.getElementById('list-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'list-modal') {
+                closeListModal();
+            }
+        });
+
+        document.getElementById('rename-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'rename-modal') {
+                closeRenameModal();
+            }
+        });
+
+        // ============ MOVE ADDRESS BETWEEN LISTS ============
+
+        let movingAddressId = null;
+
+        // ============ UNREALISTIC DRIVE TIME CHECK ============
+
+        let driveTimeCheckCallback = null;
+        let driveTimeIssues = [];
+        let currentDriveTimeIssue = null;
+        let skipAllDriveTimeChecks = false;
+        let driveTimeResolve = null;
+
+        // Check matrix for unrealistic drive times (threshold: 30 min = 1800 seconds)
+        const DRIVE_TIME_THRESHOLD = 1800;
+
+        async function checkForUnrealisticDriveTimes(matrix, points, startAddr, valid) {
+            if (skipAllDriveTimeChecks) return true;
+
+            driveTimeIssues = [];
+
+            // Build labels for addresses
+            const labels = [startAddr, ...valid.map(v => v.address.address)];
+
+            // Check all pairs for unusually long drive times
+            for (let i = 0; i < matrix.length; i++) {
+                for (let j = 0; j < matrix.length; j++) {
+                    const time = matrix[i][j];
+                    // Skip self, skip if not a valid number, skip if under threshold
+                    if (i === j) continue;
+                    if (!isFinite(time) || isNaN(time)) continue;
+                    if (time <= DRIVE_TIME_THRESHOLD) continue;
+
+                    // Skip if comparing same address (start location might be in list)
+                    if (labels[i].toLowerCase().trim() === labels[j].toLowerCase().trim()) continue;
+
+                    driveTimeIssues.push({
+                        fromIndex: i,
+                        toIndex: j,
+                        fromLabel: labels[i],
+                        toLabel: labels[j],
+                        time: time,
+                        fromIsStart: i === 0,
+                        toIsStart: j === 0,
+                        fromAddressIdx: i > 0 ? valid[i - 1].index : null,
+                        toAddressIdx: j > 0 ? valid[j - 1].index : null
+                    });
+                }
+            }
+
+            // Remove duplicate pairs (A->B and B->A)
+            const seen = new Set();
+            driveTimeIssues = driveTimeIssues.filter(issue => {
+                const key = [issue.fromIndex, issue.toIndex].sort().join('-');
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            if (driveTimeIssues.length === 0) return true;
+
+            // Show issues one at a time
+            for (const issue of driveTimeIssues) {
+                if (skipAllDriveTimeChecks) break;
+
+                currentDriveTimeIssue = issue;
+                const result = await showDriveTimeModal(issue);
+
+                if (result === 'fix') {
+                    // User wants to fix - return false to stop optimization
+                    return false;
+                }
+                // If 'continue' or 'skip', keep going
+            }
+
+            return true;
+        }
+
+        function showDriveTimeModal(issue) {
+            return new Promise((resolve) => {
+                driveTimeResolve = resolve;
+
+                let timeStr;
+                if (!isFinite(issue.time) || isNaN(issue.time)) {
+                    timeStr = 'Unable to calculate (address may be invalid)';
+                } else {
+                    const minutes = Math.round(issue.time / 60);
+                    const hours = Math.floor(minutes / 60);
+                    const remainingMins = minutes % 60;
+
+                    if (hours > 0) {
+                        timeStr = `${hours} hour${hours > 1 ? 's' : ''} ${remainingMins} min`;
+                    } else {
+                        timeStr = `${minutes} minutes`;
+                    }
+                }
+
+                document.getElementById('drivetime-from').textContent = issue.fromLabel;
+                document.getElementById('drivetime-to').textContent = issue.toLabel;
+                document.getElementById('drivetime-time').textContent = timeStr;
+
+                document.getElementById('drivetime-modal').classList.add('active');
+            });
+        }
+
+        function closeDriveTimeModal() {
+            document.getElementById('drivetime-modal').classList.remove('active');
+            currentDriveTimeIssue = null;
+        }
+
+        let fixAddressIssue = null;
+
+        function showFixAddressForm() {
+            if (!currentDriveTimeIssue) return;
+
+            fixAddressIssue = currentDriveTimeIssue;
+            closeDriveTimeModal();
+
+            // Build edit form for the addresses involved
+            const container = document.getElementById('fix-address-options');
+            let html = '';
+
+            // From address (if not start location)
+            if (!fixAddressIssue.fromIsStart && fixAddressIssue.fromAddressIdx !== null) {
+                const addr = addresses[fixAddressIssue.fromAddressIdx];
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Address 1:</label>
+                        <input type="text" id="fix-addr-from" value="${addr.address}"
+                            style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">
+                    </div>
+                `;
+            }
+
+            // To address (if not start location)
+            if (!fixAddressIssue.toIsStart && fixAddressIssue.toAddressIdx !== null) {
+                const addr = addresses[fixAddressIssue.toAddressIdx];
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">${fixAddressIssue.fromIsStart ? 'Address:' : 'Address 2:'}</label>
+                        <input type="text" id="fix-addr-to" value="${addr.address}"
+                            style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">
+                    </div>
+                `;
+            }
+
+            // If one is the start location, show it as non-editable
+            if (fixAddressIssue.fromIsStart) {
+                html = `
+                    <div style="margin-bottom: 15px; opacity: 0.6;">
+                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>
+                        <p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">${fixAddressIssue.fromLabel}</p>
+                    </div>
+                ` + html;
+            }
+
+            if (fixAddressIssue.toIsStart) {
+                html += `
+                    <div style="margin-bottom: 15px; opacity: 0.6;">
+                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>
+                        <p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">${fixAddressIssue.toLabel}</p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+            document.getElementById('fix-address-modal').classList.add('active');
+        }
+
+        function closeFixAddressModal() {
+            document.getElementById('fix-address-modal').classList.remove('active');
+            fixAddressIssue = null;
+
+            // Also resolve the drive time check so optimization stops
+            if (driveTimeResolve) {
+                driveTimeResolve('fix');
+                driveTimeResolve = null;
+            }
+        }
+
+        function saveFixedAddresses() {
+            if (!fixAddressIssue) return;
+
+            // Update the addresses
+            const fromInput = document.getElementById('fix-addr-from');
+            const toInput = document.getElementById('fix-addr-to');
+
+            if (fromInput && fixAddressIssue.fromAddressIdx !== null) {
+                const newAddr = fromInput.value.trim();
+                if (newAddr) {
+                    addresses[fixAddressIssue.fromAddressIdx].address = newAddr;
+                    // Clear verification since address changed
+                    addresses[fixAddressIssue.fromAddressIdx].verified = false;
+                    addresses[fixAddressIssue.fromAddressIdx].coords = null;
+                    addresses[fixAddressIssue.fromAddressIdx].verifiedAddress = null;
+                }
+            }
+
+            if (toInput && fixAddressIssue.toAddressIdx !== null) {
+                const newAddr = toInput.value.trim();
+                if (newAddr) {
+                    addresses[fixAddressIssue.toAddressIdx].address = newAddr;
+                    // Clear verification since address changed
+                    addresses[fixAddressIssue.toAddressIdx].verified = false;
+                    addresses[fixAddressIssue.toAddressIdx].coords = null;
+                    addresses[fixAddressIssue.toAddressIdx].verifiedAddress = null;
+                }
+            }
+
+            saveData();
+            renderAll();
+
+            document.getElementById('fix-address-modal').classList.remove('active');
+            fixAddressIssue = null;
+
+            // Resolve and trigger re-optimization
+            if (driveTimeResolve) {
+                driveTimeResolve('fix');
+                driveTimeResolve = null;
+            }
+
+            alert('Address updated! Click "Optimize Route Order" again to retry.');
+        }
+
+        document.getElementById('fix-address-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'fix-address-modal') {
+                closeFixAddressModal();
+            }
+        });
+
+        function confirmDriveTime() {
+            closeDriveTimeModal();
+            if (driveTimeResolve) {
+                driveTimeResolve('continue');
+                driveTimeResolve = null;
+            }
+        }
+
+        function skipDriveTimeCheck() {
+            skipAllDriveTimeChecks = true;
+            closeDriveTimeModal();
+            if (driveTimeResolve) {
+                driveTimeResolve('skip');
+                driveTimeResolve = null;
+            }
+        }
+
+        document.getElementById('drivetime-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'drivetime-modal') {
+                // Don't allow closing by clicking overlay - must choose an option
+            }
+        });
+
+        function openMoveModal(addressId) {
+            const address = addresses.find(a => a.id === addressId);
+            if (!address) return;
+
+            movingAddressId = addressId;
+            document.getElementById('move-address').textContent = address.address;
+
+            // Render list options
+            const container = document.getElementById('move-list-options');
+            const otherLists = Object.keys(allLists).filter(id => id !== currentListId);
+
+            container.innerHTML = otherLists.map(id => {
+                const list = allLists[id];
+                const count = list.addresses ? list.addresses.length : 0;
+                return `
+                    <div class="list-item" style="cursor: pointer;" onclick="moveAddressToList('${id}')">
+                        <div class="list-item-name">${list.name}</div>
+                        <div class="list-item-count">${count} addresses</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('move-modal').classList.add('active');
+        }
+
+        function closeMoveModal() {
+            movingAddressId = null;
+            document.getElementById('move-modal').classList.remove('active');
+        }
+
+        function moveAddressToList(targetListId) {
+            if (!movingAddressId) return;
+
+            // Find the address
+            const addressIndex = addresses.findIndex(a => a.id === movingAddressId);
+            if (addressIndex === -1) return;
+
+            const address = addresses[addressIndex];
+
+            // Remove from current list
+            addresses.splice(addressIndex, 1);
+
+            // Add to target list
+            if (!allLists[targetListId].addresses) {
+                allLists[targetListId].addresses = [];
+            }
+            allLists[targetListId].addresses.push(address);
+
+            // Fix currentIndex if needed
+            if (currentIndex >= addresses.length) {
+                currentIndex = Math.max(0, addresses.length - 1);
+            }
+
+            saveData();
+            renderAll();
+            renderListDropdown();
+            closeMoveModal();
+
+            // Show confirmation
+            const targetName = allLists[targetListId].name;
+            alert(`Moved to "${targetName}"`);
+        }
+
+        document.getElementById('move-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'move-modal') {
+                closeMoveModal();
+            }
+        });
+
+        // ============ BOTTOM NAV & HOME VIEW ============
+
+        function switchToTab(tabName) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            // Show selected view
+            const viewId = tabName === 'home' ? 'home-view' :
+                          tabName === 'files' ? 'files-view' :
+                          tabName === 'route' ? 'route-view' :
+                          tabName === 'map' ? 'map-view' :
+                          tabName === 'manage' ? 'manage-view' :
+                          tabName === 'summary' ? 'summary-view' : 'home-view';
+
+            document.getElementById(viewId).classList.add('active');
+
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tabName) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Special handling for tabs
+            if (tabName === 'map') {
+                setTimeout(initializeMap, 100);
+            }
+            if (tabName === 'files') {
+                renderFilesView();
+            }
+            if (tabName === 'home') {
+                renderHomeView();
+            }
+
+            renderAll();
+        }
+
+        function showAddMenu() {
+            document.getElementById('add-menu-modal').classList.add('active');
+        }
+
+        function closeAddMenu() {
+            document.getElementById('add-menu-modal').classList.remove('active');
+        }
+
+        document.getElementById('add-menu-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'add-menu-modal') {
+                closeAddMenu();
+            }
+        });
+
+        function renderHomeView() {
+            // Total lists
+            const totalLists = Object.keys(allLists).length;
+            document.getElementById('home-total-lists').textContent = totalLists;
+
+            // Total addresses across all lists
+            let totalAddresses = 0;
+            let completedToday = 0;
+            let totalPending = 0;
+            const today = new Date().toDateString();
+
+            Object.values(allLists).forEach(list => {
+                if (list.addresses) {
+                    totalAddresses += list.addresses.length;
+                    list.addresses.forEach(a => {
+                        if (a.status === 'done') {
+                            if (a.completedAt && new Date(a.completedAt).toDateString() === today) {
+                                completedToday++;
+                            }
+                        } else if (a.status === 'pending') {
+                            totalPending++;
+                        }
+                    });
+                }
+            });
+
+            document.getElementById('home-total-addresses').textContent = totalAddresses;
+            document.getElementById('home-completed-today').textContent = completedToday;
+            document.getElementById('home-pending').textContent = totalPending;
+
+            // Current route info
+            const currentList = allLists[currentListId];
+            if (currentList) {
+                document.getElementById('home-route-name').textContent = currentList.name;
+                const done = currentList.addresses ? currentList.addresses.filter(a => a.status === 'done').length : 0;
+                const total = currentList.addresses ? currentList.addresses.length : 0;
+                document.getElementById('home-route-progress').textContent = total > 0 ?
+                    `${done} of ${total} completed (${Math.round(done/total*100)}%)` : 'No addresses yet';
+
+                // Show current stop
+                const currentStopEl = document.getElementById('home-current-stop');
+                if (currentList.addresses && currentList.addresses.length > 0 && currentIndex < currentList.addresses.length) {
+                    const currentAddr = currentList.addresses[currentIndex];
+                    if (currentAddr && currentAddr.status === 'pending') {
+                        currentStopEl.textContent = `Next: Stop ${currentIndex + 1} - ${currentAddr.address}`;
+                    } else {
+                        currentStopEl.textContent = done === total ? 'Route completed!' : '';
+                    }
+                } else {
+                    currentStopEl.textContent = '';
+                }
+            }
+
+            // Recent lists (last 3)
+            const recentContainer = document.getElementById('home-recent-lists');
+            const listEntries = Object.entries(allLists).slice(0, 5);
+
+            if (listEntries.length > 0) {
+                recentContainer.innerHTML = listEntries.map(([id, list]) => {
+                    const count = list.addresses ? list.addresses.length : 0;
+                    const done = list.addresses ? list.addresses.filter(a => a.status === 'done').length : 0;
+                    const isActive = id === currentListId;
+                    return `
+                        <div onclick="selectList('${id}')" style="display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px; background: ${isActive ? 'rgba(108, 92, 231, 0.15)' : 'var(--bg-secondary)'}; border-radius: 10px; cursor: pointer; border: ${isActive ? '1px solid var(--accent-primary)' : '1px solid transparent'};">
+                            <span style="font-size: 20px;">📋</span>
+                            <div style="flex: 1;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600;">${list.name}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-secondary);">${done}/${count} done</p>
+                            </div>
+                            ${isActive ? '<span style="font-size: 10px; color: var(--accent-primary); font-weight: 600;">ACTIVE</span>' : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Initialize preview map after a short delay
+            setTimeout(() => {
+                initializePreviewMap();
+            }, 100);
+        }
+
+        // ============ ADD SECTION TOGGLE ============
+
+        let addSectionOpen = false;
+
+        function toggleAddSection() {
+            addSectionOpen = !addSectionOpen;
+            document.getElementById('add-section-content').style.display = addSectionOpen ? 'block' : 'none';
+            document.getElementById('add-section-arrow').textContent = addSectionOpen ? '▲' : '▼';
+        }
+
+        // ============ FOLDER & FILE MANAGEMENT ============
+
+        function renderFilesView() {
+            // Populate list selector
+            const selector = document.getElementById('edit-list-selector');
+            const listEntries = Object.entries(allLists);
+            selector.innerHTML = listEntries.map(([id, list]) => {
+                return `<option value="${id}" ${id === currentListId ? 'selected' : ''}>${list.name}</option>`;
+            }).join('');
+
+            // Render addresses for editing
+            renderEditAddresses();
+        }
+
+        function renderEditAddresses() {
+            const container = document.getElementById('edit-addresses-container');
+            const currentList = allLists[currentListId];
+
+            if (!currentList || !currentList.addresses || currentList.addresses.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No addresses yet. Add some or import from a file.</p>';
+                return;
+            }
+
+            container.innerHTML = currentList.addresses.map((a, index) => {
+                const displayAddress = a.address;
+                return `
+                    <div style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 8px; overflow: hidden;">
+                        <div onclick="toggleEditDropdown(${index})" style="display: flex; align-items: center; padding: 12px; cursor: pointer;">
+                            <span style="width: 24px; height: 24px; background: var(--accent-info); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--bg-primary); font-weight: bold; font-size: 11px; margin-right: 10px;">${index + 1}</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${a.name || 'Address ' + (index + 1)}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayAddress}</p>
+                            </div>
+                            <span id="edit-arrow-${index}" style="color: var(--text-muted); transition: transform 0.2s;">▼</span>
+                        </div>
+                        <div id="edit-dropdown-${index}" style="display: none; padding: 12px; border-top: 1px solid var(--border-color);">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Name</label>
+                                <input type="text" id="edit-name-${index}" value="${a.name || ''}" placeholder="e.g. John's House" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; box-sizing: border-box;">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Address</label>
+                                <input type="text" id="edit-addr-${index}" value="${displayAddress}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; box-sizing: border-box;">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Notes</label>
+                                <textarea id="edit-notes-${index}" placeholder="Special instructions..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; min-height: 60px; resize: vertical; box-sizing: border-box;">${a.notes || ''}</textarea>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Services</label>
+                                <input type="text" id="edit-services-${index}" value="${a.services || ''}" placeholder="e.g. Driveway, Walkway, Salt" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; box-sizing: border-box;">
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="saveAddressEdit(${index})" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Save</button>
+                                <button onclick="deleteAddressPrompt(${index})" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent-danger); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleEditDropdown(index) {
+            const dropdown = document.getElementById(`edit-dropdown-${index}`);
+            const arrow = document.getElementById(`edit-arrow-${index}`);
+            if (dropdown.style.display === 'none') {
+                dropdown.style.display = 'block';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function switchEditList(listId) {
+            currentListId = listId;
+            loadCurrentList();
+            saveData();
+            renderFilesView();
+            renderHomeView();
+        }
+
+        function saveAddressEdit(index) {
+            const name = document.getElementById(`edit-name-${index}`).value.trim();
+            const addr = document.getElementById(`edit-addr-${index}`).value.trim();
+            const notes = document.getElementById(`edit-notes-${index}`).value.trim();
+            const services = document.getElementById(`edit-services-${index}`).value.trim();
+
+            if (!addr) {
+                alert('Address is required');
+                return;
+            }
+
+            addresses[index].name = name;
+            addresses[index].address = addr;
+            addresses[index].notes = notes;
+            addresses[index].services = services;
+            addresses[index].verified = false; // Re-verify on next optimize
+            delete addresses[index].coords;
+
+            saveData();
+            renderFilesView();
+            renderAll();
+            alert('Saved!');
+        }
+
+        function deleteAddressPrompt(index) {
+            const addr = addresses[index];
+            if (confirm(`Delete "${addr.name || addr.address}"?`)) {
+                addresses.splice(index, 1);
+                if (currentIndex >= addresses.length) {
+                    currentIndex = Math.max(0, addresses.length - 1);
+                }
+                saveData();
+                renderFilesView();
+                renderAll();
+                renderHomeView();
+            }
+        }
+
+        function showRenameListModal() {
+            const currentList = allLists[currentListId];
+            const newName = prompt('Enter new list name:', currentList.name);
+            if (newName && newName.trim()) {
+                allLists[currentListId].name = newName.trim();
+                saveData();
+                renderFilesView();
+                renderHomeView();
+            }
+        }
+
+        function deleteCurrentListPrompt() {
+            if (currentListId === 'default') {
+                alert('Cannot delete the default list');
+                return;
+            }
+            const currentList = allLists[currentListId];
+            if (confirm(`Delete list "${currentList.name}" and all its addresses?`)) {
+                delete allLists[currentListId];
+                currentListId = 'default';
+                loadCurrentList();
+                saveData();
+                renderFilesView();
+                renderAll();
+                renderHomeView();
+            }
+        }
+
+        function showAddAddressModal() {
+            const name = prompt('Name (optional):');
+            const addr = prompt('Address:');
+            if (addr && addr.trim()) {
+                addresses.push({
+                    name: name ? name.trim() : '',
+                    address: addr.trim(),
+                    status: 'pending',
+                    notes: '',
+                    services: ''
+                });
+                saveData();
+                renderFilesView();
+                renderAll();
+                renderHomeView();
+            }
+        }
+
+        function showImportModal() {
+            // Switch to manage tab which has the import section
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelector('.tab[data-tab="manage"]').classList.add('active');
+            document.getElementById('manage-view').classList.add('active');
+        }
+
+        function selectList(listId) {
+            // Save current list first
+            saveData();
+
+            // Switch to new list
+            currentListId = listId;
+            loadCurrentList();
+            renderAll();
+            renderListDropdown();
+            renderFilesView();
+
+            // Switch to Route tab using switchToTab to update bottom nav
+            switchToTab('route');
+        }
+
+        function showNewFolderModal() {
+            document.getElementById('new-folder-name').value = '';
+            document.getElementById('new-folder-modal').classList.add('active');
+        }
+
+        function closeNewFolderModal() {
+            document.getElementById('new-folder-modal').classList.remove('active');
+        }
+
+        function createFolder() {
+            const name = document.getElementById('new-folder-name').value.trim();
+            if (!name) {
+                alert('Please enter a folder name');
+                return;
+            }
+
+            const id = 'folder_' + Date.now();
+            allFolders[id] = {
+                name: name,
+                parentId: currentFolderId
+            };
+
+            saveData();
+            closeNewFolderModal();
+            renderFilesView();
+        }
+
+        function deleteFolderPrompt(folderId) {
+            const folder = allFolders[folderId];
+            if (!folder) return;
+
+            const listCount = Object.values(allLists).filter(l => l.folderId === folderId).length;
+            const subfolderCount = Object.values(allFolders).filter(f => f.parentId === folderId).length;
+
+            if (listCount > 0 || subfolderCount > 0) {
+                alert(`Cannot delete "${folder.name}" - it contains ${listCount} list(s) and ${subfolderCount} subfolder(s). Move or delete them first.`);
+                return;
+            }
+
+            if (confirm(`Delete folder "${folder.name}"?`)) {
+                delete allFolders[folderId];
+                saveData();
+                renderFilesView();
+            }
+        }
+
+        function showNewListModal() {
+            document.getElementById('new-list-name-input').value = '';
+            populateFolderSelect('new-list-folder');
+            document.getElementById('new-list-modal').classList.add('active');
+        }
+
+        function closeNewListModal() {
+            document.getElementById('new-list-modal').classList.remove('active');
+        }
+
+        function createNewList() {
+            const name = document.getElementById('new-list-name-input').value.trim();
+            if (!name) {
+                alert('Please enter a list name');
+                return;
+            }
+
+            const folderId = document.getElementById('new-list-folder').value || null;
+
+            const id = 'list_' + Date.now();
+            allLists[id] = {
+                name: name,
+                addresses: [],
+                currentIndex: 0,
+                startLocation: '',
+                folderId: folderId
+            };
+
+            saveData();
+            closeNewListModal();
+            renderFilesView();
+            renderListDropdown();
+
+            // Select the new list
+            selectList(id);
+        }
+
+        function deleteListPrompt(listId) {
+            if (listId === 'default') {
+                alert('Cannot delete the default list');
+                return;
+            }
+
+            const list = allLists[listId];
+            if (!list) return;
+
+            if (confirm(`Delete "${list.name}" and all its addresses? This cannot be undone.`)) {
+                delete allLists[listId];
+
+                if (currentListId === listId) {
+                    currentListId = 'default';
+                    loadCurrentList();
+                    renderAll();
+                }
+
+                saveData();
+                renderFilesView();
+                renderListDropdown();
+            }
+        }
+
+        function populateFolderSelect(selectId) {
+            const select = document.getElementById(selectId);
+            let html = '<option value="">My Routes (root)</option>';
+
+            // Build folder options with indentation
+            function addFolderOptions(parentId, indent) {
+                Object.entries(allFolders)
+                    .filter(([id, f]) => f.parentId === parentId)
+                    .sort((a, b) => a[1].name.localeCompare(b[1].name))
+                    .forEach(([id, folder]) => {
+                        html += `<option value="${id}">${'—'.repeat(indent)} ${folder.name}</option>`;
+                        addFolderOptions(id, indent + 1);
+                    });
+            }
+
+            addFolderOptions(null, 0);
+            select.innerHTML = html;
+
+            // Pre-select current folder if viewing files
+            if (currentFolderId) {
+                select.value = currentFolderId;
+            }
+        }
+
+        // Override confirmImport to ask for list name
+        function showImportNameModal() {
+            document.getElementById('import-list-name').value = '';
+            document.getElementById('import-address-count').textContent = pendingImport.length;
+            populateFolderSelect('import-list-folder');
+            document.getElementById('import-name-modal').classList.add('active');
+        }
+
+        function closeImportNameModal() {
+            document.getElementById('import-name-modal').classList.remove('active');
+        }
+
+        function confirmImportWithName() {
+            const name = document.getElementById('import-list-name').value.trim();
+            if (!name) {
+                alert('Please enter a list name');
+                return;
+            }
+
+            const folderId = document.getElementById('import-list-folder').value || null;
+
+            // Create new list with imported addresses
+            const id = 'list_' + Date.now();
+            allLists[id] = {
+                name: name,
+                addresses: pendingImport.map(item => ({
+                    id: Date.now() + Math.random(),
+                    name: item.name,
+                    address: item.address,
+                    notes: '',
+                    status: 'pending'
+                })),
+                currentIndex: 0,
+                startLocation: '',
+                folderId: folderId
+            };
+
+            // Clear import state
+            pendingImport = [];
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('paste-input').value = '';
+            document.getElementById('file-input').value = '';
+
+            saveData();
+            closeImportNameModal();
+            renderFilesView();
+            renderListDropdown();
+
+            // Select the new list
+            selectList(id);
+
+            alert(`Created "${name}" with ${allLists[id].addresses.length} addresses!`);
+        }
+
+        // ============ EXPORT FUNCTIONS ============
+
+        function exportCSV() {
+            const done = addresses.filter(a => a.status === 'done');
+            if (done.length === 0) {
+                alert('No completed addresses to export');
+                return;
+            }
+
+            const listName = allLists[currentListId]?.name || 'Route';
+            const date = new Date().toLocaleDateString();
+
+            // CSV header
+            let csv = 'Client Name,Address,Completed Date,Notes,Status\n';
+
+            // Add rows
+            done.forEach(a => {
+                const completedDate = a.completedAt ? new Date(a.completedAt).toLocaleString() : date;
+                const notes = (a.notes || '').replace(/"/g, '""'); // Escape quotes
+                const address = a.address.replace(/"/g, '""');
+                const name = a.name.replace(/"/g, '""');
+                csv += `"${name}","${address}","${completedDate}","${notes}","Completed"\n`;
+            });
+
+            // Download file
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${listName.replace(/[^a-z0-9]/gi, '_')}_${date.replace(/\//g, '-')}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportExcel() {
+            const done = addresses.filter(a => a.status === 'done');
+            if (done.length === 0) {
+                alert('No completed addresses to export');
+                return;
+            }
+
+            const listName = allLists[currentListId]?.name || 'Route';
+            const date = new Date().toLocaleDateString();
+
+            // Create Excel-compatible XML
+            let xml = '<?xml version="1.0"?>\n';
+            xml += '<?mso-application progid="Excel.Sheet"?>\n';
+            xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+            xml += '<Worksheet ss:Name="Completed Jobs">\n<Table>\n';
+
+            // Header row
+            xml += '<Row>\n';
+            xml += '<Cell><Data ss:Type="String">Client Name</Data></Cell>\n';
+            xml += '<Cell><Data ss:Type="String">Address</Data></Cell>\n';
+            xml += '<Cell><Data ss:Type="String">Completed Date</Data></Cell>\n';
+            xml += '<Cell><Data ss:Type="String">Notes</Data></Cell>\n';
+            xml += '<Cell><Data ss:Type="String">Status</Data></Cell>\n';
+            xml += '</Row>\n';
+
+            // Data rows
+            done.forEach(a => {
+                const completedDate = a.completedAt ? new Date(a.completedAt).toLocaleString() : date;
+                xml += '<Row>\n';
+                xml += `<Cell><Data ss:Type="String">${escapeXml(a.name)}</Data></Cell>\n`;
+                xml += `<Cell><Data ss:Type="String">${escapeXml(a.address)}</Data></Cell>\n`;
+                xml += `<Cell><Data ss:Type="String">${completedDate}</Data></Cell>\n`;
+                xml += `<Cell><Data ss:Type="String">${escapeXml(a.notes || '')}</Data></Cell>\n`;
+                xml += `<Cell><Data ss:Type="String">Completed</Data></Cell>\n`;
+                xml += '</Row>\n';
+            });
+
+            xml += '</Table>\n</Worksheet>\n</Workbook>';
+
+            // Download file
+            const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${listName.replace(/[^a-z0-9]/gi, '_')}_${date.replace(/\//g, '-')}.xls`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeXml(str) {
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&apos;');
+        }
+
+        function emailReport() {
+            const done = addresses.filter(a => a.status === 'done');
+            if (done.length === 0) {
+                alert('No completed addresses to export');
+                return;
+            }
+
+            const listName = allLists[currentListId]?.name || 'Route';
+            const date = new Date().toLocaleDateString();
+            const totalDriveTime = allLists[currentListId]?.totalDriveTime;
+            let timeStr = '';
+            if (totalDriveTime) {
+                const mins = Math.round(totalDriveTime / 60);
+                const h = Math.floor(mins / 60);
+                const m = mins % 60;
+                timeStr = h > 0 ? `${h}h ${m}m` : `${m} min`;
+            }
+
+            let subject = encodeURIComponent(`Snow Removal Completed - ${listName} - ${date}`);
+
+            let body = `Snow Removal Report\n`;
+            body += `==================\n\n`;
+            body += `Route: ${listName}\n`;
+            body += `Date: ${date}\n`;
+            body += `Completed: ${done.length} properties\n`;
+            if (timeStr) body += `Total Drive Time: ${timeStr}\n`;
+            body += `\n==================\n\n`;
+            body += `COMPLETED PROPERTIES:\n\n`;
+
+            done.forEach((a, i) => {
+                const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString() : '';
+                body += `${i + 1}. ${a.name}\n`;
+                body += `   ${a.address}\n`;
+                if (completedTime) body += `   Completed: ${completedTime}\n`;
+                if (a.notes) body += `   Notes: ${a.notes}\n`;
+                body += `\n`;
+            });
+
+            body += `==================\n`;
+            body += `Generated by SmartRoute`;
+
+            window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(body)}`);
+        }
+
+        // Re-verify an address to apply the new correction logic
+        async function reverifyAddress(addressId) {
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) {
+                alert('Please enter your MapBox API key first');
+                return;
+            }
+
+            const addr = addresses.find(a => a.id === addressId);
+            if (!addr) return;
+
+            // Use original address if available, otherwise current
+            const searchAddr = addr.originalAddress || addr.address;
+
+            const geo = await geocodeMapbox(searchAddr, mapboxKey);
+            if (geo) {
+                addr.originalAddress = searchAddr;
+                addr.address = geo.fullAddress; // Replace with verified address
+                addr.coords = { lat: geo.lat, lon: geo.lon };
+                addr.verified = true;
+
+                saveData();
+                renderAll();
+                alert(`Address updated to:\n${geo.fullAddress}`);
+            } else {
+                alert('Could not verify this address. Please check for typos.');
+            }
+        }
+
+        // ============ ADDRESS DROPDOWN TOGGLE ============
+
+        function toggleAddressDropdown(idx) {
+            const dropdown = document.getElementById(`dropdown-${idx}`);
+            const arrow = document.getElementById(`arrow-${idx}`);
+            const isOpen = dropdown.style.display !== 'none';
+
+            // Close all other dropdowns
+            document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('[id^="arrow-"]').forEach(a => {
+                a.textContent = '▼';
+                a.style.transform = 'rotate(0deg)';
+            });
+
+            // Toggle this one
+            if (!isOpen) {
+                dropdown.style.display = 'block';
+                arrow.textContent = '▲';
+            }
+        }
+
+        // ============ INTERACTIVE MAP ============
+
+        let routeMap = null;
+        let mapMarkers = [];
+        let routeLinesVisible = true;
+
+        function initializeMap() {
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) return;
+
+            // Check if any addresses have coords
+            const hasCoords = addresses.some(a => a.coords);
+            if (!hasCoords && !startLocation) return;
+
+            // Hide placeholder
+            document.getElementById('map-placeholder').style.display = 'none';
+
+            // Initialize map if not already done
+            if (!routeMap) {
+                mapboxgl.accessToken = mapboxKey;
+                routeMap = new mapboxgl.Map({
+                    container: 'route-map',
+                    style: 'mapbox://styles/mapbox/dark-v11',
+                    center: [-71.5, 41.8], // Rhode Island default
+                    zoom: 10
+                });
+
+                routeMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                routeMap.on('load', () => {
+                    updateMapMarkers();
+                });
+            } else {
+                // Update access token if changed
+                mapboxgl.accessToken = mapboxKey;
+                updateMapMarkers();
+            }
+        }
+
+        async function updateMapMarkers() {
+            if (!routeMap) return;
+
+            // Wait for map to be loaded
+            if (!routeMap.loaded()) {
+                routeMap.on('load', updateMapMarkers);
+                return;
+            }
+
+            // Clear existing markers
+            mapMarkers.forEach(m => m.remove());
+            mapMarkers = [];
+
+            // Remove existing route layer if present
+            if (routeMap.getSource('route')) {
+                routeMap.removeLayer('route-line');
+                routeMap.removeSource('route');
+            }
+
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            const bounds = new mapboxgl.LngLatBounds();
+            const routeCoords = [];
+
+            // Add start location marker
+            const startAddr = document.getElementById('start-location-input').value.trim();
+            if (startAddr) {
+                const startGeo = await geocodeMapbox(startAddr, mapboxKey);
+                if (startGeo) {
+                    const el = document.createElement('div');
+                    el.className = 'map-marker';
+                    el.style.cssText = 'width: 30px; height: 30px; background: #4caf50; border: 3px solid white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);';
+                    el.innerHTML = 'S';
+
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat([startGeo.lon, startGeo.lat])
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>Start</strong><br>${startAddr}`))
+                        .addTo(routeMap);
+
+                    mapMarkers.push(marker);
+                    bounds.extend([startGeo.lon, startGeo.lat]);
+                    routeCoords.push([startGeo.lon, startGeo.lat]);
+                }
+            }
+
+            // Add address markers
+            addresses.forEach((addr, index) => {
+                if (!addr.coords) return;
+
+                // Determine color based on status
+                let color = '#74b9ff'; // pending - accent-info
+                if (addr.status === 'done') color = '#6c6c80'; // text-muted
+                else if (addr.status === 'skipped') color = '#ff7675'; // accent-danger
+                if (index === currentIndex && addr.status === 'pending') color = '#ff7675'; // current - accent-danger
+
+                const el = document.createElement('div');
+                el.className = 'map-marker';
+                el.style.cssText = `width: 26px; height: 26px; background: ${color}; border: 2px solid white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);`;
+                el.innerHTML = (index + 1).toString();
+
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat([addr.coords.lon, addr.coords.lat])
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                        <strong>${index + 1}. ${addr.name}</strong><br>
+                        ${addr.address}<br>
+                        <span style="color: ${color};">${addr.status}</span>
+                        ${addr.notes ? `<br><em>${addr.notes}</em>` : ''}
+                    `))
+                    .addTo(routeMap);
+
+                mapMarkers.push(marker);
+                bounds.extend([addr.coords.lon, addr.coords.lat]);
+                routeCoords.push([addr.coords.lon, addr.coords.lat]);
+            });
+
+            // Draw route line if we have coordinates
+            if (routeCoords.length >= 2) {
+                await drawRouteLine(routeCoords, mapboxKey);
+            }
+
+            // Fit map to show all markers
+            if (mapMarkers.length > 0) {
+                routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+            }
+        }
+
+        async function drawRouteLine(coords, mapboxKey) {
+            if (!routeMap || coords.length < 2) return;
+
+            // Get actual driving route from MapBox Directions API
+            // Need to batch if more than 25 waypoints
+            const BATCH_SIZE = 25;
+            let allRouteCoords = [];
+
+            for (let i = 0; i < coords.length - 1; i += BATCH_SIZE - 1) {
+                const batchEnd = Math.min(i + BATCH_SIZE, coords.length);
+                const batchCoords = coords.slice(i, batchEnd);
+
+                if (batchCoords.length < 2) continue;
+
+                const coordsString = batchCoords.map(c => `${c[0]},${c[1]}`).join(';');
+                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&overview=full&access_token=${mapboxKey}`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.routes && data.routes[0]) {
+                        allRouteCoords = allRouteCoords.concat(data.routes[0].geometry.coordinates);
+                    }
+                } catch (e) {
+                    console.error('Route line error:', e);
+                }
+            }
+
+            if (allRouteCoords.length === 0) {
+                // Fallback to straight lines
+                allRouteCoords = coords;
+            }
+
+            // Add the route line to the map
+            if (routeMap.getSource('route')) {
+                routeMap.getSource('route').setData({
+                    type: 'Feature',
+                    properties: {},
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: allRouteCoords
+                    }
+                });
+            } else {
+                routeMap.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: allRouteCoords
+                        }
+                    }
+                });
+
+                routeMap.addLayer({
+                    id: 'route-line',
+                    type: 'line',
+                    source: 'route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#6c5ce7',
+                        'line-width': 4,
+                        'line-opacity': routeLinesVisible ? 0.8 : 0
+                    }
+                });
+            }
+        }
+
+        function fitMapToBounds() {
+            if (!routeMap || mapMarkers.length === 0) return;
+
+            const bounds = new mapboxgl.LngLatBounds();
+            mapMarkers.forEach(marker => {
+                bounds.extend(marker.getLngLat());
+            });
+
+            routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+        }
+
+        function toggleRouteLines() {
+            if (!routeMap) return;
+
+            routeLinesVisible = !routeLinesVisible;
+            const btn = document.getElementById('toggle-route-btn');
+
+            if (routeMap.getLayer('route-line')) {
+                routeMap.setPaintProperty('route-line', 'line-opacity', routeLinesVisible ? 0.8 : 0);
+            }
+
+            btn.textContent = routeLinesVisible ? 'Hide Route' : 'Show Route';
+        }
+
+        // Go to map tab and focus on specific pin
+        function goToMapPin(addressIndex) {
+            const addr = addresses[addressIndex];
+            if (!addr || !addr.coords) return;
+
+            // Switch to map tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelector('.tab[data-tab="map"]').classList.add('active');
+            document.getElementById('map-view').classList.add('active');
+
+            // Initialize map if needed
+            setTimeout(() => {
+                initializeMap();
+
+                // Wait for map to be ready then fly to the pin
+                setTimeout(() => {
+                    if (routeMap) {
+                        routeMap.flyTo({
+                            center: [addr.coords.lon, addr.coords.lat],
+                            zoom: 16,
+                            duration: 1000
+                        });
+
+                        // Open the popup for this marker
+                        const markerIndex = addressIndex + 1; // +1 because marker 0 is start
+                        if (mapMarkers[markerIndex]) {
+                            mapMarkers[markerIndex].togglePopup();
+                        }
+                    }
+                }, 500);
+            }, 100);
+        }
+
+        // Update map when switching to map tab
+        const originalTabHandler = document.querySelectorAll('.tab').forEach.bind(document.querySelectorAll('.tab'));
+
+        // ============ PREVIEW MAP ============
+
+        let previewMap = null;
+        let previewMarkers = [];
+
+        async function initializePreviewMap() {
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            if (!mapboxKey) return;
+
+            // Check if any addresses have coords
+            const hasCoords = addresses.some(a => a.coords);
+            if (!hasCoords && !startLocation) return;
+
+            // Hide placeholder
+            document.getElementById('preview-map-placeholder').style.display = 'none';
+
+            // Initialize map if not already done
+            if (!previewMap) {
+                mapboxgl.accessToken = mapboxKey;
+                previewMap = new mapboxgl.Map({
+                    container: 'preview-map',
+                    style: 'mapbox://styles/mapbox/dark-v11',
+                    center: [-71.5, 41.8],
+                    zoom: 10,
+                    interactive: false // Disable interactions for preview
+                });
+
+                previewMap.on('load', () => {
+                    updatePreviewMarkers();
+                });
+            } else {
+                mapboxgl.accessToken = mapboxKey;
+                updatePreviewMarkers();
+            }
+        }
+
+        async function updatePreviewMarkers() {
+            if (!previewMap) return;
+
+            if (!previewMap.loaded()) {
+                previewMap.on('load', updatePreviewMarkers);
+                return;
+            }
+
+            // Clear existing markers
+            previewMarkers.forEach(m => m.remove());
+            previewMarkers = [];
+
+            // Remove existing route layer if present
+            if (previewMap.getSource('preview-route')) {
+                previewMap.removeLayer('preview-route-line');
+                previewMap.removeSource('preview-route');
+            }
+
+            const mapboxKey = document.getElementById('mapbox-key').value.trim();
+            const bounds = new mapboxgl.LngLatBounds();
+            const routeCoords = [];
+
+            // Add start location marker
+            const startAddr = document.getElementById('start-location-input').value.trim();
+            if (startAddr) {
+                const startGeo = await geocodeMapbox(startAddr, mapboxKey);
+                if (startGeo) {
+                    const el = document.createElement('div');
+                    el.style.cssText = 'width: 20px; height: 20px; background: #4caf50; border: 2px solid white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;';
+                    el.innerHTML = 'S';
+
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat([startGeo.lon, startGeo.lat])
+                        .addTo(previewMap);
+
+                    previewMarkers.push(marker);
+                    bounds.extend([startGeo.lon, startGeo.lat]);
+                    routeCoords.push([startGeo.lon, startGeo.lat]);
+                }
+            }
+
+            // Add address markers
+            addresses.forEach((addr, index) => {
+                if (!addr.coords) return;
+
+                let color = '#74b9ff'; // accent-info
+                if (addr.status === 'done') color = '#6c6c80'; // text-muted
+                else if (addr.status === 'skipped') color = '#ff7675'; // accent-danger
+                if (index === currentIndex && addr.status === 'pending') color = '#ff7675'; // accent-danger
+
+                const el = document.createElement('div');
+                el.style.cssText = `width: 18px; height: 18px; background: ${color}; border: 2px solid white; border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;`;
+                el.innerHTML = (index + 1).toString();
+
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat([addr.coords.lon, addr.coords.lat])
+                    .addTo(previewMap);
+
+                previewMarkers.push(marker);
+                bounds.extend([addr.coords.lon, addr.coords.lat]);
+                routeCoords.push([addr.coords.lon, addr.coords.lat]);
+            });
+
+            // Draw route line
+            if (routeCoords.length >= 2) {
+                await drawPreviewRouteLine(routeCoords, mapboxKey);
+            }
+
+            // Fit map to show all markers
+            if (previewMarkers.length > 0) {
+                previewMap.fitBounds(bounds, { padding: 30, maxZoom: 12 });
+            }
+        }
+
+        async function drawPreviewRouteLine(coords, mapboxKey) {
+            if (!previewMap || coords.length < 2) return;
+
+            const BATCH_SIZE = 25;
+            let allRouteCoords = [];
+
+            for (let i = 0; i < coords.length - 1; i += BATCH_SIZE - 1) {
+                const batchEnd = Math.min(i + BATCH_SIZE, coords.length);
+                const batchCoords = coords.slice(i, batchEnd);
+
+                if (batchCoords.length < 2) continue;
+
+                const coordsString = batchCoords.map(c => `${c[0]},${c[1]}`).join(';');
+                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&overview=full&access_token=${mapboxKey}`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.routes && data.routes[0]) {
+                        allRouteCoords = allRouteCoords.concat(data.routes[0].geometry.coordinates);
+                    }
+                } catch (e) {
+                    console.error('Preview route line error:', e);
+                }
+            }
+
+            if (allRouteCoords.length === 0) {
+                allRouteCoords = coords;
+            }
+
+            if (previewMap.getSource('preview-route')) {
+                previewMap.getSource('preview-route').setData({
+                    type: 'Feature',
+                    properties: {},
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: allRouteCoords
+                    }
+                });
+            } else {
+                previewMap.addSource('preview-route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: allRouteCoords
+                        }
+                    }
+                });
+
+                previewMap.addLayer({
+                    id: 'preview-route-line',
+                    type: 'line',
+                    source: 'preview-route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#6c5ce7',
+                        'line-width': 3,
+                        'line-opacity': 0.8
+                    }
+                });
+            }
+        }
+
+        // Initialize
+        loadData();
+        renderAll();
+        renderHomeView();
+    </script>
+</body>
+</html>
