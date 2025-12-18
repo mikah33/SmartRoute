@@ -10,6 +10,7 @@
 		A11111111111111111111111 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22222222222222222222222 /* App.swift */; };
 		A33333333333333333333333 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444444 /* ContentView.swift */; };
 		A55555555555555555555555 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = A66666666666666666666666 /* index.html */; };
+		ABCDEF123456789012345678 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABCDEF123456789012345679 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +18,7 @@
 		A22222222222222222222222 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		A44444444444444444444444 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A66666666666666666666666 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		ABCDEF123456789012345679 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +46,7 @@
 				A22222222222222222222222 /* App.swift */,
 				A44444444444444444444444 /* ContentView.swift */,
 				A66666666666666666666666 /* index.html */,
+				ABCDEF123456789012345679 /* Assets.xcassets */,
 			);
 			path = SmartRoute;
 			sourceTree = "<group>";
@@ -115,6 +118,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A55555555555555555555555 /* index.html in Resources */,
+				ABCDEF123456789012345678 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
