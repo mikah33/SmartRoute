@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>SmartRoute needs camera access to take photos of job sites</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SmartRoute needs photo library access to attach photos to addresses</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fonts/DMSans-Variable.ttf</string>
+	</array>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
+</plist>

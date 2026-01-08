@@ -1,12 +1,14 @@
 import SwiftUI
 import WebKit
 import UniformTypeIdentifiers
+import MessageUI
 
 // Global reference to webview for communication
 var globalWebView: WKWebView?
 
 struct WebView: UIViewRepresentable {
     @Binding var showDocumentPicker: Bool
+    @Binding var emailData: EmailData?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -17,14 +19,17 @@ struct WebView: UIViewRepresentable {
         configuration.allowsInlineMediaPlayback = true
         configuration.websiteDataStore = WKWebsiteDataStore.default()
 
-        // Add message handler for document picker
+        // Add message handlers
         let contentController = configuration.userContentController
         contentController.add(context.coordinator, name: "openDocumentPicker")
+        contentController.add(context.coordinator, name: "shareFile")
+        contentController.add(context.coordinator, name: "sendEmail")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.isOpaque = false
         webView.backgroundColor = UIColor(red: 10/255, green: 15/255, blue: 28/255, alpha: 1)
         webView.scrollView.backgroundColor = UIColor(red: 10/255, green: 15/255, blue: 28/255, alpha: 1)
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.uiDelegate = context.coordinator
 
         globalWebView = webView
@@ -52,6 +57,57 @@ struct WebView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     self.parent.showDocumentPicker = true
                 }
+            } else if message.name == "shareFile" {
+                guard let body = message.body as? [String: Any],
+                      let content = body["content"] as? String,
+                      let filename = body["filename"] as? String else {
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self.shareFileContent(content: content, filename: filename)
+                }
+            } else if message.name == "sendEmail" {
+                guard let body = message.body as? [String: Any],
+                      let subject = body["subject"] as? String,
+                      let htmlContent = body["htmlContent"] as? String,
+                      let filename = body["filename"] as? String else {
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self.parent.emailData = EmailData(
+                        subject: subject,
+                        htmlContent: htmlContent,
+                        filename: filename
+                    )
+                }
+            }
+        }
+
+        func shareFileContent(content: String, filename: String) {
+            // Create temporary file
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent(filename)
+
+            do {
+                try content.write(to: fileURL, atomically: true, encoding: .utf8)
+
+                // Present share sheet
+                let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootVC = windowScene.windows.first?.rootViewController {
+                    // For iPad, set popover source
+                    if let popover = activityVC.popoverPresentationController {
+                        popover.sourceView = rootVC.view
+                        popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+                    rootVC.present(activityVC, animated: true)
+                }
+            } catch {
+                print("Error creating temp file: \(error)")
             }
         }
 
@@ -181,16 +237,95 @@ struct DocumentPicker: UIViewControllerRepresentable {
     }
 }
 
+// Email data structure
+struct EmailData: Identifiable, Equatable {
+    let id = UUID()
+    let subject: String
+    let htmlContent: String
+    let filename: String
+
+    static func == (lhs: EmailData, rhs: EmailData) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+// Email composer
+struct MailView: UIViewControllerRepresentable {
+    @Binding var isPresented: Bool
+    let emailData: EmailData
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIViewController(context: Context) -> MFMailComposeViewController {
+        let mailVC = MFMailComposeViewController()
+        mailVC.mailComposeDelegate = context.coordinator
+        mailVC.setSubject(emailData.subject)
+
+        // Set HTML body
+        mailVC.setMessageBody(emailData.htmlContent, isHTML: true)
+
+        // Also attach the HTML as a file
+        if let data = emailData.htmlContent.data(using: .utf8) {
+            mailVC.addAttachmentData(data, mimeType: "text/html", fileName: emailData.filename)
+        }
+
+        return mailVC
+    }
+
+    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
+
+    class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+        var parent: MailView
+
+        init(parent: MailView) {
+            self.parent = parent
+        }
+
+        func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
+            parent.isPresented = false
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var showDocumentPicker = false
+    @State private var emailData: EmailData? = nil
+    @State private var showMailComposer = false
 
     var body: some View {
-        ZStack {
-            WebView(showDocumentPicker: $showDocumentPicker)
-                .ignoresSafeArea()
-        }
-        .sheet(isPresented: $showDocumentPicker) {
+        WebView(showDocumentPicker: $showDocumentPicker, emailData: $emailData)
+            .ignoresSafeArea(.all, edges: .all)
+            .sheet(isPresented: $showDocumentPicker) {
             DocumentPicker(isPresented: $showDocumentPicker)
+        }
+        .sheet(isPresented: $showMailComposer) {
+            if let data = emailData {
+                if MFMailComposeViewController.canSendMail() {
+                    MailView(isPresented: $showMailComposer, emailData: data)
+                }
+            }
+        }
+        .onChange(of: emailData) { oldValue, newValue in
+            if newValue != nil {
+                if MFMailComposeViewController.canSendMail() {
+                    showMailComposer = true
+                } else {
+                    // Fallback - show alert that mail is not configured
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let rootVC = windowScene.windows.first?.rootViewController {
+                        let alert = UIAlertController(
+                            title: "Mail Not Available",
+                            message: "Please configure an email account in Settings to send emails.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        rootVC.present(alert, animated: true)
+                    }
+                    emailData = nil
+                }
+            }
         }
     }
 }
