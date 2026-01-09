@@ -83,32 +83,43 @@ struct LandingView: View {
 
                 Spacer()
 
-                // Get Started button
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showLanding = false
+                // Buttons container
+                VStack(spacing: 16) {
+                    // Create Account button
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showLanding = false
+                        }
+                    }) {
+                        Text("Create Account")
+                            .font(.custom("DM Sans", size: 18).weight(.semibold))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.white)
+                            .cornerRadius(28)
                     }
-                }) {
-                    Text("Get Started")
-                        .font(.custom("DM Sans", size: 18).weight(.semibold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.white)
-                        .cornerRadius(28)
-                }
-                .padding(.horizontal, 32)
-                .opacity(buttonOpacity)
+                    .padding(.horizontal, 32)
 
-                // Sign in link
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showLanding = false
+                    // Sign In button
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showLanding = false
+                        }
+                    }) {
+                        Text("Sign In")
+                            .font(.custom("DM Sans", size: 18).weight(.semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.white.opacity(0.2))
+                            .cornerRadius(28)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 28)
+                                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                            )
                     }
-                }) {
-                    Text("Already have an account? Sign In")
-                        .font(.custom("DM Sans", size: 16).weight(.medium))
-                        .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 32)
                 }
                 .opacity(buttonOpacity)
                 .padding(.bottom, 50)

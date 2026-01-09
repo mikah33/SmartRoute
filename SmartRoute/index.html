@@ -97,14 +97,14 @@
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: calc(68px + env(safe-area-inset-bottom, 34px));
+            height: calc(60px + env(safe-area-inset-bottom, 34px));
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-around;
-            align-items: center;
-            padding: 0 8px;
-            padding-top: calc(env(safe-area-inset-bottom, 34px) / 2);
+            align-items: flex-start;
+            padding: 8px 8px 0 8px;
+            padding-bottom: env(safe-area-inset-bottom, 34px);
             z-index: 9999;
             -webkit-transform: translate3d(0,0,0);
             transform: translate3d(0,0,0);
@@ -187,14 +187,13 @@
         }
 
         .add-btn-circle {
-            width: 52px;
-            height: 52px;
+            width: 46px;
+            height: 46px;
             background: var(--accent-primary);
             border-radius: var(--radius-full);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: -24px;
             box-shadow: 0 4px 20px rgba(14, 165, 233, 0.35), 0 0 0 4px rgba(14, 165, 233, 0.1);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
@@ -530,6 +529,8 @@
             cursor: pointer;
             font-family: inherit;
             transition: transform 0.1s ease, opacity 0.15s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .action-btn:active {
@@ -2027,7 +2028,7 @@
     <nav class="bottom-nav" id="bottom-nav" style="display: none;">
         <!-- Home -->
         <button class="nav-btn active" data-tab="home" onclick="switchToTab('home')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
@@ -2035,7 +2036,7 @@
         </button>
         <!-- Files (Boss only) -->
         <button class="nav-btn" data-tab="files" id="files-nav-btn" onclick="switchToTab('files')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
             <span>Files</span>
@@ -2051,7 +2052,7 @@
         </button>
         <!-- Route -->
         <button class="nav-btn" data-tab="route" onclick="switchToTab('route')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <circle cx="12" cy="10" r="3"></circle>
                 <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"></path>
             </svg>
@@ -2059,7 +2060,7 @@
         </button>
         <!-- Report -->
         <button class="nav-btn" data-tab="summary" onclick="switchToTab('summary')">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
                 <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -4281,6 +4282,29 @@
                 startLocation = list.startLocation || userSettings.defaultStartLocation || '';
                 document.getElementById('start-location-input').value = startLocation;
 
+                // Restore route timer state
+                stopRouteTimer(); // Stop any running timer first
+                routeTimerSeconds = list.routeTimerSeconds || 0;
+                routeTimerStartTime = list.routeStartTime || null;
+                updateTimerDisplay();
+
+                // If timer was active and route not complete, restart it
+                if (list.routeTimerActive && !list.routeEndTime) {
+                    // Recalculate elapsed time from start time
+                    if (list.routeStartTime) {
+                        routeTimerSeconds = Math.floor((Date.now() - list.routeStartTime) / 1000);
+                    }
+                    startRouteTimer();
+                } else if (list.routeTotalTime) {
+                    // Route was completed, show final time
+                    routeTimerSeconds = list.routeTotalTime;
+                    updateTimerDisplay();
+                    const statusEl = document.getElementById('timer-status');
+                    if (statusEl) {
+                        statusEl.textContent = 'Route completed';
+                    }
+                }
+
                 // Clean up and ensure addresses have IDs
                 let needsSave = false;
                 addresses.forEach((addr, i) => {
@@ -4305,7 +4329,10 @@
 
         // Save to localStorage
         function saveData() {
-            startLocation = document.getElementById('start-location-input').value;
+            const startInput = document.getElementById('start-location-input');
+            if (startInput) {
+                startLocation = startInput.value;
+            }
 
             // Save current list data back, preserving startAddressId and endAddressId
             const existingList = allLists[currentListId] || {};
@@ -4316,7 +4343,13 @@
                 startLocation: startLocation,
                 startAddressId: existingList.startAddressId,
                 endAddressId: existingList.endAddressId,
-                totalDriveTime: existingList.totalDriveTime
+                totalDriveTime: existingList.totalDriveTime,
+                // Route timer state
+                routeStartTime: existingList.routeStartTime,
+                routeEndTime: existingList.routeEndTime,
+                routeTimerActive: routeTimerRunning,
+                routeTimerSeconds: routeTimerSeconds,
+                routeTotalTime: existingList.routeTotalTime
             };
 
             localStorage.setItem('plowRouteDataV2', JSON.stringify({
@@ -4679,7 +4712,7 @@
                 // Check if all addresses are now done or skipped (route complete)
                 const allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
                 if (allComplete && routeTimerRunning) {
-                    stopRouteTimer();
+                    stopRouteTimer(true); // Route completed
                 }
 
                 if (fromList) {
@@ -4711,7 +4744,7 @@
                 // Check if all addresses are now done or skipped (route complete)
                 const allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
                 if (allComplete && routeTimerRunning) {
-                    stopRouteTimer();
+                    stopRouteTimer(true); // Route completed
                 }
 
                 moveToNext();
@@ -4754,7 +4787,9 @@
             }
 
             // Auto-start timer on first navigation if not already running
-            if (!routeTimerRunning && currentIndex === 0) {
+            // Timer starts when navigating to the first address OR if no addresses have been completed yet
+            const hasStarted = addresses.some(a => a.status === 'done' || a.status === 'skipped');
+            if (!routeTimerRunning && !hasStarted) {
                 startRouteTimer();
             }
 
@@ -5129,10 +5164,26 @@
 
             currentIndex = 0;
 
-            // Reset timer
+            // Reset timer completely (clear all timer data from list)
             stopRouteTimer();
             routeTimerSeconds = 0;
+            routeTimerStartTime = null;
             updateTimerDisplay();
+
+            // Clear timer state from list
+            const list = allLists[currentListId];
+            if (list) {
+                list.routeStartTime = null;
+                list.routeEndTime = null;
+                list.routeTimerActive = false;
+                list.routeTimerSeconds = 0;
+                list.routeTotalTime = null;
+            }
+
+            const statusEl = document.getElementById('timer-status');
+            if (statusEl) {
+                statusEl.textContent = 'Starts on navigate';
+            }
 
             saveData();
             renderAll();
@@ -5153,7 +5204,17 @@
             if (routeTimerRunning) return;
 
             routeTimerRunning = true;
-            routeTimerStartTime = Date.now() - (routeTimerSeconds * 1000);
+
+            // If this is the first start (no existing start time), record it
+            const list = allLists[currentListId];
+            if (!list.routeStartTime) {
+                list.routeStartTime = Date.now();
+                list.routeEndTime = null; // Clear any previous end time
+                list.routeTotalTime = null; // Clear previous total
+            }
+
+            routeTimerStartTime = list.routeStartTime;
+            routeTimerSeconds = Math.floor((Date.now() - routeTimerStartTime) / 1000);
 
             routeTimerInterval = setInterval(() => {
                 routeTimerSeconds = Math.floor((Date.now() - routeTimerStartTime) / 1000);
@@ -5162,9 +5223,12 @@
 
             document.getElementById('timer-status').textContent = 'Tap to pause';
             document.getElementById('route-timer').style.color = 'var(--accent-success)';
+
+            // Save the timer state
+            saveData();
         }
 
-        function stopRouteTimer() {
+        function stopRouteTimer(isRouteComplete = false) {
             routeTimerRunning = false;
             if (routeTimerInterval) {
                 clearInterval(routeTimerInterval);
@@ -5173,11 +5237,30 @@
 
             const statusEl = document.getElementById('timer-status');
             const timerEl = document.getElementById('route-timer');
-            if (statusEl) {
-                statusEl.textContent = routeTimerSeconds > 0 ? 'Paused - tap to resume' : 'Starts on navigate';
-            }
-            if (timerEl) {
-                timerEl.style.color = 'var(--accent-warning)';
+
+            if (isRouteComplete) {
+                // Route completed - record end time and total time
+                const list = allLists[currentListId];
+                if (list && list.routeStartTime) {
+                    list.routeEndTime = Date.now();
+                    list.routeTotalTime = routeTimerSeconds;
+                    saveData();
+                }
+                if (statusEl) {
+                    statusEl.textContent = 'Route completed';
+                }
+                if (timerEl) {
+                    timerEl.style.color = 'var(--accent-success)';
+                }
+            } else {
+                // Just paused
+                if (statusEl) {
+                    statusEl.textContent = routeTimerSeconds > 0 ? 'Paused - tap to resume' : 'Starts on navigate';
+                }
+                if (timerEl) {
+                    timerEl.style.color = 'var(--accent-warning)';
+                }
+                saveData();
             }
         }
 
@@ -6275,17 +6358,26 @@
             if (currentList) {
                 document.getElementById('current-list-name').textContent = currentList.name;
 
-                // Show route stats if optimized
+                // Show route stats bar - always show if there are addresses (to display timer)
                 const statsEl = document.getElementById('route-stats');
-                if (currentList.totalDriveTime && addresses.length > 0) {
-                    const totalMins = Math.round(currentList.totalDriveTime / 60);
-                    const hours = Math.floor(totalMins / 60);
-                    const mins = totalMins % 60;
-                    const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
 
-                    document.getElementById('total-drive-time').textContent = timeStr;
+                if (addresses.length > 0) {
+                    // Show estimated drive time if optimized, otherwise show "--"
+                    if (currentList.totalDriveTime) {
+                        const totalMins = Math.round(currentList.totalDriveTime / 60);
+                        const hours = Math.floor(totalMins / 60);
+                        const mins = totalMins % 60;
+                        const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
+                        document.getElementById('total-drive-time').textContent = timeStr;
+                    } else {
+                        document.getElementById('total-drive-time').textContent = '--';
+                    }
+
                     document.getElementById('total-stops').textContent = addresses.length;
                     statsEl.style.display = 'block';
+
+                    // Update timer display to show current state
+                    updateTimerDisplay();
                 } else {
                     statsEl.style.display = 'none';
                 }
@@ -6295,6 +6387,13 @@
         function renderRouteAddressList() {
             const container = document.getElementById('route-addresses-container');
             if (!container) return;
+
+            // Always update the count in header first
+            const countEl = document.getElementById('all-stops-count');
+            if (countEl) {
+                const doneCount = addresses.filter(a => a.status === 'done').length;
+                countEl.textContent = `(${doneCount}/${addresses.length})`;
+            }
 
             if (addresses.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No addresses yet. Add some in the Addresses tab.</p>';
@@ -6328,21 +6427,21 @@
                 return `
                     <div class="route-item" data-index="${index}" style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 8px; overflow: hidden; border-left: 3px solid ${isPriority ? '#ef4444' : statusColor};">
                         <div style="display: flex; align-items: center; padding: 12px;">
-                            <div class="drag-handle" ontouchstart="handleDragStart(event, ${index})" onmousedown="handleDragStart(event, ${index})">
-                                <div class="drag-handle-lines">
-                                    <div class="drag-handle-line"></div>
-                                    <div class="drag-handle-line"></div>
-                                    <div class="drag-handle-line"></div>
-                                </div>
-                            </div>
                             <div onclick="toggleRouteDropdown(${index})" style="display: flex; align-items: center; flex: 1; cursor: pointer;">
+                                <span id="route-arrow-${index}" style="color: var(--text-muted); margin-right: 10px; transition: transform 0.2s; flex-shrink: 0;">▼</span>
                                 <span style="width: 24px; height: 24px; background: ${isPriority ? '#ef4444' : statusColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; margin-right: 10px; flex-shrink: 0;">${index + 1}</span>
                                 <div style="flex: 1; min-width: 0;">
                                     ${priorityBadge ? `<div style="margin-bottom: 2px;">${priorityBadge}</div>` : ''}
                                     <p style="margin: 0; font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortAddress}</p>
                                     ${a.name ? `<p style="margin: 2px 0 0 0; font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${a.name}</p>` : ''}
                                 </div>
-                                <span id="route-arrow-${index}" style="color: var(--text-muted); margin-left: 6px; transition: transform 0.2s; flex-shrink: 0;">▼</span>
+                            </div>
+                            <div class="drag-handle" ontouchstart="handleDragStart(event, ${index})" onmousedown="handleDragStart(event, ${index})">
+                                <div class="drag-handle-lines">
+                                    <div class="drag-handle-line"></div>
+                                    <div class="drag-handle-line"></div>
+                                    <div class="drag-handle-line"></div>
+                                </div>
                             </div>
                         </div>
                         <div id="route-dropdown-${index}" style="display: none; padding: 0 12px 12px 52px; border-top: 1px solid var(--border-color);">
@@ -6367,13 +6466,6 @@
                     </div>
                 `;
             }).join('');
-
-            // Update the count in header
-            const countEl = document.getElementById('all-stops-count');
-            if (countEl) {
-                const doneCount = addresses.filter(a => a.status === 'done').length;
-                countEl.textContent = `(${doneCount}/${addresses.length})`;
-            }
         }
 
         function toggleAllStopsDropdown() {
@@ -6463,7 +6555,7 @@
                 // Check if all addresses are now done or skipped (route complete)
                 const allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
                 if (allComplete && routeTimerRunning) {
-                    stopRouteTimer();
+                    stopRouteTimer(true); // Route completed
                 }
 
                 saveData();
@@ -10682,7 +10774,7 @@
                 html += `<p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-success); text-transform: uppercase;">Completed Jobs (${done.length})</p>`;
                 done.forEach((a, idx) => {
                     const services = a.services ? a.services.split(',').filter(s => s.trim()) : [];
-                    const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                    const completedTime = formatTimestamp(a.completedAt);
                     // Shorten address to number, street, city
                     const addrParts = a.address.split(',');
                     const shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
@@ -10708,13 +10800,14 @@
             if (skipped.length > 0) {
                 html += `<p style="margin: 15px 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-danger); text-transform: uppercase;">Skipped Jobs (${skipped.length})</p>`;
                 skipped.forEach((a, idx) => {
+                    const skippedTime = formatTimestamp(a.completedAt);
                     // Shorten address to number, street, city
                     const addrParts = a.address.split(',');
                     const shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
 
                     html += `
                         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--accent-danger);">
-                            <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">${shortAddr}</p>
+                            <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">${shortAddr}${skippedTime ? ` <span style="font-weight: 400; font-size: 11px; color: var(--text-muted);">• ${skippedTime}</span>` : ''}</p>
                             ${a.name ? `<p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-secondary);">${a.name}</p>` : ''}
                             ${a.notes ? `<p style="margin: 4px 0 0 0; font-size: 11px; color: var(--accent-info); font-style: italic;">Note: ${a.notes}</p>` : ''}
                         </div>
@@ -10984,7 +11077,7 @@
                             ${doneAddrs.map(a => {
                                 const addrParts = a.address.split(',');
                                 const shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
-                                const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                                const completedTime = formatTimestamp(a.completedAt);
                                 return `<p style="margin: 4px 0; font-size: 12px; color: var(--text-secondary);">${shortAddr}${completedTime ? ` <span style="color: var(--text-muted);">• ${completedTime}</span>` : ''}</p>`;
                             }).join('')}
                         </div>
@@ -11018,7 +11111,7 @@
                             ${work.addresses.map(a => {
                                 const addrParts = a.address.split(',');
                                 const shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
-                                const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                                const completedTime = formatTimestamp(a.completedAt);
                                 return `<p style="margin: 4px 0; font-size: 12px; color: var(--text-secondary);">${shortAddr}${completedTime ? ` <span style="color: var(--text-muted);">• ${completedTime}</span>` : ''}</p>`;
                             }).join('')}
                         </div>
@@ -11064,7 +11157,7 @@
 
                     text += `\n${work.routeName}${routeTimeStr ? ` (${routeTimeStr})` : ''}\n`;
                     doneAddrs.forEach(a => {
-                        const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                        const completedTime = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${completedTime ? ` @ ${completedTime}` : ''}\n`;
                         if (a.notes) text += `    Note: ${a.notes}\n`;
                     });
@@ -11086,7 +11179,7 @@
 
                     text += `\n${work.employeeName} - ${work.routeName}${routeTimeStr ? ` (${routeTimeStr})` : ''}\n`;
                     work.addresses.forEach(a => {
-                        const completedTime = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                        const completedTime = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${completedTime ? ` @ ${completedTime}` : ''}\n`;
                         if (a.notes) text += `    Note: ${a.notes}\n`;
                     });
@@ -11466,7 +11559,14 @@
                 createdAt: new Date().toISOString()
             };
             saveListsDirectly();
-            renderFolderInline('lists');
+
+            // Re-render to the correct container (full-screen or inline)
+            const fullScreenModal = document.getElementById('files-folder-modal');
+            if (fullScreenModal && fullScreenModal.style.display === 'block') {
+                renderListsFolderFullScreen(document.getElementById('files-folder-page-content'));
+            } else {
+                renderFolderInline('lists');
+            }
             updateSmartFolderCounts();
         }
 
@@ -12787,7 +12887,7 @@
                     if (doneAddrs.length === 0) return;
                     text += `\n${work.routeName}\n`;
                     doneAddrs.forEach(a => {
-                        const time = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                        const time = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${time ? ` @ ${time}` : ''}\n`;
                     });
                 });
@@ -12799,7 +12899,7 @@
                 report.employeeWork.forEach(work => {
                     text += `\n${work.employeeName} - ${work.routeName}\n`;
                     work.addresses.forEach(a => {
-                        const time = a.completedAt ? new Date(a.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                        const time = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${time ? ` @ ${time}` : ''}\n`;
                     });
                 });
