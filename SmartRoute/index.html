@@ -3335,7 +3335,7 @@
             document.getElementById('bottom-nav').style.display = 'flex';
             document.getElementById('app-container').style.display = 'block';
             // Check if employee has multiple routes
-            setTimeout(() => {
+            setTimeout(function() {
                 checkMultipleRoutes();
             }, 100);
         }
@@ -3387,7 +3387,7 @@
             saveUsers();
 
             // Auto-login
-            currentUser = { ...allUsers[username] };
+            currentUser = Object.assign({}, allUsers[username]);
             delete currentUser.password;
             localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
 
@@ -3417,7 +3417,7 @@
             }
 
             // Login successful
-            currentUser = { ...user };
+            currentUser = Object.assign({}, user);
             delete currentUser.password;
 
             // Save session based on remember me preference
@@ -3582,7 +3582,7 @@
             var assignedRoutes = currentUser.assignedRoutes || [];
             if (assignedRoutes.length > 0) {
                 // Switch to first assigned route if current is not assigned
-                if (!assignedRoutes.includes(currentListId)) {
+                if (!assignedRoutes.indexOf(currentListId) !== -1) {
                     currentListId = assignedRoutes[0];
                     loadCurrentList();
                 }
@@ -3606,16 +3606,16 @@
 
         function renderEmployeeList() {
             var container = document.getElementById('employee-list');
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
             if (employees.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No employees yet. Add one below.</p>';
                 return;
             }
 
-            container.innerHTML = employees.map(emp => {
+            container.innerHTML = employees.map(function(emp) {
                 var routeCount = (emp.assignedRoutes || []).length;
-                var routeNames = (emp.assignedRoutes || []).map(id => allLists[id]?.name || 'Unknown').join(', ');
+                var routeNames = (emp.assignedRoutes || []).map(function(id) { return allLists[id]?.name || 'Unknown'; }).join(', '; });
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3703,15 +3703,15 @@
 
             // Populate employee dropdown
             var select = document.getElementById('assign-employee-select');
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
             select.innerHTML = '<option value="">Choose an employee...</option>' +
-                employees.map(emp => `<option value="${emp.username}" ${preselectedEmployee === emp.username ? 'selected' : ''}>${emp.name} (@${emp.username})</option>`).join('');
+                employees.map(function(emp) { return `<option value="${emp.username}" ${preselectedEmployee === emp.username ? 'selected' : ''}>${emp.name} (@${emp.username})</option>`; }).join('');
 
             // Populate routes list
             renderAssignRoutesList(preselectedEmployee);
 
             // Add change listener
-            select.onchange = () => renderAssignRoutesList(select.value);
+            select.onchange = function() { renderAssignRoutesList(select.value);
 
             document.getElementById('assign-route-modal').classList.add('active');
         }
@@ -3727,8 +3727,8 @@
                 return;
             }
 
-            container.innerHTML = routes.map(([id, list]) => {
-                var isAssigned = assignedRoutes.includes(id);
+            container.innerHTML = routes.map(function(entry) { var id = entry[0]; var list = entry[1];
+                var isAssigned = assignedRoutes.indexOf(id) !== -1;
                 return `
                     <label style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer;">
                         <input type="checkbox" value="${id}" ${isAssigned ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
@@ -3751,7 +3751,7 @@
             }
 
             var checkboxes = document.querySelectorAll('#assign-routes-list input[type="checkbox"]:checked');
-            var assignedRoutes = Array.from(checkboxes).map(cb => cb.value);
+            var assignedRoutes = Array.from(checkboxes).map(function(cb) { return cb.value; });
 
             allUsers[username].assignedRoutes = assignedRoutes;
             saveUsers();
@@ -3764,7 +3764,7 @@
         function loadSettings() {
             var saved = localStorage.getItem('smartRouteSettings');
             if (saved) {
-                userSettings = { ...userSettings, ...JSON.parse(saved) };
+                userSettings = Object.assign({}, userSettings, JSON.parse(saved));
             }
         }
 
@@ -3802,7 +3802,7 @@
                 var servicesBadge = document.getElementById('services-count-badge');
                 if (servicesBadge) servicesBadge.textContent = servicesCount;
 
-                var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+                var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
                 var employeesBadge = document.getElementById('employees-count-badge');
                 if (employeesBadge) employeesBadge.textContent = employees.length;
 
@@ -3909,9 +3909,9 @@
                         { value: 'America/Phoenix', label: 'Arizona (no DST)' },
                         { value: 'America/Puerto_Rico', label: 'Atlantic Time (AT)' }
                     ];
-                    var timezoneSelect = timezoneOptions.map(tz =>
-                        `<option value="${tz.value}" ${userSettings.timezone === tz.value ? 'selected' : ''}>${tz.label}</option>`
-                    ).join('');
+                    var timezoneSelect = timezoneOptions.map(function(tz) {
+                        return '<option value="' + tz.value + '" ' + (userSettings.timezone === tz.value ? 'selected' : '') + '>' + tz.label + '</option>';
+                    }).join('');
 
                     return `
                         <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
@@ -3953,7 +3953,7 @@
                     var services = userSettings.services || [];
                     var servicesList = services.length === 0
                         ? '<p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 14px;">No services added yet</p>'
-                        : services.map((service, idx) => `
+                        : services.map(function(service, idx) { return `
                             <div class="settings-row" style="${idx === services.length - 1 ? 'border-bottom: none;' : ''}">
                                 <span style="font-size: 16px; color: var(--text-primary);">${service}</span>
                                 <button onclick="removeServiceAndRefresh(${idx})" style="background: none; border: none; color: var(--accent-danger); font-size: 14px; cursor: pointer; padding: 4px 8px;">Remove</button>
@@ -3974,7 +3974,7 @@
                     `;
 
                 case 'employees':
-                    var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+                    var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
                     if (employees.length === 0) {
                         return `
                             <div style="text-align: center; padding: 40px 20px;">
@@ -3989,7 +3989,7 @@
                     }
                     return `
                         <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
-                            ${employees.map((emp, idx) => `
+                            ${employees.map(function(emp, idx) { return `
                                 <div class="settings-row" style="${idx === employees.length - 1 ? 'border-bottom: none;' : ''}">
                                     <div>
                                         <p style="margin: 0; font-size: 16px; color: var(--text-primary);">${emp.name || emp.username}</p>
@@ -4003,7 +4003,7 @@
                     `;
 
                 case 'view-as-employee':
-                    var emps = Object.values(allUsers).filter(u => u.role === 'employee');
+                    var emps = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
                     if (emps.length === 0) {
                         return `
                             <div style="text-align: center; padding: 40px 20px;">
@@ -4014,7 +4014,7 @@
                     return `
                         <p style="margin: 0 0 16px 0; font-size: 14px; color: var(--text-muted);">Switch to an employee's view to check their routes or verify touch up lists.</p>
                         <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
-                            ${emps.map((emp, idx) => `
+                            ${emps.map(function(emp, idx) { return `
                                 <div onclick="viewAsEmployee('${emp.username}'); closeSettingsPage(); closeSettingsModal();" class="settings-row" style="${idx === emps.length - 1 ? 'border-bottom: none;' : ''}">
                                     <div>
                                         <p style="margin: 0; font-size: 16px; color: var(--text-primary);">${emp.name || emp.username}</p>
@@ -4082,7 +4082,7 @@
             var service = input.value.trim();
             if (!service) return;
             if (!userSettings.services) userSettings.services = [];
-            if (userSettings.services.some(s => s.toLowerCase() === service.toLowerCase())) {
+            if (userSettings.services.some(function(s) { return s.toLowerCase() === service.toLowerCase(); }) {
                 alert('This service already exists');
                 return;
             }
@@ -4110,7 +4110,7 @@
                 return;
             }
 
-            container.innerHTML = services.map((service, idx) => `
+            container.innerHTML = services.map(function(service, idx) { return `
                 <div style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--bg-card); border-radius: 8px; font-size: 13px; color: var(--text-primary);">
                     <span>${service}</span>
                     <button onclick="removeService(${idx})" style="background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 0; line-height: 1; margin-left: 4px;">&times;</button>
@@ -4129,7 +4129,7 @@
             }
 
             // Check for duplicates
-            if (userSettings.services.some(s => s.toLowerCase() === service.toLowerCase())) {
+            if (userSettings.services.some(function(s) { return s.toLowerCase() === service.toLowerCase(); }) {
                 alert('This service already exists');
                 return;
             }
@@ -4239,7 +4239,7 @@
             if (availableServices.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center;">No services configured. Go to Settings to add your services.</p>';
             } else {
-                container.innerHTML = availableServices.map((service, idx) => `
+                container.innerHTML = availableServices.map(function(service, idx) { return `
                     <label style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer;">
                         <input type="checkbox" class="mass-service-checkbox" value="${service}" style="width: 20px; height: 20px; accent-color: var(--accent-primary);">
                         <span style="font-size: 14px; font-weight: 500;">${service}</span>
@@ -4261,7 +4261,7 @@
         function applyMassServices() {
             // Get selected services from checkboxes
             var checkboxes = document.querySelectorAll('.mass-service-checkbox:checked');
-            var services = Array.from(checkboxes).map(cb => cb.value);
+            var services = Array.from(checkboxes).map(function(cb) { return cb.value; });
 
             if (services.length === 0) {
                 alert('Please select at least one service to add.');
@@ -4271,12 +4271,12 @@
             var servicesText = services.join(', ');
             var updatedCount = 0;
 
-            addresses.forEach(addr => {
+            addresses.forEach(function(addr) {
                 // Add services to address services field, avoiding duplicates
                 var existingServices = parseServices(addr.services);
 
-                services.forEach(service => {
-                    if (!existingServices.some(s => s.toLowerCase() === service.toLowerCase())) {
+                services.forEach(function(service) {
+                    if (!existingServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); }) {
                         existingServices.push(service);
                     }
                 });
@@ -4375,7 +4375,7 @@
 
                 // Clean up and ensure addresses have IDs
                 var needsSave = false;
-                addresses.forEach((addr, i) => {
+                addresses.forEach(function(addr, i) {
                     // Clean up old "Client" names
                     if (addr.name === 'Client' || addr.name === 'client') {
                         addr.name = '';
@@ -4468,14 +4468,14 @@
             if (currentUser && currentUser.role === 'employee') {
                 var assignedRoutes = currentUser.assignedRoutes || [];
                 if (assignedRoutes.length > 0) {
-                    listIds = listIds.filter(id => assignedRoutes.includes(id));
+                    listIds = listIds.filter(function(id) { return assignedRoutes.indexOf(id) !== -1; });
                 }
             }
 
-            select.innerHTML = listIds.map(id => {
+            select.innerHTML = listIds.map(function(id) {
                 var list = allLists[id];
                 var count = list.addresses ? list.addresses.length : 0;
-                return `<option value="${id}" ${id === currentListId ? 'selected' : ''}>${list.name} (${count})</option>`;
+                return '<option value="' + id + '" ' + (id === currentListId ? 'selected' : '') + '>' + list.name + ' (' + count + ')</option>';
             }).join('');
         }
 
@@ -4492,17 +4492,17 @@
         }
 
         // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
+                document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
                 tab.classList.add('active');
                 document.getElementById(`${tab.dataset.tab}-view`).classList.add('active');
                 renderAll();
 
                 // Initialize map when switching to map tab
                 if (tab.dataset.tab === 'map') {
-                    setTimeout(() => {
+                    setTimeout(function() {
                         initializeMap();
                     }, 100);
                 }
@@ -4547,7 +4547,7 @@
         // Delete address
         function deleteAddress(id) {
             if (confirm('Delete this address?')) {
-                addresses = addresses.filter(a => a.id !== id);
+                addresses = addresses.filter(function(a) { return a.id !== id; });
                 if (currentIndex >= addresses.length) {
                     currentIndex = Math.max(0, addresses.length - 1);
                 }
@@ -4561,9 +4561,9 @@
         // Helper function to parse services (handles both array and string formats)
         function parseServices(services) {
             if (Array.isArray(services)) {
-                return services.filter(s => s);
+                return services.filter(function(s) { return s; });
             } else if (typeof services === 'string' && services) {
-                return services.split(',').map(s => s.trim()).filter(s => s);
+                return services.split(',').map(function(s) { return s.trim()).filter(function(s) { return s; });
             }
             return [];
         }
@@ -4611,7 +4611,7 @@
                 `${addr.name} - ${addr.address}` : addr.address;
 
             var container = document.getElementById('service-completion-list');
-            container.innerHTML = requiredServices.map((service, idx) => `
+            container.innerHTML = requiredServices.map(function(service, idx) { return `
                 <label style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 10px; cursor: pointer;">
                     <input type="checkbox" id="service-check-${idx}" checked onchange="toggleServiceCompletion('${service.replace(/'/g, "\\'")}')"
                         style="width: 22px; height: 22px; accent-color: var(--accent-success);">
@@ -4885,7 +4885,7 @@
 
             // Auto-start timer on first navigation if not already running
             // Timer starts when navigating to the first address OR if no addresses have been completed yet
-            var hasStarted = addresses.some(a => a.status === 'done' || a.status === 'skipped');
+            var hasStarted = addresses.some(function(a) { return a.status === 'done' || a.status === 'skipped'; });
             if (!routeTimerRunning && !hasStarted) {
                 startRouteTimer();
             }
@@ -4903,7 +4903,7 @@
             document.body.appendChild(iframe);
 
             // If native app doesn't open within 500ms, use web fallback
-            setTimeout(() => {
+            setTimeout(function() {
                 document.body.removeChild(iframe);
                 window.location.href = webMapsUrl;
             }, 500);
@@ -4932,13 +4932,13 @@
             var seen = {};
             var duplicates = [];
 
-            addresses.forEach((addr, index) => {
+            addresses.forEach(function(addr, index) {
                 var normalized = normalizeAddress(addr.address);
                 if (seen[normalized] !== undefined) {
                     // Found a duplicate
                     var existingIdx = seen[normalized];
                     // Check if we already have this group
-                    var found = duplicates.find(d => d.indices.includes(existingIdx));
+                    var found = duplicates.find(function(d) { return d.indices.indexOf(existingIdx) !== -1; });
                     if (found) {
                         found.indices.push(index);
                     } else {
@@ -4958,14 +4958,14 @@
         function showDuplicateAddressModal(duplicates) {
             // Build duplicate list HTML
             var duplicateHtml = '';
-            duplicates.forEach((dup, dupIndex) => {
+            duplicates.forEach(function(dup, dupIndex) {
                 duplicateHtml += `
                     <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
                         <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
                             ⚠️ "${dup.address.length > 40 ? dup.address.substring(0, 40) + '...' : dup.address}"
                         </div>
                         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">
-                            Found ${dup.indices.length} times (positions: ${dup.indices.map(i => i + 1).join(', ')})
+                            Found ${dup.indices.length} times (positions: ${dup.indices.map(function(i) { return i + 1; }).join(', ')})
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button onclick="keepAllDuplicates(${dupIndex})" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: var(--bg-card); color: var(--text-secondary); font-size: 12px; cursor: pointer;">
@@ -5037,8 +5037,8 @@
             if (window.currentDuplicates && window.currentDuplicates[dupIndex]) {
                 var dup = window.currentDuplicates[dupIndex];
                 // Keep the first one, remove the rest (in reverse order to maintain indices)
-                var indicesToRemove = dup.indices.slice(1).sort((a, b) => b - a);
-                indicesToRemove.forEach(idx => {
+                var indicesToRemove = dup.indices.slice(1).sort(function(a, b) { return b - a; });
+                indicesToRemove.forEach(function(idx) {
                     addresses.splice(idx, 1);
                 });
                 saveData();
@@ -5100,7 +5100,7 @@
             endOptions += '<option value="custom">Custom Address...</option>';
 
             // Add addresses marked as start/end first (starred in Files)
-            addresses.forEach((a, i) => {
+            addresses.forEach(function(a, i) {
                 var label = a.address.length > 40 ? a.address.substring(0, 40) + '...' : a.address;
                 var isStart = currentList && currentList.startAddressId === a.id;
                 var isEnd = currentList && currentList.endAddressId === a.id;
@@ -5236,10 +5236,10 @@
                 return;
             }
 
-            addresses.forEach(a => {
+            addresses.forEach(function(a) {
                 // Reset in master accounts list as well
                 var normalizedAddr = a.address.trim().toLowerCase();
-                var masterAccount = masterAccounts.find(m => m.address.trim().toLowerCase() === normalizedAddr);
+                var masterAccount = masterAccounts.find(function(m) { return m.address.trim().toLowerCase() === normalizedAddr; });
                 if (masterAccount) {
                     masterAccount.status = 'pending';
                     masterAccount.lastUpdatedBy = null;
@@ -5313,7 +5313,7 @@
             routeTimerStartTime = list ? list.routeStartTime : Date.now();
             routeTimerSeconds = Math.floor((Date.now() - routeTimerStartTime) / 1000);
 
-            routeTimerInterval = setInterval(() => {
+            routeTimerInterval = setInterval(function() {
                 routeTimerSeconds = Math.floor((Date.now() - routeTimerStartTime) / 1000);
                 updateTimerDisplay();
             }, 1000);
@@ -5434,14 +5434,14 @@
                     var addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
 
                     // Check for start match
-                    if (addrLower === startAddrLower || addrLower.includes(startAddrLower) || startAddrLower.includes(addrLower)) {
+                    if (addrLower === startAddrLower || addrLower.indexOf(startAddrLower) !== -1 || startAddrLower.indexOf(addrLower) !== -1) {
                         console.log('Skipping address "' + addresses[i].address + '" - matches start location');
                         startMatchAddresses.push(addresses[i]);
                         continue;
                     }
 
                     // Check for end match
-                    if (endAddrLower && (addrLower === endAddrLower || addrLower.includes(endAddrLower) || endAddrLower.includes(addrLower))) {
+                    if (endAddrLower && (addrLower === endAddrLower || addrLower.indexOf(endAddrLower) !== -1 || endAddrLower.indexOf(addrLower) !== -1)) {
                         console.log('Skipping address "' + addresses[i].address + '" - matches end location');
                         endMatchAddresses.push(addresses[i]);
                         continue;
@@ -5525,7 +5525,7 @@
 
                 // Debug: log distance matrix
                 console.log('=== DRIVING TIME MATRIX (seconds) ===');
-                var labels = ['START'].concat(valid.map(function(v) { return v.address.address.substring(0, 20); }));
+                var labels = ['START'].concat(valid.map(function(v) { return v.address.address.substring(0, 20; }); }));
                 console.table(distanceMatrix.map(function(row, i) {
                     var obj = { from: labels[i] };
                     row.forEach(function(val, j) { obj[labels[j]] = Math.round(val); });
@@ -5743,7 +5743,7 @@
         // Build driving distance matrix using MapBox Matrix API
         async function buildDrivingMatrix(points, apiKey, btn) {
             var n = points.length;
-            var matrix = Array(n).fill(null).map(() => Array(n).fill(Infinity));
+            var matrix = Array(n).fill(null).map(function() { return Array(n).fill(Infinity; }); });
 
             // MapBox Matrix API handles up to 25 points at once
             // For more, we need to batch
@@ -5751,7 +5751,7 @@
 
             if (n <= BATCH_SIZE) {
                 // Single request
-                var coordsString = points.map(p => `${p.coords.lon},${p.coords.lat}`).join(';');
+                var coordsString = points.map(function(p) { return `${p.coords.lon},${p.coords.lat}`; }).join(';');
                 var url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordsString}?access_token=${apiKey}`;
 
                 var response = await fetch(url);
@@ -5778,11 +5778,11 @@
                     // Get distances from point i to all others in batches
                     for (var batchStart = 0; batchStart < n; batchStart += BATCH_SIZE - 1) {
                         var batchEnd = Math.min(batchStart + BATCH_SIZE - 1, n);
-                        var batchPoints = [points[i], ...points.slice(batchStart, batchEnd).filter((_, idx) => batchStart + idx !== i)];
+                        var batchPoints = [points[i]].concat(points.slice(batchStart, batchEnd).filter(function(_, idx) { return batchStart + idx !== i; }));
 
                         if (batchPoints.length < 2) continue;
 
-                        var coordsString = batchPoints.map(p => `${p.coords.lon},${p.coords.lat}`).join(';');
+                        var coordsString = batchPoints.map(function(p) { return `${p.coords.lon},${p.coords.lat}`; }).join(';');
                         var url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordsString}?sources=0&access_token=${apiKey}`;
 
                         var response = await fetch(url);
@@ -5840,7 +5840,7 @@
                         var time = calcRouteTime(arr);
                         if (time < bestTime) {
                             bestTime = time;
-                            bestRoute = [...arr];
+                            bestRoute = arr.slice();
                         }
                         return;
                     }
@@ -5886,10 +5886,10 @@
                         for (var i = 0; i < route.length - 1; i++) {
                             for (var j = i + 1; j < route.length; j++) {
                                 // Try reversing segment [i, j]
-                                var newRoute = [...route];
+                                var newRoute = route.slice();
                                 var segment = newRoute.splice(i, j - i + 1);
                                 segment.reverse();
-                                newRoute.splice(i, 0, ...segment);
+                                Array.prototype.splice.apply(newRoute, [i, 0].concat(segment));
 
                                 if (calcRouteTime(newRoute) < calcRouteTime(route)) {
                                     for (var k = 0; k < route.length; k++) route[k] = newRoute[k];
@@ -5902,7 +5902,7 @@
                     var time = calcRouteTime(route);
                     if (time < bestTime) {
                         bestTime = time;
-                        bestRoute = [...route];
+                        bestRoute = route.slice();
                     }
                 }
 
@@ -5913,7 +5913,7 @@
                     for (var i = 0; i < bestRoute.length; i++) {
                         for (var j = 0; j < bestRoute.length; j++) {
                             if (i === j || i === j + 1) continue;
-                            var newRoute = [...bestRoute];
+                            var newRoute = bestRoute.slice();
                             var [node] = newRoute.splice(i, 1);
                             var insertPos = j > i ? j - 1 : j;
                             newRoute.splice(insertPos, 0, node);
@@ -5932,14 +5932,14 @@
             console.log('=== OPTIMAL ROUTE FOUND ===');
             console.log(`Total drive time: ${Math.round(bestTime / 60)} minutes`);
             var logPrev = 0;
-            bestRoute.forEach((stop, i) => {
+            bestRoute.forEach(function(stop, i) {
                 var segmentTime = matrix[logPrev][stop];
                 console.log(`${i + 1}. Stop ${stop} (${Math.round(segmentTime / 60)} min from previous)`);
                 logPrev = stop;
             });
 
             // Convert to 0-based address indices
-            return bestRoute.map(i => i - 1);
+            return bestRoute.map(function(i) { return i - 1; });
         }
 
         function factorial(n) {
@@ -5973,7 +5973,7 @@
                     // Find the best address match (prefer actual addresses over POIs)
                     var bestMatch = data.features[0];
                     for (var feature of data.features) {
-                        if (feature.place_type.includes('address')) {
+                        if (feature.place_type.indexOf('address') !== -1) {
                             bestMatch = feature;
                             break;
                         }
@@ -5998,7 +5998,7 @@
         async function verifyAddress(addressId) {
             var mapboxKey = getMapboxKey();
 
-            var addr = addresses.find(a => a.id === addressId);
+            var addr = addresses.find(function(a) { return a.id === addressId; });
             if (!addr) return;
 
             var geo = await geocodeMapbox(addr.address, mapboxKey);
@@ -6027,7 +6027,7 @@
         async function verifyAllAddresses() {
             var mapboxKey = getMapboxKey();
 
-            var unverified = addresses.filter(a => !a.verified);
+            var unverified = addresses.filter(function(a) { return !a.verified; });
             if (unverified.length === 0) {
                 alert('All addresses are already verified!');
                 return;
@@ -6054,7 +6054,7 @@
                     failed.push(addr.address);
                 }
 
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(function(r) { return setTimeout(r, 100); });
             }
 
             saveData();
@@ -6073,7 +6073,7 @@
 
         // Show map preview for an address
         function showMapPreview(addressId) {
-            var addr = addresses.find(a => a.id === addressId);
+            var addr = addresses.find(function(a) { return a.id === addressId; });
             if (!addr || !addr.coords) {
                 alert('Address not verified yet. Click "Verify" first.');
                 return;
@@ -6085,7 +6085,7 @@
         // Reset session (keep addresses, reset status)
         function resetSession() {
             if (confirm('Reset all addresses to pending? This will clear your progress.')) {
-                addresses.forEach(a => {
+                addresses.forEach(function(a) {
                     a.status = 'pending';
                     delete a.completedAt;
                 });
@@ -6097,19 +6097,19 @@
 
         // Export summary for invoicing
         function exportSummary() {
-            var done = addresses.filter(a => a.status === 'done');
+            var done = addresses.filter(function(a) { return a.status === 'done'; });
             var date = new Date().toLocaleDateString();
 
             var text = `Snow Plowing - ${date}\n`;
             text += `========================\n\n`;
             text += `Completed Properties (${done.length}):\n`;
-            done.forEach((a, i) => {
+            done.forEach(function(a, i) {
                 text += `${i + 1}. ${a.name ? a.name + ' - ' : ''}${a.address}\n`;
             });
 
-            navigator.clipboard.writeText(text).then(() => {
+            navigator.clipboard.writeText(text).then(function() {
                 alert('Summary copied to clipboard!');
-            }).catch(() => {
+            }).catch(function() {
                 alert('Could not copy. Summary:\n\n' + text);
             });
         }
@@ -6128,7 +6128,7 @@
                 return;
             }
 
-            var pending = addresses.filter(a => a.status === 'pending');
+            var pending = addresses.filter(function(a) { return a.status === 'pending'; });
             if (pending.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -6151,7 +6151,7 @@
             }
 
             var current = addresses[currentIndex];
-            var pendingCount = addresses.filter(a => a.status === 'pending').length;
+            var pendingCount = addresses.filter(function(a) { return a.status === 'pending'; }).length;
             var stopNum = addresses.length - pendingCount + 1;
 
             // Get MapBox key for map preview
@@ -6186,21 +6186,21 @@
         function markDoneDebounced() {
             if (markActionLock) return;
             markActionLock = true;
-            setTimeout(() => { markActionLock = false; }, 300);
+            setTimeout(function() { markActionLock = false; }, 300);
             markDone();
         }
         function markSkipDebounced() {
             if (markActionLock) return;
             markActionLock = true;
-            setTimeout(() => { markActionLock = false; }, 300);
+            setTimeout(function() { markActionLock = false; }, 300);
             markSkip();
         }
 
         function renderProgress() {
             var total = addresses.length;
-            var done = addresses.filter(a => a.status === 'done').length;
-            var pending = addresses.filter(a => a.status === 'pending').length;
-            var completed = addresses.filter(a => a.status !== 'pending').length;
+            var done = addresses.filter(function(a) { return a.status === 'done'; }).length;
+            var pending = addresses.filter(function(a) { return a.status === 'pending'; }).length;
+            var completed = addresses.filter(function(a) { return a.status !== 'pending'; }).length;
             var percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
             document.getElementById('progress-label').textContent = `${completed} of ${total} completed`;
@@ -6226,9 +6226,9 @@
                 return;
             }
 
-            var otherLists = Object.keys(allLists).filter(id => id !== currentListId);
+            var otherLists = Object.keys(allLists).filter(function(id) { return id !== currentListId; });
 
-            container.innerHTML = addresses.map((a, idx) => {
+            container.innerHTML = addresses.map(function(a, idx) {
                 // Show corrected address if verified, otherwise original
                 var displayAddress = a.verified ? a.address : (a.originalAddress || a.address);
                 var showOriginal = a.originalAddress && a.originalAddress !== a.address;
@@ -6238,7 +6238,7 @@
                         <div style="width: 28px; height: 28px; background: var(--accent-info); color: var(--bg-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">${idx + 1}</div>
                         <div style="flex: 1; min-width: 0;">
                             <p style="margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayAddress}</p>
-                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">${[a.name, a.notes ? 'Has notes' : '', a.verified ? 'Verified' : ''].filter(x => x).join(' • ')}</p>
+                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">${[a.name, a.notes ? 'Has notes' : '', a.verified ? 'Verified' : ''].filter(function(x) { return x; }).join(' • ')}</p>
                         </div>
                         <span id="arrow-${idx}" style="color: var(--text-muted); font-size: 14px; transition: transform 0.2s;">▼</span>
                     </div>
@@ -6261,10 +6261,10 @@
         }
 
         function renderSummary() {
-            var done = addresses.filter(a => a.status === 'done');
-            var skipped = addresses.filter(a => a.status === 'skipped');
-            var pending = addresses.filter(a => a.status === 'pending');
-            var needsTouchUp = addresses.filter(a => a.status === 'done' && a.incompleteServices && a.incompleteServices.length > 0);
+            var done = addresses.filter(function(a) { return a.status === 'done'; });
+            var skipped = addresses.filter(function(a) { return a.status === 'skipped'; });
+            var pending = addresses.filter(function(a) { return a.status === 'pending'; });
+            var needsTouchUp = addresses.filter(function(a) { return a.status === 'done' && a.incompleteServices && a.incompleteServices.length > 0; });
 
             document.getElementById('done-count').textContent = done.length;
             document.getElementById('skipped-count').textContent = skipped.length;
@@ -6292,7 +6292,7 @@
             var isBoss = currentUser && currentUser.role === 'boss';
             var earningsDiv = document.getElementById('report-earnings');
             if (isBoss && earningsDiv) {
-                var totalEarnings = done.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+                var totalEarnings = done.reduce(function(sum, a) { return sum + (parseFloat(a.price) || 0), 0; });
                 if (totalEarnings > 0) {
                     earningsDiv.style.display = 'block';
                     document.getElementById('report-total').textContent = '$' + totalEarnings.toFixed(2);
@@ -6312,7 +6312,7 @@
 
             // Completed Section (collapsible, starts expanded) - Employee only
             if (isEmployee && done.length > 0) {
-                var doneTotal = done.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+                var doneTotal = done.reduce(function(sum, a) { return sum + (parseFloat(a.price) || 0), 0; });
                 html += `
                     <div style="background: var(--bg-card); border-radius: 14px; margin-bottom: 10px; overflow: hidden;">
                         <div onclick="toggleReportSection('done')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
@@ -6331,7 +6331,7 @@
                             </div>
                         </div>
                         <div id="report-section-done" style="padding: 0 16px 16px 16px;">
-                            ${done.map(a => {
+                            ${done.map(function(a) {
                                 var hasIncomplete = a.incompleteServices && a.incompleteServices.length > 0;
                                 var borderColor = hasIncomplete ? 'var(--accent-warning)' : 'var(--accent-success)';
                                 var timestamp = a.completedAt ? formatTimestamp(a.completedAt) : '';
@@ -6373,7 +6373,7 @@
                             <span id="report-arrow-skipped" style="color: var(--text-muted); font-size: 12px; transition: transform 0.2s;">▼</span>
                         </div>
                         <div id="report-section-skipped" style="display: none; padding: 0 16px 16px 16px;">
-                            ${skipped.map(a => {
+                            ${skipped.map(function(a) {
                                 var timestamp = a.completedAt ? formatTimestamp(a.completedAt) : '';
                                 var addressParts = a.address.split(',');
                                 var shortAddress = addressParts.length >= 2 ? `${addressParts[0].trim()}, ${addressParts[1].trim()}` : addressParts[0].trim();
@@ -6410,7 +6410,7 @@
                             <span id="report-arrow-pending" style="color: var(--text-muted); font-size: 12px; transition: transform 0.2s;">▼</span>
                         </div>
                         <div id="report-section-pending" style="display: none; padding: 0 16px 16px 16px;">
-                            ${pending.map(a => {
+                            ${pending.map(function(a) {
                                 var addressParts = a.address.split(',');
                                 var shortAddress = addressParts.length >= 2 ? `${addressParts[0].trim()}, ${addressParts[1].trim()}` : addressParts[0].trim();
                                 return `
@@ -6427,7 +6427,7 @@
             }
 
             // Incomplete Services Section (for addresses marked done but with missing services) - Employee only
-            var incomplete = addresses.filter(a => a.status === 'done' && a.incompleteServices && a.incompleteServices.length > 0);
+            var incomplete = addresses.filter(function(a) { return a.status === 'done' && a.incompleteServices && a.incompleteServices.length > 0; });
             if (isEmployee && incomplete.length > 0) {
                 html += `
                     <div style="background: var(--bg-card); border-radius: 14px; margin-bottom: 10px; overflow: hidden;">
@@ -6444,7 +6444,7 @@
                             <span id="report-arrow-incomplete" style="color: var(--text-muted); font-size: 12px; transition: transform 0.2s; transform: rotate(180deg);">▼</span>
                         </div>
                         <div id="report-section-incomplete" style="padding: 0 16px 16px 16px;">
-                            ${incomplete.map(a => {
+                            ${incomplete.map(function(a) {
                                 var addressParts = a.address.split(',');
                                 var shortAddress = addressParts.length >= 2 ? `${addressParts[0].trim()}, ${addressParts[1].trim()}` : addressParts[0].trim();
                                 return `
@@ -6529,7 +6529,7 @@
             // Always update the count in header first - do this regardless of container
             var countEl = document.getElementById('all-stops-count');
             if (countEl) {
-                var doneCount = addresses.filter(a => a.status === 'done').length;
+                var doneCount = addresses.filter(function(a) { return a.status === 'done'; }).length;
                 countEl.textContent = `(${doneCount}/${addresses.length})`;
             }
 
@@ -6541,7 +6541,7 @@
                 return;
             }
 
-            container.innerHTML = addresses.map((a, index) => {
+            container.innerHTML = addresses.map(function(a, index) {
                 var fullAddress = a.verified ? a.address : (a.originalAddress || a.address);
                 // Shorten address for preview: show number, street, city only
                 var addressParts = fullAddress.split(',');
@@ -6592,7 +6592,7 @@
                             ${a.photos && a.photos.length > 0 ? `
                                 <p style="margin: 10px 0 5px 0; font-size: 12px; color: var(--text-secondary);">Photos (${a.photos.length}):</p>
                                 <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-                                    ${a.photos.slice(0, 3).map((photo, pIdx) => `
+                                    ${a.photos.slice(0, 3).map(function(photo, pIdx) { return `
                                         <img src="${photo.data}" onclick="viewPhoto(${index}, ${pIdx})" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color);">
                                     `).join('')}
                                     ${a.photos.length > 3 ? `<span style="width: 50px; height: 50px; background: var(--bg-card); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-secondary);">+${a.photos.length - 3}</span>` : ''}
@@ -6668,7 +6668,7 @@
             var shortAddr = addr.address.split(',')[0];
             if (confirm(`Navigate to "${shortAddr}"?\n\nThis will set it as your current stop and move it in the route order.`)) {
                 // Find the current position (first pending address)
-                var targetPosition = addresses.findIndex(a => a.status === 'pending');
+                var targetPosition = addresses.findIndex(function(a) { return a.status === 'pending'; });
                 if (targetPosition === -1) targetPosition = 0;
 
                 // Only move if it's not already at the target position
@@ -6714,7 +6714,7 @@
                 syncToMasterAccounts(addr.address, 'skipped', addr.photos || [], addr.notes || '', addr.services || '', employeeName);
 
                 // Check if all addresses are now done or skipped (route complete)
-                var allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
+                var allComplete = addresses.every(function(a) { return a.status === 'done' || a.status === 'skipped'; });
                 if (allComplete && routeTimerRunning) {
                     stopRouteTimer(true); // Route completed
                 }
@@ -6797,7 +6797,7 @@
             // Update drop indicator
             if (newIndex !== dragState.currentIndex) {
                 // Remove old indicator
-                dragState.items.forEach(item => item.classList.remove('route-item-drag-over'));
+                dragState.items.forEach(function(item) { return item.classList.remove('route-item-drag-over'); });
 
                 // Add new indicator
                 if (newIndex < dragState.items.length && newIndex !== dragState.startIndex) {
@@ -6828,7 +6828,7 @@
                 dragState.draggedElement.style.zIndex = '';
             }
 
-            dragState.items.forEach(item => item.classList.remove('route-item-drag-over'));
+            dragState.items.forEach(function(item) { return item.classList.remove('route-item-drag-over'); });
 
             // Reorder if moved to different position
             if (dragState.currentIndex !== dragState.startIndex) {
@@ -6883,7 +6883,7 @@
             var select = document.getElementById('photo-address-select');
             select.innerHTML = '<option value="">Choose an address...</option>';
 
-            addresses.forEach((addr, index) => {
+            addresses.forEach(function(addr, index) {
                 var photoCount = addr.photos ? addr.photos.length : 0;
                 select.innerHTML += `<option value="${index}">${index + 1}. ${addr.address}${photoCount > 0 ? ` (${photoCount} photos)` : ''}</option>`;
             });
@@ -6899,7 +6899,7 @@
             var select = document.getElementById('photo-address-select');
             select.innerHTML = '<option value="">Choose an address...</option>';
 
-            addresses.forEach((addr, idx) => {
+            addresses.forEach(function(addr, idx) {
                 var photoCount = addr.photos ? addr.photos.length : 0;
                 select.innerHTML += `<option value="${idx}"${idx === index ? ' selected' : ''}>${idx + 1}. ${addr.address}${photoCount > 0 ? ` (${photoCount} photos)` : ''}</option>`;
             });
@@ -6941,7 +6941,7 @@
             gallery.innerHTML = `
                 <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">${addr.photos.length} photo${addr.photos.length !== 1 ? 's' : ''}</p>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                    ${addr.photos.map((photo, pIdx) => `
+                    ${addr.photos.map(function(photo, pIdx) { return `
                         <div style="position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden;">
                             <img src="${photo.data}" onclick="viewPhoto(${currentPhotoAddressIndex}, ${pIdx})" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
                             <span style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; font-size: 9px; padding: 2px 5px; border-radius: 4px;">${new Date(photo.timestamp).toLocaleDateString()}</span>
@@ -6987,7 +6987,7 @@
             var processed = 0;
             var totalFiles = files.length;
 
-            Array.from(files).forEach(file => {
+            Array.from(files).forEach(function(file) {
                 if (!file.type.startsWith('image/')) {
                     processed++;
                     return;
@@ -6996,7 +6996,7 @@
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     // Compress image before storing
-                    compressImage(e.target.result, 800, 0.7, (compressedData) => {
+                    compressImage(e.target.result, 800, 0.7, function(compressedData) {
                         addr.photos.push({
                             data: compressedData,
                             timestamp: Date.now(),
@@ -7025,7 +7025,7 @@
             if (!addr.photos) addr.photos = [];
 
             // Compress the image
-            compressImage('data:image/jpeg;base64,' + base64Data, 800, 0.7, (compressedData) => {
+            compressImage('data:image/jpeg;base64,' + base64Data, 800, 0.7, function(compressedData) {
                 addr.photos.push({
                     data: compressedData,
                     timestamp: Date.now(),
@@ -7089,7 +7089,7 @@
         }
 
         // Close photo viewer on background click
-        document.getElementById('photo-viewer-modal').addEventListener('click', (e) => {
+        document.getElementById('photo-viewer-modal').addEventListener('click', function(e) {
             if (e.target.id === 'photo-viewer-modal') {
                 closePhotoViewer();
             }
@@ -7105,10 +7105,10 @@
         var pendingImport = [];
 
         // Import tab switching
-        document.querySelectorAll('.import-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.import-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.import-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.import-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.import-tab').forEach(function(t) { return t.classList.remove('active'); });
+                document.querySelectorAll('.import-content').forEach(function(c) { return c.classList.remove('active'); });
                 tab.classList.add('active');
                 document.getElementById(`import-${tab.dataset.import}`).classList.add('active');
             });
@@ -7118,25 +7118,25 @@
         var dropZone = document.getElementById('drop-zone');
         var fileInput = document.getElementById('file-input');
 
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', function() { fileInput.click(); });
 
-        dropZone.addEventListener('dragover', (e) => {
+        dropZone.addEventListener('dragover', function(e) {
             e.preventDefault();
             dropZone.classList.add('dragover');
         });
 
-        dropZone.addEventListener('dragleave', () => {
+        dropZone.addEventListener('dragleave', function() {
             dropZone.classList.remove('dragover');
         });
 
-        dropZone.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', function(e) {
             e.preventDefault();
             dropZone.classList.remove('dragover');
             var file = e.dataTransfer.files[0];
             if (file) processFile(file);
         });
 
-        fileInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', function(e) {
             var file = e.target.files[0];
             if (file) processFile(file);
         });
@@ -7144,7 +7144,7 @@
         // Process uploaded file
         function processFile(file) {
             var reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = function(e) {
                 var content = e.target.result;
                 parseAddresses(content, file.name);
             };
@@ -7153,15 +7153,15 @@
 
         // Parse addresses from text content
         function parseAddresses(content, filename = '') {
-            var lines = content.split(/[\r\n]+/).filter(line => line.trim());
-            var isCSV = filename.endsWith('.csv') || content.includes(',') && lines[0].toLowerCase().includes('name');
+            var lines = content.split(/[\r\n]+/).filter(function(line) { return line.trim(); });
+            var isCSV = filename.endsWith('.csv') || content.indexOf(',') !== -1 && lines[0].toLowerCase().indexOf('name') !== -1;
 
             pendingImport = [];
 
             // Check if first line is a header
             var firstLine = lines[0].toLowerCase();
-            var hasHeader = firstLine.includes('name') || firstLine.includes('address') ||
-                              firstLine.includes('client') || firstLine.includes('street');
+            var hasHeader = firstLine.indexOf('name') !== -1 || firstLine.indexOf('address') !== -1 ||
+                              firstLine.indexOf('client') !== -1 || firstLine.indexOf('street') !== -1;
             var startIndex = hasHeader ? 1 : 0;
 
             for (var i = startIndex; i < lines.length; i++) {
@@ -7195,7 +7195,7 @@
                     // Plain text - try to detect name vs address
                     // Common patterns: "Name - Address" or "Name, Address" or just "Address"
 
-                    if (line.includes(' - ')) {
+                    if (line.indexOf(' - ') !== -1) {
                         var parts = line.split(' - ');
                         // Check if first part looks like a name (no numbers at start)
                         if (!/^\d/.test(parts[0])) {
@@ -7204,7 +7204,7 @@
                         } else {
                             address = line;
                         }
-                    } else if (line.includes(',')) {
+                    } else if (line.indexOf(',') !== -1) {
                         var parts = line.split(',');
                         // If first part has no numbers, it's probably a name
                         if (!/\d/.test(parts[0]) && parts.length > 2) {
@@ -7226,8 +7226,8 @@
                 if (!address || address.length < 5) continue;
 
                 // Skip obvious non-address lines
-                if (address.toLowerCase().includes('total') ||
-                    address.toLowerCase().includes('count') ||
+                if (address.toLowerCase().indexOf('total') !== -1 ||
+                    address.toLowerCase().indexOf('count') !== -1 ||
                     address.match(/^[\d\s\.\$]+$/)) continue;
 
                 pendingImport.push({
@@ -7288,7 +7288,7 @@
             }
 
             count.textContent = pendingImport.length;
-            list.innerHTML = pendingImport.map(item => `
+            list.innerHTML = pendingImport.map(function(item) { return `
                 <div class="preview-item">
                     <span class="preview-address">${item.address}</span>
                     ${item.name ? `<span class="preview-name">${item.name}</span>` : ''}
@@ -7319,7 +7319,7 @@
         var editingAddressId = null;
 
         function editNotes(id) {
-            var address = addresses.find(a => a.id === id);
+            var address = addresses.find(function(a) { return a.id === id; });
             if (!address) return;
 
             editingAddressId = id;
@@ -7355,7 +7355,7 @@
         function saveNotes() {
             if (!editingAddressId) return;
 
-            var address = addresses.find(a => a.id === editingAddressId);
+            var address = addresses.find(function(a) { return a.id === editingAddressId; });
             if (address) {
                 address.notes = document.getElementById('notes-textarea').value.trim();
                 saveData();
@@ -7366,7 +7366,7 @@
         }
 
         // Close modal on overlay click
-        document.getElementById('notes-modal').addEventListener('click', (e) => {
+        document.getElementById('notes-modal').addEventListener('click', function(e) {
             if (e.target.id === 'notes-modal') {
                 closeNotesModal();
             }
@@ -7390,7 +7390,7 @@
             var container = document.getElementById('lists-container');
             var listIds = Object.keys(allLists);
 
-            container.innerHTML = listIds.map(id => {
+            container.innerHTML = listIds.map(function(id) {
                 var list = allLists[id];
                 var count = list.addresses ? list.addresses.length : 0;
                 var isDefault = id === 'default';
@@ -7490,13 +7490,13 @@
         }
 
         // Close modals on overlay click
-        document.getElementById('list-modal').addEventListener('click', (e) => {
+        document.getElementById('list-modal').addEventListener('click', function(e) {
             if (e.target.id === 'list-modal') {
                 closeListModal();
             }
         });
 
-        document.getElementById('rename-modal').addEventListener('click', (e) => {
+        document.getElementById('rename-modal').addEventListener('click', function(e) {
             if (e.target.id === 'rename-modal') {
                 closeRenameModal();
             }
@@ -7720,7 +7720,7 @@
             alert('Address updated! Click "Optimize Route Order" again to retry.');
         }
 
-        document.getElementById('fix-address-modal').addEventListener('click', (e) => {
+        document.getElementById('fix-address-modal').addEventListener('click', function(e) {
             if (e.target.id === 'fix-address-modal') {
                 closeFixAddressModal();
             }
@@ -7743,14 +7743,14 @@
             }
         }
 
-        document.getElementById('drivetime-modal').addEventListener('click', (e) => {
+        document.getElementById('drivetime-modal').addEventListener('click', function(e) {
             if (e.target.id === 'drivetime-modal') {
                 // Don't allow closing by clicking overlay - must choose an option
             }
         });
 
         function openMoveModal(addressId) {
-            var address = addresses.find(a => a.id === addressId);
+            var address = addresses.find(function(a) { return a.id === addressId; });
             if (!address) return;
 
             movingAddressId = addressId;
@@ -7758,9 +7758,9 @@
 
             // Render list options
             var container = document.getElementById('move-list-options');
-            var otherLists = Object.keys(allLists).filter(id => id !== currentListId);
+            var otherLists = Object.keys(allLists).filter(function(id) { return id !== currentListId; });
 
-            container.innerHTML = otherLists.map(id => {
+            container.innerHTML = otherLists.map(function(id) {
                 var list = allLists[id];
                 var count = list.addresses ? list.addresses.length : 0;
                 return `
@@ -7783,7 +7783,7 @@
             if (!movingAddressId) return;
 
             // Find the address
-            var addressIndex = addresses.findIndex(a => a.id === movingAddressId);
+            var addressIndex = addresses.findIndex(function(a) { return a.id === movingAddressId; });
             if (addressIndex === -1) return;
 
             var address = addresses[addressIndex];
@@ -7812,7 +7812,7 @@
             alert(`Moved to "${targetName}"`);
         }
 
-        document.getElementById('move-modal').addEventListener('click', (e) => {
+        document.getElementById('move-modal').addEventListener('click', function(e) {
             if (e.target.id === 'move-modal') {
                 closeMoveModal();
             }
@@ -7824,13 +7824,13 @@
             // Role-based access control
             if (currentUser && currentUser.role === 'employee') {
                 var allowedTabs = ['home', 'route', 'summary'];
-                if (!allowedTabs.includes(tabName)) {
+                if (!allowedTabs.indexOf(tabName) !== -1) {
                     return; // Block access for employees
                 }
             }
 
             // Hide all views
-            document.querySelectorAll('.view').forEach(v => {
+            document.querySelectorAll('.view').forEach(function(v) {
                 v.classList.remove('active');
                 v.style.display = 'none';
             });
@@ -7849,7 +7849,7 @@
             }
 
             // Update nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
+            document.querySelectorAll('.nav-btn').forEach(function(btn) {
                 btn.classList.remove('active');
                 if (btn.dataset.tab === tabName) {
                     btn.classList.add('active');
@@ -7858,7 +7858,7 @@
 
             // Special handling for tabs
             if (tabName === 'map') {
-                setTimeout(() => {
+                setTimeout(function() {
                     initializeMap();
                     // Resize map after showing (fixes WebGL display issues)
                     if (window.routeMap) {
@@ -7873,7 +7873,7 @@
                 renderHomeView();
                 // Resize preview map after showing (fixes WebGL display issues)
                 if (previewMap) {
-                    setTimeout(() => previewMap.resize(), 150);
+                    setTimeout(function() { previewMap.resize(); }, 150);
                 }
             }
             if (tabName === 'summary') {
@@ -7908,7 +7908,7 @@
             document.getElementById('add-menu-modal').classList.remove('active');
         }
 
-        document.getElementById('add-menu-modal').addEventListener('click', (e) => {
+        document.getElementById('add-menu-modal').addEventListener('click', function(e) {
             if (e.target.id === 'add-menu-modal') {
                 closeAddMenu();
             }
@@ -7919,14 +7919,14 @@
             if (!currentUser || currentUser.role !== 'boss') return;
 
             // Calculate stats from master accounts
-            var doneCount = masterAccounts.filter(a => a.status === 'done').length;
-            var pendingCount = masterAccounts.filter(a => a.status === 'pending').length;
-            var incompleteCount = masterAccounts.filter(a => a.hasIncompleteServices).length;
+            var doneCount = masterAccounts.filter(function(a) { return a.status === 'done'; }).length;
+            var pendingCount = masterAccounts.filter(function(a) { return a.status === 'pending'; }).length;
+            var incompleteCount = masterAccounts.filter(function(a) { return a.hasIncompleteServices; }).length;
             var totalCount = masterAccounts.length;
             var completedPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
             // Count employees
-            var employeeCount = Object.values(allUsers).filter(u => u.role === 'employee').length;
+            var employeeCount = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; }).length;
 
             // Update stats
             document.getElementById('manage-done-count').textContent = doneCount;
@@ -7978,17 +7978,17 @@
                 return;
             }
 
-            var filteredAccounts = [...masterAccounts];
+            var filteredAccounts = masterAccounts.slice();
 
             // Apply filter
             if (liveFilterStatus === 'incomplete') {
-                filteredAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+                filteredAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
             } else if (liveFilterStatus !== 'all') {
-                filteredAccounts = masterAccounts.filter(a => a.status === liveFilterStatus);
+                filteredAccounts = masterAccounts.filter(function(a) { return a.status === liveFilterStatus; });
             }
 
             // Update filter button styles
-            ['all', 'done', 'pending', 'incomplete'].forEach(status => {
+            ['all', 'done', 'pending', 'incomplete'].forEach(function(status) {
                 var btn = document.getElementById(`manage-filter-${status}`);
                 if (btn) {
                     if (status === liveFilterStatus) {
@@ -8006,7 +8006,7 @@
                 return;
             }
 
-            container.innerHTML = filteredAccounts.slice(0, 50).map(account => {
+            container.innerHTML = filteredAccounts.slice(0, 50).map(function(account) {
                 var hasIncomplete = account.hasIncompleteServices;
                 var statusColor = hasIncomplete ? 'var(--accent-warning)' :
                                    account.status === 'done' ? 'var(--accent-success)' :
@@ -8039,16 +8039,16 @@
             var container = document.getElementById('manage-employees-list');
             if (!container) return;
 
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
             if (employees.length === 0) {
                 container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 15px;">No employees yet. Add employees from the + menu.</p>`;
                 return;
             }
 
-            container.innerHTML = employees.map(emp => {
+            container.innerHTML = employees.map(function(emp) {
                 var assignedRoutes = emp.assignedRoutes || [];
-                var routeCount = assignedRoutes.filter(id => allLists[id]).length;
+                var routeCount = assignedRoutes.filter(function(id) { return allLists[id]; }).length;
 
                 return `
                     <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-secondary); border-radius: 10px; margin-bottom: 8px;">
@@ -8085,9 +8085,9 @@
             section.style.display = 'block';
             document.getElementById('manage-touchup-count').textContent = touchUpLists.length;
 
-            container.innerHTML = touchUpLists.map(masterList => {
+            container.innerHTML = touchUpLists.map(function(masterList) {
                 var accounts = masterList.accounts || [];
-                var doneCount = accounts.filter(a => a.status === 'done').length;
+                var doneCount = accounts.filter(function(a) { return a.status === 'done'; }).length;
                 var totalCount = accounts.length;
                 var progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
                 var isComplete = doneCount === totalCount && totalCount > 0;
@@ -8121,7 +8121,7 @@
                 return;
             }
 
-            container.innerHTML = reports.slice(0, 5).map((report, idx) => {
+            container.innerHTML = reports.slice(0, 5).map(function(report, idx) {
                 var date = new Date(report.submittedAt).toLocaleDateString();
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 8px;">
@@ -8146,7 +8146,7 @@
             var currentList = allLists[currentListId];
             if (currentList) {
                 document.getElementById('home-route-name').textContent = currentList.name;
-                var done = currentList.addresses ? currentList.addresses.filter(a => a.status === 'done').length : 0;
+                var done = currentList.addresses ? currentList.addresses.filter(function(a) { return a.status === 'done'; }).length : 0;
                 var total = currentList.addresses ? currentList.addresses.length : 0;
                 document.getElementById('home-route-progress').textContent = total > 0 ?
                     `${done} of ${total} completed (${Math.round(done/total*100)}%)` : 'No addresses yet';
@@ -8173,9 +8173,9 @@
             document.getElementById('home-routes-count').textContent = listEntries.length;
 
             if (listEntries.length > 0) {
-                recentContainer.innerHTML = '<div style="padding-top: 14px;">' + listEntries.map(([id, list]) => {
+                recentContainer.innerHTML = '<div style="padding-top: 14px;">' + listEntries.map(function(entry) { var id = entry[0]; var list = entry[1];
                     var count = list.addresses ? list.addresses.length : 0;
-                    var done = list.addresses ? list.addresses.filter(a => a.status === 'done').length : 0;
+                    var done = list.addresses ? list.addresses.filter(function(a) { return a.status === 'done'; }).length : 0;
                     var isActive = id === currentListId;
                     var progressPercent = count > 0 ? Math.round((done / count) * 100) : 0;
                     return `
@@ -8201,7 +8201,7 @@
             }
 
             // Initialize preview map after a short delay
-            setTimeout(() => {
+            setTimeout(function() {
                 initializePreviewMap();
             }, 100);
 
@@ -8225,7 +8225,7 @@
             }
 
             // Get all employees
-            var employees = Object.entries(allUsers).filter(([username, user]) => user.role === 'employee');
+            var employees = Object.entries(allUsers).filter(function(entry) { var username = entry[0]; var user = entry[1]; return user.role === 'employee');
 
             if (employees.length === 0) {
                 section.style.display = 'none';
@@ -8236,7 +8236,7 @@
             countEl.textContent = `${employees.length} employee${employees.length !== 1 ? 's' : ''}`;
 
             var html = '';
-            employees.forEach(([username, employee]) => {
+            employees.forEach(function(entry) { var username = entry[0]; var employee = entry[1];
                 var assignedRoutes = employee.assignedRoutes || [];
 
                 // Calculate total progress across all assigned routes
@@ -8247,11 +8247,11 @@
 
                 var currentAddress = null;
 
-                assignedRoutes.forEach(routeId => {
+                assignedRoutes.forEach(function(routeId) {
                     var route = allLists[routeId];
                     if (route && route.addresses) {
                         var routeTotal = route.addresses.length;
-                        var routeDone = route.addresses.filter(a => a.status === 'done').length;
+                        var routeDone = route.addresses.filter(function(a) { return a.status === 'done'; }).length;
                         totalAddresses += routeTotal;
                         totalDone += routeDone;
 
@@ -8262,7 +8262,7 @@
 
                             // Get current address (first pending address in this route)
                             var currentIdx = route.currentIndex || 0;
-                            var pendingAddresses = route.addresses.filter(a => a.status === 'pending');
+                            var pendingAddresses = route.addresses.filter(function(a) { return a.status === 'pending'; });
                             if (pendingAddresses.length > 0) {
                                 var addr = route.addresses[currentIdx] && route.addresses[currentIdx].status === 'pending'
                                     ? route.addresses[currentIdx]
@@ -8313,8 +8313,8 @@
             if (!container) return;
 
             // Check if route is started (has pending addresses)
-            var pending = addresses.filter(a => a.status === 'pending');
-            var hasStarted = addresses.some(a => a.status === 'done' || a.status === 'skipped');
+            var pending = addresses.filter(function(a) { return a.status === 'pending'; });
+            var hasStarted = addresses.some(function(a) { return a.status === 'done' || a.status === 'skipped'; });
 
             // Only show if route has addresses and has been started (at least one done/skipped) OR has pending
             if (addresses.length === 0 || pending.length === 0) {
@@ -8408,7 +8408,7 @@
             // Populate list selector
             var selector = document.getElementById('edit-list-selector');
             var listEntries = Object.entries(allLists);
-            selector.innerHTML = listEntries.map(([id, list]) => {
+            selector.innerHTML = listEntries.map(function(entry) { var id = entry[0]; var list = entry[1];
                 return `<option value="${id}" ${id === currentListId ? 'selected' : ''}>${list.name}</option>`;
             }).join('');
 
@@ -8512,7 +8512,7 @@
             selectedFileContent = content;
 
             // Parse addresses from content
-            var lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = content.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             var addressCount = lines.length;
 
             // Update UI
@@ -8549,14 +8549,14 @@
                 }
             }
 
-            var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = text.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             if (lines.length === 0) {
                 alert('No valid addresses found');
                 return;
             }
 
             // Add addresses to current list
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 addresses.push({
                     id: Date.now() + Math.random(),
                     address: line,
@@ -8584,7 +8584,7 @@
 
             // Auto-optimize if enabled
             if (userSettings.autoOptimize && addresses.length >= 2) {
-                setTimeout(() => optimizeRoute(), 500);
+                setTimeout(function() { optimizeRoute(); }, 500);
             }
         }
 
@@ -8606,9 +8606,9 @@
 
             var isBoss = currentUser && currentUser.role === 'boss';
 
-            container.innerHTML = currentList.addresses.map((a, index) => {
+            container.innerHTML = currentList.addresses.map(function(a, index) {
                 var displayAddress = a.address;
-                var addressServices = (a.services || '').split(',').map(s => s.trim()).filter(s => s);
+                var addressServices = (a.services || '').split(',').map(function(s) { return s.trim()).filter(function(s) { return s; });
                 var availableServices = userSettings.services || [];
 
                 // Check if this address is start/end
@@ -8616,8 +8616,8 @@
                 var isEndAddr = currentList.endAddressId === a.id;
 
                 var servicesHtml = availableServices.length > 0
-                    ? availableServices.map(service => {
-                        var isChecked = addressServices.some(s => s.toLowerCase() === service.toLowerCase());
+                    ? availableServices.map(function(service) {
+                        var isChecked = addressServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); });
                         var serviceId = service.replace(/[^a-zA-Z0-9]/g, '_');
                         return `
                             <label style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg-card); border-radius: 8px; cursor: pointer; font-size: 12px;">
@@ -8848,7 +8848,7 @@
 
             // Get selected services from checkboxes
             var checkboxes = document.querySelectorAll(`.edit-service-checkbox-${index}:checked`);
-            var services = Array.from(checkboxes).map(cb => cb.value).join(', ');
+            var services = Array.from(checkboxes).map(function(cb) { return cb.value; }).join(', '; });
 
             if (!addr) {
                 alert('Address is required');
@@ -8935,8 +8935,8 @@
 
         function showImportModal() {
             // Switch to manage tab which has the import section
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
+            document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
             document.querySelector('.tab[data-tab="manage"]').classList.add('active');
             document.getElementById('manage-view').classList.add('active');
         }
@@ -8984,8 +8984,8 @@
             var folder = allFolders[folderId];
             if (!folder) return;
 
-            var listCount = Object.values(allLists).filter(l => l.folderId === folderId).length;
-            var subfolderCount = Object.values(allFolders).filter(f => f.parentId === folderId).length;
+            var listCount = Object.values(allLists).filter(function(l) { return l.folderId === folderId; }).length;
+            var subfolderCount = Object.values(allFolders).filter(function(f) { return f.parentId === folderId; }).length;
 
             if (listCount > 0 || subfolderCount > 0) {
                 alert(`Cannot delete "${folder.name}" - it contains ${listCount} list(s) and ${subfolderCount} subfolder(s). Move or delete them first.`);
@@ -9034,7 +9034,7 @@
             newListCurrentTab = tab;
 
             // Update tab buttons
-            ['none', 'paste', 'file', 'manual'].forEach(t => {
+            ['none', 'paste', 'file', 'manual'].forEach(function(t) {
                 var btn = document.getElementById(`newlist-tab-${t}`);
                 var content = document.getElementById(`newlist-content-${t}`);
                 if (t === tab) {
@@ -9065,7 +9065,7 @@
             newListFileName = fileName;
             newListFileContent = content;
 
-            var lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = content.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
 
             document.getElementById('newlist-file-name').textContent = fileName;
             document.getElementById('newlist-file-count').textContent = lines.length + ' addresses';
@@ -9102,7 +9102,7 @@
                 return;
             }
 
-            container.innerHTML = newListManualAddresses.map((addr, idx) => `
+            container.innerHTML = newListManualAddresses.map(function(addr, idx) { return `
                 <div style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 6px;">
                     <span style="width: 20px; height: 20px; background: var(--accent-info); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600; flex-shrink: 0;">${idx + 1}</span>
                     <span style="flex: 1; font-size: 12px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${addr}</span>
@@ -9126,8 +9126,8 @@
             if (newListCurrentTab === 'paste') {
                 var text = document.getElementById('newlist-paste-text').value.trim();
                 if (text) {
-                    var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                    newAddresses = lines.map(line => ({
+                    var lines = text.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
+                    newAddresses = lines.map(function(line) { return ({
                         address: line,
                         name: '',
                         status: 'pending',
@@ -9138,8 +9138,8 @@
                     }));
                 }
             } else if (newListCurrentTab === 'file' && newListFileContent) {
-                var lines = newListFileContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                newAddresses = lines.map(line => ({
+                var lines = newListFileContent.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
+                newAddresses = lines.map(function(line) { return ({
                     address: line,
                     name: '',
                     status: 'pending',
@@ -9149,7 +9149,7 @@
                     price: ''
                 }));
             } else if (newListCurrentTab === 'manual' && newListManualAddresses.length > 0) {
-                newAddresses = newListManualAddresses.map(addr => ({
+                newAddresses = newListManualAddresses.map(function(addr) { return ({
                     address: addr,
                     name: '',
                     status: 'pending',
@@ -9180,7 +9180,7 @@
             // Auto-optimize if enabled and we have enough addresses
             if (newAddresses.length >= 2 && userSettings.autoOptimize) {
                 alert(`Created "${name}" with ${newAddresses.length} addresses! Auto-optimizing route...`);
-                setTimeout(() => {
+                setTimeout(function() {
                     optimizeRoute();
                 }, 500);
             } else if (newAddresses.length > 0) {
@@ -9219,9 +9219,9 @@
             // Build folder options with indentation
             function addFolderOptions(parentId, indent) {
                 Object.entries(allFolders)
-                    .filter(([id, f]) => f.parentId === parentId)
-                    .sort((a, b) => a[1].name.localeCompare(b[1].name))
-                    .forEach(([id, folder]) => {
+                    .filter(function(entry) { var id = entry[0]; var f = entry[1]; return f.parentId === parentId; })
+                    .sort(function(a, b) { return a[1].name.localeCompare(b[1].name); })
+                    .forEach(function(entry) { var id = entry[0]; var folder = entry[1];
                         html += `<option value="${id}">${'—'.repeat(indent)} ${folder.name}</option>`;
                         addFolderOptions(id, indent + 1);
                     });
@@ -9261,7 +9261,7 @@
             var id = 'list_' + Date.now();
             allLists[id] = {
                 name: name,
-                addresses: pendingImport.map(item => ({
+                addresses: pendingImport.map(function(item) { return ({
                     id: Date.now() + Math.random(),
                     name: item.name,
                     address: item.address,
@@ -9293,7 +9293,7 @@
             if (userSettings.autoOptimize && addressCount >= 2) {
                 alert(`Created "${name}" with ${addressCount} addresses! Auto-optimizing route...`);
                 // Short delay to var the UI update first
-                setTimeout(() => {
+                setTimeout(function() {
                     optimizeRoute();
                 }, 500);
             } else {
@@ -9318,7 +9318,7 @@
                 var companyName = userSettings.company || 'SmartRoute';
                 csv = 'Name,Address,Status,Completed By,Completed Services,Incomplete Services,Last Updated\n';
 
-                masterAccounts.forEach(a => {
+                masterAccounts.forEach(function(a) {
                     var address = a.address.replace(/"/g, '""');
                     var name = (a.name || '').replace(/"/g, '""');
                     var status = a.status || 'pending';
@@ -9332,7 +9332,7 @@
                 filename = `${companyName.replace(/[^a-z0-9]/gi, '_')}_MasterList_${date.replace(/\//g, '-')}.csv`;
             } else {
                 // Employee exports their route data
-                var done = addresses.filter(a => a.status === 'done');
+                var done = addresses.filter(function(a) { return a.status === 'done'; });
                 if (done.length === 0) {
                     alert('No completed addresses to export');
                     return;
@@ -9341,7 +9341,7 @@
                 var listName = allLists[currentListId]?.name || 'Route';
                 csv = 'Name,Address,Services Completed,Completed Date,Notes,Photos\n';
 
-                done.forEach(a => {
+                done.forEach(function(a) {
                     var completedDate = a.completedAt ? new Date(a.completedAt).toLocaleString() : date;
                     var notes = (a.notes || '').replace(/"/g, '""');
                     var address = a.address.replace(/"/g, '""');
@@ -9375,7 +9375,7 @@
             }
 
             // Employee exports their route data
-            var done = addresses.filter(a => a.status === 'done');
+            var done = addresses.filter(function(a) { return a.status === 'done'; });
             if (done.length === 0) {
                 alert('No completed addresses to export');
                 return;
@@ -9442,18 +9442,18 @@
                 <div class="label">Jobs Completed</div>
             </div>
             <div class="summary-item">
-                <div class="number">${done.filter(a => a.photos && a.photos.length > 0).length}</div>
+                <div class="number">${done.filter(function(a) { return a.photos && a.photos.length > 0; }).length}</div>
                 <div class="label">With Photos</div>
             </div>
             <div class="summary-item">
-                <div class="number">${done.reduce((sum, a) => sum + (a.services ? a.services.length : 0), 0)}</div>
+                <div class="number">${done.reduce(function(sum, a) { return sum + (a.services ? a.services.length : 0); }, 0)}</div>
                 <div class="label">Services Done</div>
             </div>
         </div>
 `;
 
             // Add each job
-            done.forEach((a, idx) => {
+            done.forEach(function(a, idx) {
                 var completedDate = a.completedAt ? new Date(a.completedAt).toLocaleString() : date;
                 var services = a.services && a.services.length > 0 ? a.services : [];
                 var hasPhotos = a.photos && a.photos.length > 0;
@@ -9470,7 +9470,7 @@
             <div class="services">
                 <div class="services-title">Services Completed:</div>
                 ${services.length > 0
-                    ? services.map(s => `<span class="service-tag">${escapeHtml(s)}</span>`).join('')
+                    ? services.map(function(s) { return `<span class="service-tag">${escapeHtml(s)}</span>`; }).join('')
                     : '<span class="no-services">Standard service completed</span>'}
             </div>
 
@@ -9480,7 +9480,7 @@
             <div class="photos">
                 <div class="photos-title">Photo Documentation (${a.photos.length}):</div>
                 <div class="photos-grid">
-                    ${a.photos.map(p => `<img class="photo" src="${p.data}" alt="Job photo">`).join('')}
+                    ${a.photos.map(function(p) { return `<img class="photo" src="${p.data}" alt="Job photo">`; }).join('')}
                 </div>
             </div>
             ` : ''}
@@ -9510,9 +9510,9 @@
             var companyName = userSettings.company || 'SmartRoute';
             var userName = userSettings.name || '';
 
-            var doneAccounts = masterAccounts.filter(a => a.status === 'done');
-            var pendingAccounts = masterAccounts.filter(a => a.status === 'pending');
-            var incompleteAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+            var doneAccounts = masterAccounts.filter(function(a) { return a.status === 'done'; });
+            var pendingAccounts = masterAccounts.filter(function(a) { return a.status === 'pending'; });
+            var incompleteAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
             var totalCount = masterAccounts.length;
             var completedPercent = totalCount > 0 ? Math.round((doneAccounts.length / totalCount) * 100) : 0;
 
@@ -9607,13 +9607,13 @@
                 <span class="badge incomplete">${incompleteAccounts.length}</span>
             </div>
 `;
-                incompleteAccounts.forEach(a => {
+                incompleteAccounts.forEach(function(a) {
                     html += `
             <div class="account incomplete">
                 <div class="account-name">${escapeHtml(a.name || a.address.split(',')[0])}</div>
                 <div class="account-address">${escapeHtml(a.address)}</div>
-                ${a.completedServices && a.completedServices.length > 0 ? `<div class="account-services completed">Done: ${a.completedServices.map(s => escapeHtml(s)).join(', ')}</div>` : ''}
-                ${a.incompleteServices && a.incompleteServices.length > 0 ? `<div class="account-services incomplete">Missing: ${a.incompleteServices.map(s => escapeHtml(s)).join(', ')}</div>` : ''}
+                ${a.completedServices && a.completedServices.length > 0 ? `<div class="account-services completed">Done: ${a.completedServices.map(function(s) { return escapeHtml(s); }).join(', ')}</div>` : ''}
+                ${a.incompleteServices && a.incompleteServices.length > 0 ? `<div class="account-services incomplete">Missing: ${a.incompleteServices.map(function(s) { return escapeHtml(s); }).join(', ')}</div>` : ''}
                 ${a.lastUpdatedBy ? `<div class="account-meta">Updated by: ${escapeHtml(a.lastUpdatedBy)}</div>` : ''}
             </div>
 `;
@@ -9630,12 +9630,12 @@
                 <span class="badge done">${doneAccounts.length}</span>
             </div>
 `;
-                doneAccounts.filter(a => !a.hasIncompleteServices).forEach(a => {
+                doneAccounts.filter(function(a) { return !a.hasIncompleteServices; }).forEach(function(a) {
                     html += `
             <div class="account done">
                 <div class="account-name">${escapeHtml(a.name || a.address.split(',')[0])}</div>
                 <div class="account-address">${escapeHtml(a.address)}</div>
-                ${a.completedServices && a.completedServices.length > 0 ? `<div class="account-services completed">Services: ${a.completedServices.map(s => escapeHtml(s)).join(', ')}</div>` : ''}
+                ${a.completedServices && a.completedServices.length > 0 ? `<div class="account-services completed">Services: ${a.completedServices.map(function(s) { return escapeHtml(s); }).join(', ')}</div>` : ''}
                 ${a.lastUpdatedBy ? `<div class="account-meta">Completed by: ${escapeHtml(a.lastUpdatedBy)}${a.lastUpdatedAt ? ' • ' + new Date(a.lastUpdatedAt).toLocaleString() : ''}</div>` : ''}
             </div>
 `;
@@ -9652,13 +9652,13 @@
                 <span class="badge pending">${pendingAccounts.length}</span>
             </div>
 `;
-                pendingAccounts.forEach(a => {
+                pendingAccounts.forEach(function(a) {
                     var assignedTo = findEmployeesWithAddress(a.address);
                     html += `
             <div class="account pending">
                 <div class="account-name">${escapeHtml(a.name || a.address.split(',')[0])}</div>
                 <div class="account-address">${escapeHtml(a.address)}</div>
-                ${assignedTo.length > 0 ? `<div class="account-meta">Assigned to: ${assignedTo.map(e => escapeHtml(e)).join(', ')}</div>` : ''}
+                ${assignedTo.length > 0 ? `<div class="account-meta">Assigned to: ${assignedTo.map(function(e) { return escapeHtml(e); }).join(', ')}</div>` : ''}
             </div>
 `;
                 });
@@ -9706,13 +9706,13 @@
                     newWindow.document.write('<h2>Export: ' + filename + '</h2>');
                     newWindow.document.write('<p>Copy the content below:</p>');
                     newWindow.document.write('<textarea style="width:100%;height:400px;font-family:monospace;">' + content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>');
-                    newWindow.document.write('<br><br><button onclick="navigator.clipboard.writeText(document.querySelector(\'textarea\').value).then(() => alert(\'Copied!\'))">Copy to Clipboard</button>');
+                    newWindow.document.write('<br><br><button onclick="navigator.clipboard.writeText(document.querySelector(\'textarea\').value).then(function() { alert(\'Copied!\'))">Copy to Clipboard</button>');
                     newWindow.document.write('</body></html>');
                     newWindow.document.close();
                 } else {
                     // Last resort: show in alert
                     alert('Export ready!\n\nFilename: ' + filename + '\n\nContent copied to clipboard.');
-                    navigator.clipboard.writeText(content).catch(() => {});
+                    navigator.clipboard.writeText(content).catch(function() {});
                 }
             }
         }
@@ -9725,7 +9725,7 @@
                 return;
             }
 
-            var done = addresses.filter(a => a.status === 'done');
+            var done = addresses.filter(function(a) { return a.status === 'done'; });
             if (done.length === 0) {
                 alert('No completed addresses to export');
                 return;
@@ -9788,18 +9788,18 @@
                 <div class="label">Jobs Completed</div>
             </div>
             <div class="summary-item">
-                <div class="number">${done.filter(a => a.photos && a.photos.length > 0).length}</div>
+                <div class="number">${done.filter(function(a) { return a.photos && a.photos.length > 0; }).length}</div>
                 <div class="label">With Photos</div>
             </div>
             <div class="summary-item">
-                <div class="number">${done.reduce((sum, a) => sum + (a.services ? a.services.length : 0), 0)}</div>
+                <div class="number">${done.reduce(function(sum, a) { return sum + (a.services ? a.services.length : 0); }, 0)}</div>
                 <div class="label">Services Done</div>
             </div>
         </div>
 `;
 
             // Add each job
-            done.forEach((a, idx) => {
+            done.forEach(function(a, idx) {
                 var completedDate = a.completedAt ? new Date(a.completedAt).toLocaleString() : date;
                 var services = a.services && a.services.length > 0 ? a.services : [];
                 var hasPhotos = a.photos && a.photos.length > 0;
@@ -9816,7 +9816,7 @@
             <div class="services">
                 <div class="services-title">Services Completed:</div>
                 ${services.length > 0
-                    ? services.map(s => `<span class="service-tag">${escapeHtml(s)}</span>`).join('')
+                    ? services.map(function(s) { return `<span class="service-tag">${escapeHtml(s)}</span>`; }).join('')
                     : '<span class="no-services">Standard service completed</span>'}
             </div>
 
@@ -9826,7 +9826,7 @@
             <div class="photos">
                 <div class="photos-title">Photo Documentation (${a.photos.length}):</div>
                 <div class="photos-grid">
-                    ${a.photos.map(p => `<img class="photo" src="${p.data}" alt="Job photo">`).join('')}
+                    ${a.photos.map(function(p) { return `<img class="photo" src="${p.data}" alt="Job photo">`; }).join('')}
                 </div>
             </div>
             ` : ''}
@@ -9868,9 +9868,9 @@
             var companyName = userSettings.company || 'SmartRoute';
 
             // Categorize accounts
-            var completed = masterAccounts.filter(a => a.status === 'completed');
-            var needsTouchUp = masterAccounts.filter(a => a.status === 'touch_up');
-            var pending = masterAccounts.filter(a => a.status === 'pending' || !a.status);
+            var completed = masterAccounts.filter(function(a) { return a.status === 'completed'; });
+            var needsTouchUp = masterAccounts.filter(function(a) { return a.status === 'touch_up'; });
+            var pending = masterAccounts.filter(function(a) { return a.status === 'pending' || !a.status; });
 
             var totalAccounts = masterAccounts.length;
             var completedCount = completed.length;
@@ -9965,7 +9965,7 @@
                 <span>Needs Touch Up</span>
                 <span class="section-badge">${needsTouchUp.length}</span>
             </div>`;
-                needsTouchUp.forEach(a => {
+                needsTouchUp.forEach(function(a) {
                     var completedServices = a.completedServices || [];
                     var incompleteServices = a.incompleteServices || [];
                     html += `
@@ -9979,8 +9979,8 @@
                 </div>
                 ${completedServices.length > 0 || incompleteServices.length > 0 ? `
                 <div class="services">
-                    ${completedServices.map(s => `<span class="service-tag service-done">${escapeHtml(s)}</span>`).join('')}
-                    ${incompleteServices.map(s => `<span class="service-tag service-pending">${escapeHtml(s)}</span>`).join('')}
+                    ${completedServices.map(function(s) { return `<span class="service-tag service-done">${escapeHtml(s)}</span>`; }).join('')}
+                    ${incompleteServices.map(function(s) { return `<span class="service-tag service-pending">${escapeHtml(s)}</span>`; }).join('')}
                 </div>` : ''}
                 ${a.completedBy ? `<div class="account-meta">Completed by: ${escapeHtml(a.completedBy)}${a.lastUpdated ? ' • ' + new Date(a.lastUpdated).toLocaleString() : ''}</div>` : ''}
             </div>`;
@@ -9996,7 +9996,7 @@
                 <span>Completed</span>
                 <span class="section-badge">${completed.length}</span>
             </div>`;
-                completed.forEach(a => {
+                completed.forEach(function(a) {
                     var completedServices = a.completedServices || [];
                     html += `
             <div class="account">
@@ -10009,7 +10009,7 @@
                 </div>
                 ${completedServices.length > 0 ? `
                 <div class="services">
-                    ${completedServices.map(s => `<span class="service-tag service-done">${escapeHtml(s)}</span>`).join('')}
+                    ${completedServices.map(function(s) { return `<span class="service-tag service-done">${escapeHtml(s)}</span>`; }).join('')}
                 </div>` : ''}
                 ${a.completedBy ? `<div class="account-meta">Completed by: ${escapeHtml(a.completedBy)}${a.lastUpdated ? ' • ' + new Date(a.lastUpdated).toLocaleString() : ''}</div>` : ''}
             </div>`;
@@ -10025,7 +10025,7 @@
                 <span>Pending</span>
                 <span class="section-badge">${pending.length}</span>
             </div>`;
-                pending.forEach(a => {
+                pending.forEach(function(a) {
                     html += `
             <div class="account">
                 <div class="account-header">
@@ -10069,7 +10069,7 @@
         async function reverifyAddress(addressId) {
             var mapboxKey = getMapboxKey();
 
-            var addr = addresses.find(a => a.id === addressId);
+            var addr = addresses.find(function(a) { return a.id === addressId; });
             if (!addr) return;
 
             // Use original address if available, otherwise current
@@ -10100,8 +10100,8 @@
             var isOpen = dropdown.style.display !== 'none';
 
             // Close all other dropdowns
-            document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
-            document.querySelectorAll('[id^="arrow-"]').forEach(a => {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(function(d) { return d.style.display = 'none'; });
+            document.querySelectorAll('[id^="arrow-"]').forEach(function(a) {
                 a.textContent = '▼';
                 a.style.transform = 'rotate(0deg)';
             });
@@ -10254,7 +10254,7 @@
 
                 if (batchCoords.length < 2) continue;
 
-                var coordsString = batchCoords.map(c => `${c[0]},${c[1]}`).join(';');
+                var coordsString = batchCoords.map(function(c) { return `${c[0]},${c[1]}`; }).join(';');
                 var url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&overview=full&access_token=${mapboxKey}`;
 
                 try {
@@ -10318,7 +10318,7 @@
             if (!window.routeMap || window.mapMarkers.length === 0) return;
 
             var bounds = new mapboxgl.LngLatBounds();
-            window.mapMarkers.forEach(marker => {
+            window.mapMarkers.forEach(function(marker) {
                 bounds.extend(marker.getLngLat());
             });
 
@@ -10344,17 +10344,17 @@
             if (!addr || !addr.coords) return;
 
             // Switch to map tab
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
+            document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
             document.querySelector('.tab[data-tab="map"]').classList.add('active');
             document.getElementById('map-view').classList.add('active');
 
             // Initialize map if needed
-            setTimeout(() => {
+            setTimeout(function() {
                 initializeMap();
 
                 // Wait for map to be ready then fly to the pin
-                setTimeout(() => {
+                setTimeout(function() {
                     if (window.routeMap) {
                         window.routeMap.flyTo({
                             center: [addr.coords.lon, addr.coords.lat],
@@ -10384,7 +10384,7 @@
             var mapboxKey = getMapboxKey();
 
             // Check if any addresses have coords
-            var hasCoords = addresses.some(a => a.coords);
+            var hasCoords = addresses.some(function(a) { return a.coords; });
             if (!hasCoords && !startLocation) return;
 
             // Hide placeholder
@@ -10401,7 +10401,7 @@
                     interactive: false // Disable interactions for preview
                 });
 
-                previewMap.on('load', () => {
+                previewMap.on('load', function() {
                     updatePreviewMarkers();
                 });
             } else {
@@ -10419,7 +10419,7 @@
             }
 
             // Clear existing markers
-            previewMarkers.forEach(m => m.remove());
+            previewMarkers.forEach(function(m) { return m.remove(); });
             previewMarkers = [];
 
             // Remove existing route layer if present
@@ -10452,7 +10452,7 @@
             }
 
             // Add address markers
-            addresses.forEach((addr, index) => {
+            addresses.forEach(function(addr, index) {
                 if (!addr.coords) return;
 
                 var color = '#3b82f6'; // accent-info
@@ -10496,7 +10496,7 @@
 
                 if (batchCoords.length < 2) continue;
 
-                var coordsString = batchCoords.map(c => `${c[0]},${c[1]}`).join(';');
+                var coordsString = batchCoords.map(function(c) { return `${c[0]},${c[1]}`; }).join(';');
                 var url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&overview=full&access_token=${mapboxKey}`;
 
                 try {
@@ -10607,7 +10607,7 @@
         function filterSummaryAccounts(filter) {
             summaryAccountFilter = filter;
             // Update button styles
-            ['all', 'done', 'pending', 'incomplete'].forEach(f => {
+            ['all', 'done', 'pending', 'incomplete'].forEach(function(f) {
                 var btn = document.getElementById(`summary-filter-${f}`);
                 if (btn) {
                     if (f === filter) {
@@ -10625,9 +10625,9 @@
         function renderSummaryMasterSection() {
             if (masterAccounts.length === 0) return;
 
-            var doneCount = masterAccounts.filter(a => a.status === 'done').length;
-            var pendingCount = masterAccounts.filter(a => a.status === 'pending').length;
-            var incompleteCount = masterAccounts.filter(a => a.hasIncompleteServices).length;
+            var doneCount = masterAccounts.filter(function(a) { return a.status === 'done'; }).length;
+            var pendingCount = masterAccounts.filter(function(a) { return a.status === 'pending'; }).length;
+            var incompleteCount = masterAccounts.filter(function(a) { return a.hasIncompleteServices; }).length;
             var totalCount = masterAccounts.length;
             var completedPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
@@ -10660,13 +10660,13 @@
             var container = document.getElementById('summary-accounts-list');
             if (!container) return;
 
-            var filtered = [...masterAccounts];
+            var filtered = masterAccounts.slice();
             if (summaryAccountFilter === 'done') {
-                filtered = filtered.filter(a => a.status === 'done');
+                filtered = filtered.filter(function(a) { return a.status === 'done'; });
             } else if (summaryAccountFilter === 'pending') {
-                filtered = filtered.filter(a => a.status === 'pending');
+                filtered = filtered.filter(function(a) { return a.status === 'pending'; });
             } else if (summaryAccountFilter === 'incomplete') {
-                filtered = filtered.filter(a => a.hasIncompleteServices);
+                filtered = filtered.filter(function(a) { return a.hasIncompleteServices; });
             }
 
             if (filtered.length === 0) {
@@ -10674,7 +10674,7 @@
                 return;
             }
 
-            container.innerHTML = filtered.slice(0, 20).map(account => {
+            container.innerHTML = filtered.slice(0, 20).map(function(account) {
                 var statusColor = account.status === 'done' ? 'var(--accent-success)' :
                                    account.hasIncompleteServices ? 'var(--accent-warning)' : 'var(--accent-info)';
                 var assignedTo = findEmployeesWithAddress(account.address);
@@ -10708,7 +10708,7 @@
             if (!section || !container) return;
 
             var list = getDailyTouchUpList();
-            var pendingAddresses = list.addresses.filter(a => a.status === 'pending');
+            var pendingAddresses = list.addresses.filter(function(a) { return a.status === 'pending'; });
 
             if (countEl) countEl.textContent = pendingAddresses.length;
 
@@ -10717,7 +10717,7 @@
                 return;
             }
 
-            container.innerHTML = pendingAddresses.map(addr => {
+            container.innerHTML = pendingAddresses.map(function(addr) {
                 var incompleteServices = addr.incompleteServices || [];
                 var totalServices = userSettings.services || [];
                 var isFullyIncomplete = incompleteServices.length >= totalServices.length || addr.fullyIncomplete;
@@ -10754,8 +10754,8 @@
             }
 
             section.style.display = 'block';
-            container.innerHTML = touchUpLists.map(list => {
-                var pendingCount = list.addresses ? list.addresses.filter(a => a.status !== 'done').length : 0;
+            container.innerHTML = touchUpLists.map(function(list) {
+                var pendingCount = list.addresses ? list.addresses.filter(function(a) { return a.status !== 'done'; }).length : 0;
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 8px; padding: 10px; margin-bottom: 6px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -10774,9 +10774,9 @@
             var countEl = document.getElementById('summary-reports-count');
             if (!container) return;
 
-            var sortedReports = [...employeeReports].sort((a, b) =>
-                new Date(b.submittedAt) - new Date(a.submittedAt)
-            );
+            var sortedReports = employeeReports.slice().sort(function(a, b) {
+                return new Date(b.submittedAt) - new Date(a.submittedAt);
+            });
 
             if (countEl) countEl.textContent = sortedReports.length;
 
@@ -10785,7 +10785,7 @@
                 return;
             }
 
-            container.innerHTML = sortedReports.slice(0, 5).map(report => {
+            container.innerHTML = sortedReports.slice(0, 5).map(function(report) {
                 var submittedDate = new Date(report.submittedAt);
                 var dateStr = submittedDate.toLocaleDateString();
                 var addedBadge = report.addedToMyReport ? '<span style="font-size: 8px; background: var(--accent-success); color: white; padding: 1px 4px; border-radius: 3px; margin-left: 4px;">Added</span>' : '';
@@ -10813,9 +10813,9 @@
             if (!container) return;
 
             // Sort by newest first
-            var sortedReports = [...employeeReports].sort((a, b) =>
-                new Date(b.submittedAt) - new Date(a.submittedAt)
-            );
+            var sortedReports = employeeReports.slice().sort(function(a, b) {
+                return new Date(b.submittedAt) - new Date(a.submittedAt);
+            });
 
             if (countEl) countEl.textContent = sortedReports.length;
 
@@ -10824,12 +10824,12 @@
                 return;
             }
 
-            container.innerHTML = sortedReports.map(report => {
+            container.innerHTML = sortedReports.map(function(report) {
                 var submittedDate = new Date(report.submittedAt);
                 var dateStr = submittedDate.toLocaleDateString();
                 var timeStr = submittedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                var doneCount = report.addresses.filter(a => a.status === 'done').length;
-                var skippedCount = report.addresses.filter(a => a.status === 'skipped').length;
+                var doneCount = report.addresses.filter(function(a) { return a.status === 'done'; }).length;
+                var skippedCount = report.addresses.filter(function(a) { return a.status === 'skipped'; }).length;
 
                 // Format route time
                 var routeTimeStr = 'N/A';
@@ -10875,7 +10875,7 @@
                 return;
             }
 
-            var doneAddresses = addresses.filter(a => a.status === 'done' || a.status === 'skipped');
+            var doneAddresses = addresses.filter(function(a) { return a.status === 'done' || a.status === 'skipped'; });
             if (doneAddresses.length === 0) {
                 alert('No completed or skipped addresses to report.');
                 return;
@@ -10889,7 +10889,7 @@
                 date: new Date().toLocaleDateString(),
                 routeName: currentList.name,
                 routeTime: routeTimerSeconds,
-                addresses: addresses.map(a => ({
+                addresses: addresses.map(function(a) { return ({
                     address: a.address,
                     name: a.name || '',
                     status: a.status,
@@ -10905,11 +10905,11 @@
             employeeReports.push(report);
             saveEmployeeReports();
 
-            alert(`Report submitted successfully!\n\n${doneAddresses.filter(a => a.status === 'done').length} jobs completed\n${doneAddresses.filter(a => a.status === 'skipped').length} jobs skipped\n\nThe boss will review your report.`);
+            alert(`Report submitted successfully!\n\n${doneAddresses.filter(function(a) { return a.status === 'done'; }).length} jobs completed\n${doneAddresses.filter(function(a) { return a.status === 'skipped'; }).length} jobs skipped\n\nThe boss will review your report.`; });
         }
 
         function viewEmployeeReport(reportId) {
-            var report = employeeReports.find(r => r.id === reportId);
+            var report = employeeReports.find(function(r) { return r.id === reportId; });
             if (!report) return;
 
             viewingReportId = reportId;
@@ -10926,9 +10926,9 @@
                 routeTimeStr = hours > 0 ? `${hours}h ${mins}m ${secs}s` : `${mins}m ${secs}s`;
             }
 
-            var done = report.addresses.filter(a => a.status === 'done');
-            var skipped = report.addresses.filter(a => a.status === 'skipped');
-            var totalEarnings = done.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+            var done = report.addresses.filter(function(a) { return a.status === 'done'; });
+            var skipped = report.addresses.filter(function(a) { return a.status === 'skipped'; });
+            var totalEarnings = done.reduce(function(sum, a) { return sum + (parseFloat(a.price) || 0), 0; });
 
             var html = `
                 <div style="background: var(--bg-secondary); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
@@ -10949,8 +10949,8 @@
             // Completed jobs
             if (done.length > 0) {
                 html += `<p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-success); text-transform: uppercase;">Completed Jobs (${done.length})</p>`;
-                done.forEach((a, idx) => {
-                    var services = a.services ? a.services.split(',').filter(s => s.trim()) : [];
+                done.forEach(function(a, idx) {
+                    var services = a.services ? a.services.split(',').filter(function(s) { return s.trim(); }) : [];
                     var completedTime = formatTimestamp(a.completedAt);
                     // Shorten address to number, street, city
                     var addrParts = a.address.split(',');
@@ -10964,7 +10964,7 @@
                             ${a.notes ? `<p style="margin: 4px 0 0 0; font-size: 11px; color: var(--accent-info); font-style: italic;">Note: ${a.notes}</p>` : ''}
                             ${a.photos && a.photos.length > 0 ? `
                                 <div style="display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;">
-                                    ${a.photos.slice(0, 4).map(p => `<img src="${p.data}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">`).join('')}
+                                    ${a.photos.slice(0, 4).map(function(p) { return `<img src="${p.data}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">`; }).join('')}
                                     ${a.photos.length > 4 ? `<span style="width: 40px; height: 40px; background: var(--bg-card); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted);">+${a.photos.length - 4}</span>` : ''}
                                 </div>
                             ` : ''}
@@ -10976,7 +10976,7 @@
             // Skipped jobs
             if (skipped.length > 0) {
                 html += `<p style="margin: 15px 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-danger); text-transform: uppercase;">Skipped Jobs (${skipped.length})</p>`;
-                skipped.forEach((a, idx) => {
+                skipped.forEach(function(a, idx) {
                     var skippedTime = formatTimestamp(a.completedAt);
                     // Shorten address to number, street, city
                     var addrParts = a.address.split(',');
@@ -11006,7 +11006,7 @@
 
             if (!confirm('Delete this employee report? This cannot be undone.')) return;
 
-            employeeReports = employeeReports.filter(r => r.id !== viewingReportId);
+            employeeReports = employeeReports.filter(function(r) { return r.id !== viewingReportId; });
             saveEmployeeReports();
 
             closeViewEmployeeReportModal();
@@ -11016,11 +11016,11 @@
         function compileEmployeeReport() {
             if (!viewingReportId) return;
 
-            var report = employeeReports.find(r => r.id === viewingReportId);
+            var report = employeeReports.find(function(r) { return r.id === viewingReportId; });
             if (!report) return;
 
             // Add completed addresses from employee report to current list
-            var doneAddresses = report.addresses.filter(a => a.status === 'done');
+            var doneAddresses = report.addresses.filter(function(a) { return a.status === 'done'; });
 
             if (doneAddresses.length === 0) {
                 alert('No completed jobs to add.');
@@ -11033,7 +11033,7 @@
 
             allLists[newListId] = {
                 name: listName,
-                addresses: doneAddresses.map((a, idx) => ({
+                addresses: doneAddresses.map(function(a, idx) { return ({
                     id: Date.now() + idx,
                     address: a.address,
                     name: a.name,
@@ -11054,7 +11054,7 @@
             saveData();
 
             // Mark as compiled by removing from pending reports
-            employeeReports = employeeReports.filter(r => r.id !== viewingReportId);
+            employeeReports = employeeReports.filter(function(r) { return r.id !== viewingReportId; });
             saveEmployeeReports();
 
             closeViewEmployeeReportModal();
@@ -11073,7 +11073,7 @@
             if (!currentUser || currentUser.role !== 'boss') return;
 
             // Find or create boss work entry for current list
-            var bossEntry = bossReport.bossWork.find(w => w.routeName === listName);
+            var bossEntry = bossReport.bossWork.find(function(w) { return w.routeName === listName; });
             if (!bossEntry) {
                 bossEntry = {
                     routeName: listName,
@@ -11085,7 +11085,7 @@
             }
 
             // Add address if not already tracked
-            if (!bossEntry.addresses.find(a => a.address === address.address)) {
+            if (!bossEntry.addresses.find(function(a) { return a.address === address.address; })) {
                 bossEntry.addresses.push({
                     address: address.address,
                     name: address.name || '',
@@ -11111,10 +11111,10 @@
         function addEmployeeReportToMyReport() {
             if (!viewingReportId) return;
 
-            var report = employeeReports.find(r => r.id === viewingReportId);
+            var report = employeeReports.find(function(r) { return r.id === viewingReportId; });
             if (!report) return;
 
-            var doneAddresses = report.addresses.filter(a => a.status === 'done');
+            var doneAddresses = report.addresses.filter(function(a) { return a.status === 'done'; });
 
             if (doneAddresses.length === 0) {
                 alert('No completed jobs to add.');
@@ -11122,7 +11122,7 @@
             }
 
             // Check if already added
-            if (bossReport.employeeWork.find(w => w.originalReportId === report.id)) {
+            if (bossReport.employeeWork.find(function(w) { return w.originalReportId === report.id; })) {
                 alert('This report has already been added to My Report.');
                 return;
             }
@@ -11132,7 +11132,7 @@
                 employeeName: report.employeeName,
                 routeName: report.routeName,
                 routeTime: report.routeTime,
-                addresses: doneAddresses.map(a => ({
+                addresses: doneAddresses.map(function(a) { return ({
                     address: a.address,
                     name: a.name || '',
                     status: a.status,
@@ -11164,25 +11164,25 @@
             var allDates = [];
 
             // Collect all completion dates from boss work
-            bossReport.bossWork.forEach(work => {
-                work.addresses.forEach(a => {
+            bossReport.bossWork.forEach(function(work) {
+                work.addresses.forEach(function(a) {
                     if (a.completedAt) allDates.push(new Date(a.completedAt));
                 });
             });
 
             // Collect all completion dates from employee work
-            bossReport.employeeWork.forEach(work => {
-                work.addresses.forEach(a => {
+            bossReport.employeeWork.forEach(function(work) {
+                work.addresses.forEach(function(a) {
                     if (a.completedAt) allDates.push(new Date(a.completedAt));
                 });
             });
 
             if (allDates.length === 0) return '';
 
-            var minDate = new Date(Math.min(...allDates));
-            var maxDate = new Date(Math.max(...allDates));
+            var minDate = new Date(Math.min.apply(Math, allDates));
+            var maxDate = new Date(Math.max.apply(Math, allDates));
 
-            var formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            var formatDate = function(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
 
             if (formatDate(minDate) === formatDate(maxDate)) {
                 return formatDate(minDate);
@@ -11193,8 +11193,8 @@
 
         // Update the My Report summary counts
         function updateMyReportSummary() {
-            var bossJobCount = bossReport.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
-            var employeeJobCount = bossReport.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+            var bossJobCount = bossReport.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
+            var employeeJobCount = bossReport.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
             var totalDone = bossJobCount + employeeJobCount;
 
             var totalDoneEl = document.getElementById('my-report-total-done');
@@ -11229,12 +11229,12 @@
             var html = '';
 
             // Boss's own work
-            var bossJobCount = bossReport.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
+            var bossJobCount = bossReport.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
             if (bossReport.bossWork.length > 0 && bossJobCount > 0) {
                 html += `<p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-info); text-transform: uppercase;">My Work (${bossJobCount})</p>`;
 
-                bossReport.bossWork.forEach(work => {
-                    var doneAddrs = work.addresses.filter(a => a.status === 'done');
+                bossReport.bossWork.forEach(function(work) {
+                    var doneAddrs = work.addresses.filter(function(a) { return a.status === 'done'; });
                     if (doneAddrs.length === 0) return;
 
                     // Format route time
@@ -11251,7 +11251,7 @@
                                 <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${work.routeName}</span>
                                 <span style="font-size: 11px; color: var(--text-muted);">${doneAddrs.length} jobs${routeTimeStr ? ` • ${routeTimeStr}` : ''}</span>
                             </div>
-                            ${doneAddrs.map(a => {
+                            ${doneAddrs.map(function(a) {
                                 var addrParts = a.address.split(',');
                                 var shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
                                 var completedTime = formatTimestamp(a.completedAt);
@@ -11264,10 +11264,10 @@
 
             // Employee work
             if (bossReport.employeeWork.length > 0) {
-                var employeeJobCount = bossReport.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+                var employeeJobCount = bossReport.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
                 html += `<p style="margin: 15px 0 10px 0; font-size: 12px; font-weight: 600; color: var(--accent-warning); text-transform: uppercase;">Employee Work (${employeeJobCount})</p>`;
 
-                bossReport.employeeWork.forEach(work => {
+                bossReport.employeeWork.forEach(function(work) {
                     // Format route time
                     var routeTimeStr = '';
                     if (work.routeTime > 0) {
@@ -11285,7 +11285,7 @@
                                 </div>
                                 <span style="font-size: 11px; color: var(--text-muted);">${work.addresses.length} jobs${routeTimeStr ? ` • ${routeTimeStr}` : ''}</span>
                             </div>
-                            ${work.addresses.map(a => {
+                            ${work.addresses.map(function(a) {
                                 var addrParts = a.address.split(',');
                                 var shortAddr = addrParts.length >= 2 ? `${addrParts[0].trim()}, ${addrParts[1].trim()}` : addrParts[0].trim();
                                 var completedTime = formatTimestamp(a.completedAt);
@@ -11305,8 +11305,8 @@
 
         // Export My Report
         function exportMyReport() {
-            var bossJobCount = bossReport.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
-            var employeeJobCount = bossReport.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+            var bossJobCount = bossReport.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
+            var employeeJobCount = bossReport.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
 
             if (bossJobCount === 0 && employeeJobCount === 0) {
                 alert('No work to export yet.');
@@ -11321,8 +11321,8 @@
             if (bossJobCount > 0) {
                 text += `MY WORK (${bossJobCount} jobs)\n`;
                 text += `${'-'.repeat(30)}\n`;
-                bossReport.bossWork.forEach(work => {
-                    var doneAddrs = work.addresses.filter(a => a.status === 'done');
+                bossReport.bossWork.forEach(function(work) {
+                    var doneAddrs = work.addresses.filter(function(a) { return a.status === 'done'; });
                     if (doneAddrs.length === 0) return;
 
                     var routeTimeStr = '';
@@ -11333,7 +11333,7 @@
                     }
 
                     text += `\n${work.routeName}${routeTimeStr ? ` (${routeTimeStr})` : ''}\n`;
-                    doneAddrs.forEach(a => {
+                    doneAddrs.forEach(function(a) {
                         var completedTime = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${completedTime ? ` @ ${completedTime}` : ''}\n`;
                         if (a.notes) text += `    Note: ${a.notes}\n`;
@@ -11346,7 +11346,7 @@
             if (employeeJobCount > 0) {
                 text += `EMPLOYEE WORK (${employeeJobCount} jobs)\n`;
                 text += `${'-'.repeat(30)}\n`;
-                bossReport.employeeWork.forEach(work => {
+                bossReport.employeeWork.forEach(function(work) {
                     var routeTimeStr = '';
                     if (work.routeTime > 0) {
                         var hours = Math.floor(work.routeTime / 3600);
@@ -11355,7 +11355,7 @@
                     }
 
                     text += `\n${work.employeeName} - ${work.routeName}${routeTimeStr ? ` (${routeTimeStr})` : ''}\n`;
-                    work.addresses.forEach(a => {
+                    work.addresses.forEach(function(a) {
                         var completedTime = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${completedTime ? ` @ ${completedTime}` : ''}\n`;
                         if (a.notes) text += `    Note: ${a.notes}\n`;
@@ -11367,10 +11367,10 @@
             text += `Total: ${bossJobCount + employeeJobCount} jobs completed\n`;
 
             // Copy to clipboard
-            var copyAndPromptReset = () => {
+            var copyAndPromptReset = function() {
                 // Check if all master accounts are done or skipped
                 var allMasterComplete = masterAccounts.length > 0 &&
-                    masterAccounts.every(a => a.status === 'done' || a.status === 'skipped');
+                    masterAccounts.every(function(a) { return a.status === 'done' || a.status === 'skipped'; });
 
                 if (allMasterComplete) {
                     if (confirm('Report copied to clipboard!\n\nAll accounts are complete. Would you like to reset everything for the next storm?')) {
@@ -11381,7 +11381,7 @@
                 }
             };
 
-            navigator.clipboard.writeText(text).then(copyAndPromptReset).catch(() => {
+            navigator.clipboard.writeText(text).then(copyAndPromptReset).catch(function() {
                 // Fallback
                 var textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -11418,7 +11418,7 @@
             saveBossReport();
 
             // Reset all master accounts to pending
-            masterAccounts.forEach(a => {
+            masterAccounts.forEach(function(a) {
                 a.status = 'pending';
                 a.lastUpdatedBy = null;
                 a.lastUpdatedAt = null;
@@ -11429,10 +11429,10 @@
             saveMasterAccounts();
 
             // Reset all addresses in all lists to pending
-            Object.keys(allLists).forEach(listId => {
+            Object.keys(allLists).forEach(function(listId) {
                 var list = allLists[listId];
                 if (list.addresses) {
-                    list.addresses.forEach(addr => {
+                    list.addresses.forEach(function(addr) {
                         addr.status = 'pending';
                         addr.completedAt = null;
                         addr.completedServices = [];
@@ -11507,7 +11507,7 @@
             if (accountsEl) accountsEl.textContent = `${masterAccounts.length} account${masterAccounts.length !== 1 ? 's' : ''}`;
 
             // Employees count
-            var employeeCount = Object.values(allUsers).filter(u => u.role === 'employee').length;
+            var employeeCount = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; }).length;
             var employeesEl = document.getElementById('smart-folder-employees-count');
             if (employeesEl) employeesEl.textContent = `${employeeCount} employee${employeeCount !== 1 ? 's' : ''}`;
 
@@ -11648,7 +11648,7 @@
                 breadcrumbSub.style.display = 'inline';
                 breadcrumbSub.textContent = subData.dateRange || '';
                 breadcrumbCurrent.style.cursor = 'pointer';
-                breadcrumbCurrent.onclick = () => {
+                breadcrumbCurrent.onclick = function() {
                     currentViewingReport = null;
                     renderFolderInline(currentSmartFolder);
                 };
@@ -11692,7 +11692,7 @@
             if (listIds.length === 0) {
                 html += '<div style="background: var(--bg-card); border-radius: 14px; padding: 40px; text-align: center;"><p style="margin: 0; color: var(--text-muted); font-size: 14px;">No lists yet.<br><br>Create your first list to get started.</p></div>';
             } else {
-                listIds.forEach(listId => {
+                listIds.forEach(function(listId) {
                     var list = allLists[listId];
                     var addrCount = list.addresses ? list.addresses.length : 0;
                     var isActive = listId === currentListId;
@@ -11717,7 +11717,7 @@
             contentEl.innerHTML = html;
 
             // Add click handlers after rendering
-            document.querySelectorAll('.folder-list-item').forEach(item => {
+            document.querySelectorAll('.folder-list-item').forEach(function(item) {
                 item.addEventListener('click', function() {
                     var listId = this.getAttribute('data-listid');
                     if (listId) openListDetailInline(listId);
@@ -11782,7 +11782,7 @@
 
             var breadcrumbCurrent = document.getElementById('breadcrumb-current');
             breadcrumbCurrent.style.cursor = 'pointer';
-            breadcrumbCurrent.onclick = () => {
+            breadcrumbCurrent.onclick = function() {
                 currentViewingList = null;
                 renderFolderInline('lists');
             };
@@ -11860,7 +11860,7 @@
                 html += '<p style="margin: 0; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No addresses in this list yet.</p>';
             } else {
                 html += '<div style="max-height: 400px; overflow-y: auto;">';
-                list.addresses.forEach((addr, index) => {
+                list.addresses.forEach(function(addr, index) {
                     var addrParts = addr.address.split(',');
                     var shortAddr = addrParts.length >= 2 ? addrParts[0].trim() + ', ' + addrParts[1].trim() : addrParts[0].trim();
                     var addressServices = Array.isArray(addr.services) ? addr.services : (addr.services ? [addr.services] : []);
@@ -11873,8 +11873,8 @@
                     // Services checkboxes
                     var servicesHtml = '';
                     if (availableServices.length > 0) {
-                        availableServices.forEach(service => {
-                            var isChecked = addressServices.some(s => s.toLowerCase() === service.toLowerCase());
+                        availableServices.forEach(function(service) {
+                            var isChecked = addressServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); });
                             servicesHtml += '<label style="display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-secondary); border-radius: 6px; cursor: pointer; font-size: 11px;">' +
                                 '<input type="checkbox" class="folder-service-checkbox-' + listId + '-' + index + '" value="' + service + '" ' + (isChecked ? 'checked' : '') + ' style="width: 14px; height: 14px; accent-color: var(--accent-primary);">' +
                                 '<span style="color: var(--text-primary);">' + service + '</span>' +
@@ -11947,7 +11947,7 @@
 
             // Update tab buttons
             var tabs = ['single', 'paste', 'file'];
-            tabs.forEach(t => {
+            tabs.forEach(function(t) {
                 var btn = document.getElementById('folder-import-tab-' + t);
                 if (btn) {
                     if (t === tab) {
@@ -12024,7 +12024,7 @@
             if (nameInput) nameInput.value = '';
 
             // Re-render the list detail with timeout to ensure DOM updates
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12045,7 +12045,7 @@
                 return;
             }
 
-            var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = text.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             if (lines.length === 0) {
                 alert('No valid addresses found');
                 return;
@@ -12085,7 +12085,7 @@
             alert(lines.length + ' addresses imported');
 
             // Re-render the list detail with timeout to ensure DOM updates
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12111,7 +12111,7 @@
             folderSelectedFileName = fileName;
             folderSelectedFileContent = content;
 
-            var lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = content.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
 
             var selectedFileEl = document.getElementById('folder-selected-file');
             var fileNameEl = document.getElementById('folder-file-name');
@@ -12145,7 +12145,7 @@
                 return;
             }
 
-            var lines = folderSelectedFileContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = folderSelectedFileContent.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             if (lines.length === 0) {
                 alert('No valid addresses found in file');
                 return;
@@ -12183,7 +12183,7 @@
 
             // Clear file selection and re-render with timeout
             clearFolderSelectedFile();
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12211,7 +12211,7 @@
             }
 
             // Re-render the list detail with timeout
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12313,7 +12313,7 @@
                 } else {
                     var existingServices = Array.isArray(addr.services) ? addr.services : (addr.services ? [addr.services] : []);
                     selectedServices.forEach(function(service) {
-                        var alreadyHas = existingServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); });
+                        var alreadyHas = existingServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(; }); });
                         if (!alreadyHas) {
                             existingServices.push(service);
                         }
@@ -12360,7 +12360,7 @@
             }
 
             // Re-render the list detail with timeout to ensure DOM updates
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12389,7 +12389,7 @@
 
             // Get selected services
             var checkboxes = document.querySelectorAll('.folder-service-checkbox-' + listId + '-' + index + ':checked');
-            addr.services = Array.from(checkboxes).map(cb => cb.value);
+            addr.services = Array.from(checkboxes).map(function(cb) { return cb.value; });
 
             saveListsDirectly();
 
@@ -12400,7 +12400,7 @@
             }
 
             // Re-render the list detail with timeout to ensure DOM updates
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12434,7 +12434,7 @@
             saveListsDirectly();
             updateSmartFolderCounts();
             // Re-render with timeout
-            setTimeout(() => {
+            setTimeout(function() {
                 var contentEl = getFilesFolderContentEl();
                 if (contentEl) {
                     renderListDetailInline(contentEl, listId);
@@ -12476,7 +12476,7 @@
 
             // Group accounts by city
             var accountsByCity = {};
-            masterAccounts.forEach((a, index) => {
+            masterAccounts.forEach(function(a, index) {
                 var addrParts = a.address.split(',');
                 var city = 'Other';
                 if (addrParts.length >= 2) {
@@ -12486,7 +12486,7 @@
                 if (!accountsByCity[city]) {
                     accountsByCity[city] = [];
                 }
-                accountsByCity[city].push({ ...a, originalIndex: index });
+                accountsByCity[city].push(Object.assign({}, a, { originalIndex: index }));
             });
 
             var sortedCities = Object.keys(accountsByCity).sort();
@@ -12548,7 +12548,7 @@
                 html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 30px; text-align: center;"><p style="margin: 0; color: var(--text-muted); font-size: 13px;">No addresses yet.<br><br>Add addresses above or upload a master list from the Report tab.</p></div>';
             } else {
                 // Render cities as collapsible groups
-                sortedCities.forEach(city => {
+                sortedCities.forEach(function(city) {
                     var cityAccounts = accountsByCity[city];
                     var isExpanded = expandedCities[city] !== false;
                     var escapedCity = city.replace(/'/g, "\\'");
@@ -12564,7 +12564,7 @@
                         '</div>' +
                         '<div id="city-accounts-' + cityId + '" style="display: ' + (isExpanded ? 'block' : 'none') + ';">';
 
-                    cityAccounts.forEach(a => {
+                    cityAccounts.forEach(function(a) {
                         var addrParts = a.address.split(',');
                         var streetAddr = addrParts[0].trim();
                         var accountServices = Array.isArray(a.services) ? a.services : (a.services ? [a.services] : []);
@@ -12576,8 +12576,8 @@
                         // Services checkboxes
                         var servicesHtml = '';
                         if (availableServices.length > 0) {
-                            availableServices.forEach(service => {
-                                var isChecked = accountServices.some(s => s.toLowerCase() === service.toLowerCase());
+                            availableServices.forEach(function(service) {
+                                var isChecked = accountServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); });
                                 servicesHtml += '<label style="display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-card); border-radius: 6px; cursor: pointer; font-size: 11px;">' +
                                     '<input type="checkbox" class="account-service-checkbox-' + idx + '" value="' + service + '" ' + (isChecked ? 'checked' : '') + ' style="width: 14px; height: 14px; accent-color: var(--accent-primary);">' +
                                     '<span style="color: var(--text-primary);">' + service + '</span>' +
@@ -12636,7 +12636,7 @@
             contentEl.innerHTML = html;
 
             // Add click handlers for city headers
-            document.querySelectorAll('.city-header').forEach(header => {
+            document.querySelectorAll('.city-header').forEach(function(header) {
                 header.addEventListener('click', function() {
                     var city = this.getAttribute('data-city');
                     if (city) toggleCityDropdown(city);
@@ -12644,7 +12644,7 @@
             });
 
             // Add click handlers for account rows
-            document.querySelectorAll('.account-row').forEach(row => {
+            document.querySelectorAll('.account-row').forEach(function(row) {
                 row.addEventListener('click', function(e) {
                     e.stopPropagation();
                     var idx = this.getAttribute('data-accountidx');
@@ -12681,7 +12681,7 @@
 
             // Get selected services
             var checkboxes = document.querySelectorAll('.account-service-checkbox-' + index + ':checked');
-            account.services = Array.from(checkboxes).map(cb => cb.value);
+            account.services = Array.from(checkboxes).map(function(cb) { return cb.value; });
 
             saveMasterAccounts();
             renderAccountsFolderInline(getFilesFolderContentEl());
@@ -12726,7 +12726,7 @@
 
             // Update tab buttons
             var tabs = ['single', 'paste', 'file'];
-            tabs.forEach(t => {
+            tabs.forEach(function(t) {
                 var btn = document.getElementById('account-import-tab-' + t);
                 if (btn) {
                     if (t === tab) {
@@ -12764,13 +12764,13 @@
                 return;
             }
 
-            var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = text.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             if (lines.length === 0) {
                 alert('No valid addresses found');
                 return;
             }
 
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 masterAccounts.push({
                     address: line,
                     name: '',
@@ -12803,7 +12803,7 @@
             accountSelectedFileName = fileName;
             accountSelectedFileContent = content;
 
-            var lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = content.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
 
             document.getElementById('account-selected-file').style.display = 'block';
             document.getElementById('account-file-name').textContent = fileName;
@@ -12826,13 +12826,13 @@
                 return;
             }
 
-            var lines = accountSelectedFileContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = accountSelectedFileContent.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
             if (lines.length === 0) {
                 alert('No valid addresses found in file');
                 return;
             }
 
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 masterAccounts.push({
                     address: line,
                     name: '',
@@ -12886,7 +12886,7 @@
             if (listIds.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center;">No lists available. Create a list first.</p>';
             } else {
-                container.innerHTML = listIds.map(id => {
+                container.innerHTML = listIds.map(function(id) {
                     var list = allLists[id];
                     var count = list.addresses ? list.addresses.length : 0;
                     return `
@@ -12925,7 +12925,7 @@
                 name: account.name || '',
                 email: account.email || '',
                 price: account.price || '',
-                services: Array.isArray(account.services) ? [...account.services] : (account.services ? [account.services] : []),
+                services: Array.isArray(account.services) ? account.services.slice() : (account.services ? [account.services] : []),
                 completed: false,
                 addedAt: new Date().toISOString()
             };
@@ -12950,14 +12950,14 @@
         }
 
         // Close modal when clicking overlay
-        document.getElementById('add-account-to-list-modal').addEventListener('click', (e) => {
+        document.getElementById('add-account-to-list-modal').addEventListener('click', function(e) {
             if (e.target.id === 'add-account-to-list-modal') {
                 closeAddAccountToListModal();
             }
         });
 
         function renderEmployeesFolderInline(contentEl) {
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
             var html = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -12982,7 +12982,7 @@
             if (employees.length === 0) {
                 html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 30px; text-align: center;"><p style="margin: 0; color: var(--text-muted); font-size: 13px;">No employees yet.<br><br>Add your first employee above.</p></div>';
             } else {
-                employees.forEach(emp => {
+                employees.forEach(function(emp) {
                     var assignedCount = emp.assignedRoutes ? emp.assignedRoutes.length : 0;
                     html += `
                         <div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
@@ -13071,7 +13071,7 @@
         }
 
         function renderReportsFolderInline(contentEl) {
-            var sorted = [...archivedReports].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            var sorted = archivedReports.slice().sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt; }); });
 
             var html = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -13085,9 +13085,9 @@
             if (archivedReports.length === 0) {
                 html += '<div style="background: var(--bg-card); border-radius: 14px; padding: 40px; text-align: center;"><p style="margin: 0; color: var(--text-muted); font-size: 14px;">No reports yet.<br><br>Reports are saved here when you complete a storm and reset.</p></div>';
             } else {
-                sorted.forEach(report => {
-                    var bossJobCount = report.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
-                    var employeeJobCount = report.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+                sorted.forEach(function(report) {
+                    var bossJobCount = report.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
+                    var employeeJobCount = report.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
                     var totalJobs = bossJobCount + employeeJobCount;
 
                     html += `
@@ -13111,7 +13111,7 @@
         }
 
         function openArchivedReportInline(reportId) {
-            var report = archivedReports.find(r => r.id === reportId);
+            var report = archivedReports.find(function(r) { return r.id === reportId; });
             if (!report) return;
 
             currentViewingReport = report;
@@ -13129,8 +13129,8 @@
         }
 
         function renderReportDetailInline(contentEl, report) {
-            var bossJobCount = report.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
-            var employeeJobCount = report.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+            var bossJobCount = report.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
+            var employeeJobCount = report.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
             var totalJobs = bossJobCount + employeeJobCount;
 
             var html = `
@@ -13148,8 +13148,8 @@
             if (report.bossWork.length > 0 && bossJobCount > 0) {
                 html += `<div style="background: var(--bg-card); border-radius: 14px; padding: 14px; margin-bottom: 12px;">
                     <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--accent-info); text-transform: uppercase;">My Work (${bossJobCount} jobs)</p>`;
-                report.bossWork.forEach(work => {
-                    var doneAddrs = work.addresses.filter(a => a.status === 'done');
+                report.bossWork.forEach(function(work) {
+                    var doneAddrs = work.addresses.filter(function(a) { return a.status === 'done'; });
                     if (doneAddrs.length === 0) return;
 
                     var routeTimeStr = '';
@@ -13173,7 +13173,7 @@
             if (report.employeeWork.length > 0) {
                 html += `<div style="background: var(--bg-card); border-radius: 14px; padding: 14px; margin-bottom: 12px;">
                     <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--accent-warning); text-transform: uppercase;">Employee Work (${employeeJobCount} jobs)</p>`;
-                report.employeeWork.forEach(work => {
+                report.employeeWork.forEach(function(work) {
                     var routeTimeStr = '';
                     if (work.routeTime > 0) {
                         var hours = Math.floor(work.routeTime / 3600);
@@ -13192,12 +13192,12 @@
             }
 
             // Unprocessed reports
-            var unadded = report.employeeReports ? report.employeeReports.filter(r => !r.addedToMyReport) : [];
+            var unadded = report.employeeReports ? report.employeeReports.filter(function(r) { return !r.addedToMyReport; }) : [];
             if (unadded.length > 0) {
                 html += `<div style="background: var(--bg-card); border-radius: 14px; padding: 14px;">
                     <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--accent-danger); text-transform: uppercase;">Unprocessed Reports (${unadded.length})</p>`;
-                unadded.forEach(r => {
-                    var doneCount = r.addresses.filter(a => a.status === 'done').length;
+                unadded.forEach(function(r) {
+                    var doneCount = r.addresses.filter(function(a) { return a.status === 'done'; }).length;
                     html += `
                         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
                             <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">${r.employeeName}</p>
@@ -13214,7 +13214,7 @@
         function deleteArchivedReportInline(reportId) {
             if (!confirm('Delete this archived report? This cannot be undone.')) return;
 
-            archivedReports = archivedReports.filter(r => r.id !== reportId);
+            archivedReports = archivedReports.filter(function(r) { return r.id !== reportId; });
             saveArchivedReports();
             updateSmartFolderCounts();
 
@@ -13224,22 +13224,22 @@
         }
 
         function exportArchivedReport(reportId) {
-            var report = archivedReports.find(r => r.id === reportId);
+            var report = archivedReports.find(function(r) { return r.id === reportId; });
             if (!report) return;
 
-            var bossJobCount = report.bossWork.reduce((sum, w) => sum + w.addresses.filter(a => a.status === 'done').length, 0);
-            var employeeJobCount = report.employeeWork.reduce((sum, w) => sum + w.addresses.length, 0);
+            var bossJobCount = report.bossWork.reduce(function(sum, w) { return sum + w.addresses.filter(function(a) { return a.status === 'done'; }).length, 0; });
+            var employeeJobCount = report.employeeWork.reduce(function(sum, w) { return sum + w.addresses.length, 0; });
 
             var text = `SmartRoute Report - ${report.dateRange}\n`;
             text += `${'='.repeat(50)}\n\n`;
 
             if (bossJobCount > 0) {
                 text += `MY WORK (${bossJobCount} jobs)\n${'-'.repeat(30)}\n`;
-                report.bossWork.forEach(work => {
-                    var doneAddrs = work.addresses.filter(a => a.status === 'done');
+                report.bossWork.forEach(function(work) {
+                    var doneAddrs = work.addresses.filter(function(a) { return a.status === 'done'; });
                     if (doneAddrs.length === 0) return;
                     text += `\n${work.routeName}\n`;
-                    doneAddrs.forEach(a => {
+                    doneAddrs.forEach(function(a) {
                         var time = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${time ? ` @ ${time}` : ''}\n`;
                     });
@@ -13249,9 +13249,9 @@
 
             if (employeeJobCount > 0) {
                 text += `EMPLOYEE WORK (${employeeJobCount} jobs)\n${'-'.repeat(30)}\n`;
-                report.employeeWork.forEach(work => {
+                report.employeeWork.forEach(function(work) {
                     text += `\n${work.employeeName} - ${work.routeName}\n`;
-                    work.addresses.forEach(a => {
+                    work.addresses.forEach(function(a) {
                         var time = formatTimestamp(a.completedAt);
                         text += `  ✓ ${a.address}${time ? ` @ ${time}` : ''}\n`;
                     });
@@ -13260,9 +13260,9 @@
 
             text += `\n${'='.repeat(50)}\nTotal: ${bossJobCount + employeeJobCount} jobs\n`;
 
-            navigator.clipboard.writeText(text).then(() => {
+            navigator.clipboard.writeText(text).then(function() {
                 alert('Report copied to clipboard!');
-            }).catch(() => {
+            }).catch(function() {
                 var textarea = document.createElement('textarea');
                 textarea.value = text;
                 document.body.appendChild(textarea);
@@ -13276,7 +13276,7 @@
         function deleteArchivedReport(reportId) {
             if (!confirm('Delete this archived report? This cannot be undone.')) return;
 
-            archivedReports = archivedReports.filter(r => r.id !== reportId);
+            archivedReports = archivedReports.filter(function(r) { return r.id !== reportId; });
             saveArchivedReports();
             updateSmartFolderCounts();
 
@@ -13350,7 +13350,7 @@
                 if (listIds.length === 0) {
                     container.innerHTML = '<p style="margin: 0; padding: 8px; color: var(--text-muted); font-size: 13px; text-align: center;">No routes available. Create a route first.</p>';
                 } else {
-                    container.innerHTML = listIds.map(listId => {
+                    container.innerHTML = listIds.map(function(listId) {
                         var list = allLists[listId];
                         var addrCount = list.addresses ? list.addresses.length : 0;
                         return `
@@ -13403,7 +13403,7 @@
             var totalSkipped = 0;
             var importedRoutes = [];
 
-            checkboxes.forEach(checkbox => {
+            checkboxes.forEach(function(checkbox) {
                 var listId = checkbox.value;
                 var list = allLists[listId];
 
@@ -13412,9 +13412,9 @@
                 }
 
                 var addedFromList = 0;
-                list.addresses.forEach(addr => {
+                list.addresses.forEach(function(addr) {
                     var normalizedAddr = addr.address.trim().toLowerCase();
-                    var exists = masterAccounts.some(m => m.address.trim().toLowerCase() === normalizedAddr);
+                    var exists = masterAccounts.some(function(m) { return m.address.trim().toLowerCase() === normalizedAddr; });
                     if (!exists) {
                         masterAccounts.push({
                             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -13464,7 +13464,7 @@
                 return;
             }
 
-            var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var lines = text.split('\n').map(function(l) { return l.trim()).filter(function(l) { return l.length > 0; });
 
             if (lines.length === 0) {
                 alert('No valid addresses found.');
@@ -13472,9 +13472,9 @@
             }
 
             var addedCount = 0;
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 var normalizedAddr = line.trim().toLowerCase();
-                var exists = masterAccounts.some(m => m.address.trim().toLowerCase() === normalizedAddr);
+                var exists = masterAccounts.some(function(m) { return m.address.trim().toLowerCase() === normalizedAddr; });
                 if (!exists) {
                     masterAccounts.push({
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -13527,14 +13527,14 @@
             }
 
             // Count touch up lists that will be deleted
-            var touchUpCount = Object.keys(allLists).filter(id => allLists[id].isTouchUpList || allLists[id].isTemporary).length;
+            var touchUpCount = Object.keys(allLists).filter(function(id) { return allLists[id].isTouchUpList || allLists[id].isTemporary; }).length;
             var touchUpMsg = touchUpCount > 0 ? `\n\nThis will also delete ${touchUpCount} touch up list(s).` : '';
 
             if (!confirm(`Reset all ${masterAccounts.length} accounts to pending status?\n\nThis is useful when starting a new snow storm.${touchUpMsg}`)) {
                 return;
             }
 
-            masterAccounts.forEach(account => {
+            masterAccounts.forEach(function(account) {
                 account.status = 'pending';
                 account.lastUpdatedBy = null;
                 account.lastUpdatedAt = null;
@@ -13604,10 +13604,10 @@
             filterTabs.style.display = 'block';
 
             // Calculate stats
-            var doneCount = masterAccounts.filter(a => a.status === 'done').length;
-            var skippedCount = masterAccounts.filter(a => a.status === 'skipped').length;
-            var pendingCount = masterAccounts.filter(a => a.status === 'pending').length;
-            var incompleteCount = masterAccounts.filter(a => a.hasIncompleteServices).length;
+            var doneCount = masterAccounts.filter(function(a) { return a.status === 'done'; }).length;
+            var skippedCount = masterAccounts.filter(function(a) { return a.status === 'skipped'; }).length;
+            var pendingCount = masterAccounts.filter(function(a) { return a.status === 'pending'; }).length;
+            var incompleteCount = masterAccounts.filter(function(a) { return a.hasIncompleteServices; }).length;
             var totalCount = masterAccounts.length;
             var completedCount = doneCount + skippedCount;
             var progressPercent = Math.round((completedCount / totalCount) * 100);
@@ -13643,8 +13643,8 @@
 
             // Get all touch up lists
             var touchUpLists = Object.keys(allLists)
-                .filter(id => allLists[id].isTouchUpList)
-                .map(id => ({ id, ...allLists[id] }));
+                .filter(function(id) { return allLists[id].isTouchUpList; })
+                .map(function(id) { return Object.assign({ id: id }, allLists[id]); });
 
             if (touchUpLists.length === 0) {
                 section.style.display = 'none';
@@ -13653,16 +13653,16 @@
 
             section.style.display = 'block';
 
-            container.innerHTML = touchUpLists.map(list => {
+            container.innerHTML = touchUpLists.map(function(list) {
                 var addresses = list.addresses || [];
-                var doneCount = addresses.filter(a => a.status === 'done').length;
+                var doneCount = addresses.filter(function(a) { return a.status === 'done'; }).length;
                 var totalCount = addresses.length;
                 var progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
                 // Check if assigned to an employee
                 var assignedTo = 'Not assigned';
-                Object.values(allUsers).forEach(user => {
-                    if (user.role === 'employee' && user.assignedRoutes && user.assignedRoutes.includes(list.id)) {
+                Object.values(allUsers).forEach(function(user) {
+                    if (user.role === 'employee' && user.assignedRoutes && user.assignedRoutes.indexOf(list.id) !== -1) {
                         assignedTo = user.name || user.username;
                     }
                 });
@@ -13693,19 +13693,19 @@
             var employeesWithAddress = [];
 
             // Get all employees
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
-            employees.forEach(emp => {
+            employees.forEach(function(emp) {
                 // Check each route assigned to this employee
                 if (emp.assignedRoutes && emp.assignedRoutes.length > 0) {
-                    emp.assignedRoutes.forEach(routeId => {
+                    emp.assignedRoutes.forEach(function(routeId) {
                         var route = allLists[routeId];
                         if (route && route.addresses) {
                             // Check if this address exists in this route
-                            var hasAddress = route.addresses.some(addr =>
-                                addr.address.trim().toLowerCase() === normalizedAddr
-                            );
-                            if (hasAddress && !employeesWithAddress.includes(emp.name || emp.username)) {
+                            var hasAddress = route.addresses.some(function(addr) {
+                                return addr.address.trim().toLowerCase() === normalizedAddr;
+                            });
+                            if (hasAddress && !employeesWithAddress.indexOf(emp.name || emp.username) !== -1) {
                                 employeesWithAddress.push(emp.name || emp.username);
                             }
                         }
@@ -13721,13 +13721,13 @@
             var container = document.getElementById('live-accounts-list');
             if (!container) return;
 
-            var filteredAccounts = [...masterAccounts];
+            var filteredAccounts = masterAccounts.slice();
 
             // Apply filter
             if (liveFilterStatus === 'incomplete') {
-                filteredAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+                filteredAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
             } else if (liveFilterStatus !== 'all') {
-                filteredAccounts = masterAccounts.filter(a => a.status === liveFilterStatus);
+                filteredAccounts = masterAccounts.filter(function(a) { return a.status === liveFilterStatus; });
             }
 
             if (filteredAccounts.length === 0) {
@@ -13738,7 +13738,7 @@
             }
 
             // Sort: incomplete first (if showing all), pending next, then by last update time (newest first)
-            filteredAccounts.sort((a, b) => {
+            filteredAccounts.sort(function(a, b) {
                 // Incomplete services at the top when viewing all
                 if (liveFilterStatus === 'all') {
                     if (a.hasIncompleteServices && !b.hasIncompleteServices) return -1;
@@ -13752,7 +13752,7 @@
                 return 0;
             });
 
-            container.innerHTML = filteredAccounts.map(account => {
+            container.innerHTML = filteredAccounts.map(function(account) {
                 var hasIncomplete = account.hasIncompleteServices && account.incompleteServices && account.incompleteServices.length > 0;
                 var statusColor = hasIncomplete ? 'var(--accent-warning)' :
                                    account.status === 'done' ? 'var(--accent-success)' :
@@ -13822,7 +13822,7 @@
         var viewingLiveAccountId = null;
 
         function viewLiveAccount(accountId) {
-            var account = masterAccounts.find(a => a.id === accountId);
+            var account = masterAccounts.find(function(a) { return a.id === accountId; });
             if (!account) return;
 
             viewingLiveAccountId = accountId;
@@ -13839,7 +13839,7 @@
                     <div style="margin-top: 15px;">
                         <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Photos (${account.photos.length})</p>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                            ${account.photos.map((photo, idx) => `
+                            ${account.photos.map(function(photo, idx) { return `
                                 <img src="${photo}" onclick="viewLiveAccountPhoto(${idx})" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer;">
                             `).join('')}
                         </div>
@@ -13911,7 +13911,7 @@
         function manualUpdateLiveAccount(status) {
             if (!viewingLiveAccountId) return;
 
-            var account = masterAccounts.find(a => a.id === viewingLiveAccountId);
+            var account = masterAccounts.find(function(a) { return a.id === viewingLiveAccountId; });
             if (!account) return;
 
             account.status = status;
@@ -13926,7 +13926,7 @@
         // View photo in live account
         function viewLiveAccountPhoto(index) {
             if (!viewingLiveAccountId) return;
-            var account = masterAccounts.find(a => a.id === viewingLiveAccountId);
+            var account = masterAccounts.find(function(a) { return a.id === viewingLiveAccountId; });
             if (!account || !account.photos || !account.photos[index]) return;
 
             // Open photo in full view
@@ -14048,9 +14048,9 @@
             var list = getDailyTouchUpList();
 
             // Check if already in list
-            var existingIdx = list.addresses.findIndex(a =>
-                a.address.trim().toLowerCase() === account.address.trim().toLowerCase()
-            );
+            var existingIdx = list.addresses.findIndex(function(a) {
+                return a.address.trim().toLowerCase() === account.address.trim().toLowerCase();
+            });
 
             var touchUpEntry = {
                 id: account.id || Date.now().toString(),
@@ -14078,9 +14078,9 @@
             var list = getDailyTouchUpList();
             var normalizedAddr = address.trim().toLowerCase();
 
-            var idx = list.addresses.findIndex(a =>
-                a.address.trim().toLowerCase() === normalizedAddr
-            );
+            var idx = list.addresses.findIndex(function(a) {
+                return a.address.trim().toLowerCase() === normalizedAddr;
+            });
 
             if (idx >= 0) {
                 list.addresses.splice(idx, 1);
@@ -14093,9 +14093,9 @@
             var list = getDailyTouchUpList();
             var normalizedAddr = address.trim().toLowerCase();
 
-            var entry = list.addresses.find(a =>
-                a.address.trim().toLowerCase() === normalizedAddr
-            );
+            var entry = list.addresses.find(function(a) {
+                return a.address.trim().toLowerCase() === normalizedAddr;
+            });
 
             if (entry) {
                 entry.status = 'done';
@@ -14103,9 +14103,9 @@
                 saveDailyTouchUpList();
 
                 // Also update master account
-                var masterAccount = masterAccounts.find(m =>
-                    m.address.trim().toLowerCase() === normalizedAddr
-                );
+                var masterAccount = masterAccounts.find(function(m) {
+                    return m.address.trim().toLowerCase() === normalizedAddr;
+                });
                 if (masterAccount) {
                     masterAccount.hasIncompleteServices = false;
                     masterAccount.incompleteServices = [];
@@ -14121,7 +14121,7 @@
             if (!section || !container) return;
 
             var list = getDailyTouchUpList();
-            var pendingAddresses = list.addresses.filter(a => a.status === 'pending');
+            var pendingAddresses = list.addresses.filter(function(a) { return a.status === 'pending'; });
 
             if (pendingAddresses.length === 0) {
                 section.style.display = 'none';
@@ -14131,7 +14131,7 @@
             section.style.display = 'block';
             document.getElementById('manage-daily-touchup-count').textContent = pendingAddresses.length;
 
-            container.innerHTML = pendingAddresses.map(addr => {
+            container.innerHTML = pendingAddresses.map(function(addr) {
                 var services = addr.incompleteServices ? addr.incompleteServices.join(', ') : '';
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 3px solid var(--accent-warning);">
@@ -14158,7 +14158,7 @@
 
         // Open touch up list modal
         function openTouchUpListModal() {
-            var incompleteAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+            var incompleteAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
             if (incompleteAccounts.length === 0) {
                 alert('No accounts with incomplete services found.');
                 return;
@@ -14166,9 +14166,9 @@
 
             // Get all unique incomplete services
             var allIncompleteServices = new Set();
-            incompleteAccounts.forEach(a => {
+            incompleteAccounts.forEach(function(a) {
                 if (a.incompleteServices) {
-                    a.incompleteServices.forEach(s => allIncompleteServices.add(s));
+                    a.incompleteServices.forEach(function(s) { return allIncompleteServices.add(s); });
                 }
             });
 
@@ -14182,7 +14182,7 @@
             // Render service filter buttons
             var filtersContainer = document.getElementById('touchup-service-filters');
             var filterHtml = `<button onclick="filterTouchUpByService('all')" id="touchup-filter-all" style="padding: 8px 14px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">All Services</button>`;
-            allIncompleteServices.forEach(service => {
+            allIncompleteServices.forEach(function(service) {
                 var serviceId = service.replace(/\s+/g, '-').toLowerCase();
                 filterHtml += `<button onclick="filterTouchUpByService('${service.replace(/'/g, "\\'")}')" id="touchup-filter-${serviceId}" style="padding: 8px 14px; border: none; border-radius: 8px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer;">${service}</button>`;
             });
@@ -14190,13 +14190,13 @@
 
             // Reset filter and selection
             touchUpServiceFilter = 'all';
-            touchUpSelectedAccounts = incompleteAccounts.map(a => a.id);
+            touchUpSelectedAccounts = incompleteAccounts.map(function(a) { return a.id; });
 
             // Populate employee dropdown
             var employeeSelect = document.getElementById('touchup-assign-employee');
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
             employeeSelect.innerHTML = '<option value="">Boss Only (Don\'t assign)</option>';
-            employees.forEach(emp => {
+            employees.forEach(function(emp) {
                 employeeSelect.innerHTML += `<option value="${emp.username}">${emp.name || emp.username}</option>`;
             });
 
@@ -14219,7 +14219,7 @@
 
             // Update filter button styles
             var allFilters = document.querySelectorAll('[id^="touchup-filter-"]');
-            allFilters.forEach(btn => {
+            allFilters.forEach(function(btn) {
                 btn.style.background = 'var(--bg-secondary)';
                 btn.style.color = 'var(--text-secondary)';
             });
@@ -14237,13 +14237,13 @@
             }
 
             // Update selected accounts based on filter
-            var incompleteAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+            var incompleteAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
             if (service === 'all') {
-                touchUpSelectedAccounts = incompleteAccounts.map(a => a.id);
+                touchUpSelectedAccounts = incompleteAccounts.map(function(a) { return a.id; });
             } else {
                 touchUpSelectedAccounts = incompleteAccounts
-                    .filter(a => a.incompleteServices && a.incompleteServices.includes(service))
-                    .map(a => a.id);
+                    .filter(function(a) { return a.incompleteServices && a.incompleteServices.indexOf(service) !== -1; })
+                    .map(function(a) { return a.id; });
             }
 
             // Update count
@@ -14267,12 +14267,12 @@
         // Render the touch up addresses list
         function renderTouchUpAddressesList() {
             var container = document.getElementById('touchup-addresses-list');
-            var filteredAccounts = masterAccounts.filter(a => a.hasIncompleteServices);
+            var filteredAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
 
             if (touchUpServiceFilter !== 'all') {
-                filteredAccounts = filteredAccounts.filter(a =>
-                    a.incompleteServices && a.incompleteServices.includes(touchUpServiceFilter)
-                );
+                filteredAccounts = filteredAccounts.filter(function(a) {
+                    return a.incompleteServices && a.incompleteServices.indexOf(touchUpServiceFilter) !== -1;
+                });
             }
 
             if (filteredAccounts.length === 0) {
@@ -14280,8 +14280,8 @@
                 return;
             }
 
-            container.innerHTML = filteredAccounts.map(account => {
-                var isSelected = touchUpSelectedAccounts.includes(account.id);
+            container.innerHTML = filteredAccounts.map(function(account) {
+                var isSelected = touchUpSelectedAccounts.indexOf(account.id) !== -1;
                 return `
                     <label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer;">
                         <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleTouchUpAccount('${account.id}')" style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent-warning);">
@@ -14306,11 +14306,11 @@
             var assignedEmployee = document.getElementById('touchup-assign-employee').value;
 
             // Get selected accounts
-            var selectedAccounts = masterAccounts.filter(a => touchUpSelectedAccounts.includes(a.id));
+            var selectedAccounts = masterAccounts.filter(function(a) { return touchUpSelectedAccounts.indexOf(a.id) !== -1; });
 
             // Create new list with the touch up addresses
             var newListId = 'touchup_' + Date.now();
-            var touchUpAddresses = selectedAccounts.map((account, idx) => ({
+            var touchUpAddresses = selectedAccounts.map(function(account, idx) { return ({
                 id: Date.now() + idx,
                 address: account.address,
                 name: account.name || '',
@@ -14345,7 +14345,7 @@
 
             // Create Touch Up Master List for boss tracking
             var touchUpMasterListId = 'touchup_master_' + Date.now();
-            var touchUpMasterAccounts = selectedAccounts.map(account => ({
+            var touchUpMasterAccounts = selectedAccounts.map(function(account) { return ({
                 id: account.id + '_touchup',
                 address: account.address,
                 name: account.name || '',
@@ -14408,7 +14408,7 @@
             // Auto-optimize if enabled and we have enough addresses
             if (userSettings.autoOptimize && selectedAccounts.length >= 2) {
                 alert(`Touch up list "${listName}" created with ${selectedAccounts.length} addresses!\n\n${assignmentMsg}\n\nAuto-optimizing route...`);
-                setTimeout(() => {
+                setTimeout(function() {
                     optimizeRoute();
                 }, 500);
             } else {
@@ -14418,8 +14418,8 @@
 
         // Clean up temporary touch up lists (called when resetting for new storm)
         function cleanupTouchUpLists() {
-            var touchUpListIds = Object.keys(allLists).filter(id => allLists[id].isTouchUpList || allLists[id].isTemporary);
-            touchUpListIds.forEach(id => {
+            var touchUpListIds = Object.keys(allLists).filter(function(id) { return allLists[id].isTouchUpList || allLists[id].isTemporary; });
+            touchUpListIds.forEach(function(id) {
                 delete allLists[id];
             });
             window.activeTouchUpLists = [];
@@ -14462,9 +14462,9 @@
 
             section.style.display = 'block';
 
-            container.innerHTML = window.touchUpMasterLists.map(masterList => {
+            container.innerHTML = window.touchUpMasterLists.map(function(masterList) {
                 var accounts = masterList.accounts || [];
-                var doneCount = accounts.filter(a => a.status === 'done').length;
+                var doneCount = accounts.filter(function(a) { return a.status === 'done'; }).length;
                 var totalCount = accounts.length;
                 var progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
                 var isComplete = doneCount === totalCount && totalCount > 0;
@@ -14489,15 +14489,15 @@
 
         // Open touch up master detail view
         function openTouchUpMasterDetail(masterListId) {
-            var masterList = window.touchUpMasterLists.find(ml => ml.id === masterListId);
+            var masterList = window.touchUpMasterLists.find(function(ml) { return ml.id === masterListId; });
             if (!masterList) return;
 
             // Show a modal with the touch up master list details
             var accounts = masterList.accounts || [];
-            var doneAccounts = accounts.filter(a => a.status === 'done');
-            var pendingAccounts = accounts.filter(a => a.status === 'pending');
+            var doneAccounts = accounts.filter(function(a) { return a.status === 'done'; });
+            var pendingAccounts = accounts.filter(function(a) { return a.status === 'pending'; });
 
-            var accountsHtml = accounts.map(acc => {
+            var accountsHtml = accounts.map(function(acc) {
                 var statusColor = acc.status === 'done' ? 'var(--accent-success)' : 'var(--accent-info)';
                 var statusBg = acc.status === 'done' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)';
                 var updateInfo = '';
@@ -14570,9 +14570,9 @@
         function syncTouchUpToMaster(routeListId, address, status, employeeName) {
             if (!window.touchUpMasterLists) return;
 
-            window.touchUpMasterLists.forEach(masterList => {
+            window.touchUpMasterLists.forEach(function(masterList) {
                 if (masterList.linkedRouteId === routeListId) {
-                    var account = masterList.accounts.find(a => a.address.trim().toLowerCase() === address.trim().toLowerCase());
+                    var account = masterList.accounts.find(function(a) { return a.address.trim().toLowerCase() === address.trim().toLowerCase(); });
                     if (account) {
                         account.status = status;
                         account.lastUpdatedBy = employeeName;
@@ -14602,7 +14602,7 @@
 
             // Get assigned routes
             var assignedRoutes = currentUser.assignedRoutes || [];
-            var availableRoutes = assignedRoutes.filter(id => allLists[id]);
+            var availableRoutes = assignedRoutes.filter(function(id) { return allLists[id]; });
 
             if (availableRoutes.length > 1) {
                 floatingBtn.style.display = 'block';
@@ -14620,12 +14620,12 @@
             var container = document.getElementById('route-switcher-list');
 
             var routes = assignedRoutes
-                .filter(id => allLists[id])
-                .map(id => ({ id, ...allLists[id] }));
+                .filter(function(id) { return allLists[id]; })
+                .map(function(id) { return Object.assign({ id: id }, allLists[id]); });
 
-            container.innerHTML = routes.map(route => {
+            container.innerHTML = routes.map(function(route) {
                 var addresses = route.addresses || [];
-                var doneCount = addresses.filter(a => a.status === 'done').length;
+                var doneCount = addresses.filter(function(a) { return a.status === 'done'; }).length;
                 var totalCount = addresses.length;
                 var progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
                 var isCurrentRoute = route.id === currentListId;
@@ -14706,19 +14706,19 @@
             }
 
             // Get all employees
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
             if (employees.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 10px;">No employees added yet</p>';
                 return;
             }
 
-            container.innerHTML = employees.map(emp => {
+            container.innerHTML = employees.map(function(emp) {
                 var assignedRoutes = emp.assignedRoutes || [];
-                var routeCount = assignedRoutes.filter(id => allLists[id]).length;
+                var routeCount = assignedRoutes.filter(function(id) { return allLists[id]; }).length;
 
                 // Check for active touch up routes
-                var hasTouchUp = assignedRoutes.some(id => allLists[id] && allLists[id].isTouchUpList);
+                var hasTouchUp = assignedRoutes.some(function(id) { return allLists[id] && allLists[id].isTouchUpList; });
 
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 8px;">
@@ -14745,12 +14745,12 @@
 
             // Store original boss user
             if (!viewingAsEmployee) {
-                originalBossUser = { ...currentUser };
+                originalBossUser = Object.assign({}, currentUser);
             }
 
             // Switch to employee view
             viewingAsEmployee = true;
-            currentUser = { ...emp };
+            currentUser = Object.assign({}, emp);
 
             // Filter lists to only show employee's assigned routes
             var assignedRoutes = emp.assignedRoutes || [];
@@ -14799,7 +14799,7 @@
             document.body.style.paddingTop = '0';
 
             // Restore boss user
-            currentUser = { ...originalBossUser };
+            currentUser = Object.assign({}, originalBossUser);
             viewingAsEmployee = false;
             originalBossUser = null;
 
@@ -14819,7 +14819,7 @@
             var emp = allUsers[username];
             if (!emp || emp.role !== 'employee') return;
 
-            var assignedRoutes = (emp.assignedRoutes || []).filter(id => allLists[id]);
+            var assignedRoutes = (emp.assignedRoutes || []).filter(function(id) { return allLists[id]; });
 
             if (assignedRoutes.length === 0) {
                 alert(`${emp.name || username} has no routes assigned.`);
@@ -14827,7 +14827,7 @@
             }
 
             // Show options
-            var routeOptions = assignedRoutes.map((id, idx) => {
+            var routeOptions = assignedRoutes.map(function(id, idx) {
                 var list = allLists[id];
                 var isTouchUp = list.isTouchUpList ? ' (Touch Up)' : '';
                 return `${idx + 1}. ${list.name}${isTouchUp}`;
@@ -14928,7 +14928,7 @@
             }
 
             // Get all employees
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
 
             if (employees.length === 0) {
                 section.style.display = 'none';
@@ -14937,7 +14937,7 @@
 
             section.style.display = 'block';
 
-            container.innerHTML = employees.map(emp => {
+            container.innerHTML = employees.map(function(emp) {
                 var passwordDisplay = emp.plainPassword || '(hidden - set before this feature)';
                 var isHidden = !emp.plainPassword;
 
