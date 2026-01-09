@@ -3428,6 +3428,57 @@
                 saveUsers();
             }
 
+            // Create test list with addresses if it doesn't exist
+            if (!allLists['test']) {
+                var testAddresses = [
+                    '649 Putnam Pike Greenville ri',
+                    '685 Admiral St Providence ri',
+                    '712 Smith St Providence ri',
+                    '20 Oakdale St Providence',
+                    '41 Yorkshire St, Providence ri',
+                    '118 Vandewater St, Providence ri',
+                    '48 Greeley St, Providence ri',
+                    '45 Greeley St, Providence ri',
+                    '45 Opper St, Providence ri',
+                    '44 Cambridge St, Providence ri',
+                    '422 Smithfield Ave, Pawtucket ri',
+                    '221 Parkside Ave, Pawtucket ri',
+                    '80 Vineyard St, Pawtucket',
+                    '18 Eleventh St, Providence ri',
+                    '59 8th St, Providence RI',
+                    '111 Medway st Providence ri',
+                    '96 E Manning St, Providence ri',
+                    '1000 Willett Ave, Riverside ri',
+                    '7 Forbes St, Riverside ri',
+                    '1228 Westminster St, Providence ri',
+                    '1510 Westminster st Providence ri',
+                    '44 Cambridge St, Providence ri'
+                ];
+
+                allLists['test'] = {
+                    id: 'test',
+                    name: 'Test',
+                    addresses: testAddresses.map(function(addr, idx) {
+                        return {
+                            id: 'test-addr-' + idx,
+                            address: addr,
+                            name: '',
+                            notes: '',
+                            services: '',
+                            status: 'pending',
+                            verified: false,
+                            coords: null
+                        };
+                    }),
+                    startLocation: '685 Admiral St Providence ri',
+                    createdAt: new Date().toISOString()
+                };
+                currentListId = 'test';
+                addresses = allLists['test'].addresses;
+                startLocation = allLists['test'].startLocation;
+                saveData();
+            }
+
             currentUser = Object.assign({}, allUsers[devUsername]);
             delete currentUser.password;
             localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
@@ -5335,11 +5386,13 @@
                 var startAddrLower = startAddr.toLowerCase().replace(/[^a-z0-9]/g, '');
 
                 var geocoded = [];
+                var skippedAddresses = []; // Track addresses that match start location
                 for (var i = 0; i < addresses.length; i++) {
                     // Skip if this address matches the start location
                     var addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
                     if (addrLower === startAddrLower || addrLower.includes(startAddrLower) || startAddrLower.includes(addrLower)) {
                         console.log('Skipping address "' + addresses[i].address + '" - matches start location');
+                        skippedAddresses.push(addresses[i]);
                         continue;
                     }
 
@@ -5585,7 +5638,7 @@
                     });
                 });
 
-                addresses = reorderedAddresses.concat(invalidAddresses);
+                addresses = reorderedAddresses.concat(invalidAddresses).concat(skippedAddresses);
 
                 currentIndex = 0;
                 saveData();
@@ -5618,7 +5671,7 @@
                 alert(msg);
 
                 // Update route map if initialized
-                if (routeMap) {
+                if (window.routeMap) {
                     updateMapMarkers();
                 }
 
@@ -7752,8 +7805,8 @@
                 setTimeout(() => {
                     initializeMap();
                     // Resize map after showing (fixes WebGL display issues)
-                    if (routeMap) {
-                        routeMap.resize();
+                    if (window.routeMap) {
+                        window.routeMap.resize();
                     }
                 }, 100);
             }
@@ -10000,9 +10053,9 @@
 
         // ============ INTERACTIVE MAP ============
 
-        var routeMap = null;
-        var mapMarkers = [];
-        var routeLinesVisible = true;
+        window.routeMap = null;
+        window.mapMarkers = [];
+        window.routeLinesVisible = true;
 
         function initializeMap() {
             var mapboxKey = getMapboxKey();
@@ -10015,18 +10068,18 @@
             document.getElementById('map-placeholder').style.display = 'none';
 
             // Initialize map if not already done
-            if (!routeMap) {
+            if (!window.routeMap) {
                 mapboxgl.accessToken = mapboxKey;
-                routeMap = new mapboxgl.Map({
+                window.routeMap = new mapboxgl.Map({
                     container: 'route-map',
                     style: 'mapbox://styles/mapbox/dark-v11',
                     center: [-71.5, 41.8], // Rhode Island default
                     zoom: 10
                 });
 
-                routeMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                window.routeMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-                routeMap.on('load', function() {
+                window.routeMap.on('load', function() {
                     updateMapMarkers();
                 });
             } else {
@@ -10037,22 +10090,25 @@
         }
 
         async function updateMapMarkers() {
-            if (!routeMap) return;
 
             // Wait for map to be loaded
-            if (!routeMap.loaded()) {
-                routeMap.on('load', updateMapMarkers);
+            if (!window.routeMap.loaded()) {
+                window.routeMap.on('load', updateMapMarkers);
                 return;
             }
 
             // Clear existing markers
-            mapMarkers.forEach(function(m) { m.remove(); });
-            mapMarkers = [];
+            if (typeof window.mapMarkers !== 'undefined' && window.mapMarkers && window.mapMarkers.length > 0) {
+                for (var i = 0; i < window.mapMarkers.length; i++) {
+                    window.mapMarkers[i].remove();
+                }
+            }
+            window.mapMarkers = [];
 
             // Remove existing route layer if present
-            if (routeMap.getSource('route')) {
-                routeMap.removeLayer('route-line');
-                routeMap.removeSource('route');
+            if (window.routeMap.getSource('route')) {
+                window.routeMap.removeLayer('route-line');
+                window.routeMap.removeSource('route');
             }
 
             var mapboxKey = getMapboxKey();
@@ -10060,7 +10116,8 @@
             var routeCoords = [];
 
             // Add start location marker
-            var startAddr = document.getElementById('start-location-input').value.trim();
+            var startInputEl = document.getElementById('start-location-input');
+            var startAddr = startInputEl ? startInputEl.value.trim() : '';
             if (startAddr) {
                 var startGeo = await geocodeMapbox(startAddr, mapboxKey);
                 if (startGeo) {
@@ -10072,9 +10129,9 @@
                     var marker = new mapboxgl.Marker(el)
                         .setLngLat([startGeo.lon, startGeo.lat])
                         .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML('<strong>Start</strong><br>' + startAddr))
-                        .addTo(routeMap);
+                        .addTo(window.routeMap);
 
-                    mapMarkers.push(marker);
+                    window.mapMarkers.push(marker);
                     bounds.extend([startGeo.lon, startGeo.lat]);
                     routeCoords.push([startGeo.lon, startGeo.lat]);
                 }
@@ -10103,9 +10160,9 @@
                 var marker = new mapboxgl.Marker(el)
                     .setLngLat([addr.coords.lon, addr.coords.lat])
                     .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml))
-                    .addTo(routeMap);
+                    .addTo(window.routeMap);
 
-                mapMarkers.push(marker);
+                window.mapMarkers.push(marker);
                 bounds.extend([addr.coords.lon, addr.coords.lat]);
                 routeCoords.push([addr.coords.lon, addr.coords.lat]);
             });
@@ -10116,13 +10173,13 @@
             }
 
             // Fit map to show all markers
-            if (mapMarkers.length > 0) {
-                routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+            if (window.mapMarkers.length > 0) {
+                window.routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
             }
         }
 
         async function drawRouteLine(coords, mapboxKey) {
-            if (!routeMap || coords.length < 2) return;
+            if (!window.routeMap || coords.length < 2) return;
 
             // Get actual driving route from MapBox Directions API
             // Need to batch if more than 25 waypoints
@@ -10156,8 +10213,8 @@
             }
 
             // Add the route line to the map
-            if (routeMap.getSource('route')) {
-                routeMap.getSource('route').setData({
+            if (window.routeMap.getSource('route')) {
+                window.routeMap.getSource('route').setData({
                     type: 'Feature',
                     properties: {},
                     geometry: {
@@ -10166,7 +10223,7 @@
                     }
                 });
             } else {
-                routeMap.addSource('route', {
+                window.routeMap.addSource('route', {
                     type: 'geojson',
                     data: {
                         type: 'Feature',
@@ -10178,7 +10235,7 @@
                     }
                 });
 
-                routeMap.addLayer({
+                window.routeMap.addLayer({
                     id: 'route-line',
                     type: 'line',
                     source: 'route',
@@ -10189,34 +10246,34 @@
                     paint: {
                         'line-color': '#06b6d4',
                         'line-width': 4,
-                        'line-opacity': routeLinesVisible ? 0.8 : 0
+                        'line-opacity': window.routeLinesVisible ? 0.8 : 0
                     }
                 });
             }
         }
 
         function fitMapToBounds() {
-            if (!routeMap || mapMarkers.length === 0) return;
+            if (!window.routeMap || window.mapMarkers.length === 0) return;
 
             var bounds = new mapboxgl.LngLatBounds();
-            mapMarkers.forEach(marker => {
+            window.mapMarkers.forEach(marker => {
                 bounds.extend(marker.getLngLat());
             });
 
-            routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+            window.routeMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
         }
 
         function toggleRouteLines() {
-            if (!routeMap) return;
+            if (!window.routeMap) return;
 
-            routeLinesVisible = !routeLinesVisible;
+            window.routeLinesVisible = !window.routeLinesVisible;
             var btn = document.getElementById('toggle-route-btn');
 
-            if (routeMap.getLayer('route-line')) {
-                routeMap.setPaintProperty('route-line', 'line-opacity', routeLinesVisible ? 0.8 : 0);
+            if (window.routeMap.getLayer('route-line')) {
+                window.routeMap.setPaintProperty('route-line', 'line-opacity', window.routeLinesVisible ? 0.8 : 0);
             }
 
-            btn.textContent = routeLinesVisible ? 'Hide Route' : 'Show Route';
+            btn.textContent = window.routeLinesVisible ? 'Hide Route' : 'Show Route';
         }
 
         // Go to map tab and focus on specific pin
@@ -10236,8 +10293,8 @@
 
                 // Wait for map to be ready then fly to the pin
                 setTimeout(() => {
-                    if (routeMap) {
-                        routeMap.flyTo({
+                    if (window.routeMap) {
+                        window.routeMap.flyTo({
                             center: [addr.coords.lon, addr.coords.lat],
                             zoom: 16,
                             duration: 1000
@@ -10245,8 +10302,8 @@
 
                         // Open the popup for this marker
                         var markerIndex = addressIndex + 1; // +1 because marker 0 is start
-                        if (mapMarkers[markerIndex]) {
-                            mapMarkers[markerIndex].togglePopup();
+                        if (window.mapMarkers[markerIndex]) {
+                            window.mapMarkers[markerIndex].togglePopup();
                         }
                     }
                 }, 500);
