@@ -7395,31 +7395,32 @@
 
         // ============ MOVE ADDRESS BETWEEN LISTS ============
 
-        let movingAddressId = null;
+        var movingAddressId = null;
 
         // ============ UNREALISTIC DRIVE TIME CHECK ============
 
-        let driveTimeCheckCallback = null;
-        let driveTimeIssues = [];
-        let currentDriveTimeIssue = null;
-        let skipAllDriveTimeChecks = false;
-        let driveTimeResolve = null;
+        var driveTimeCheckCallback = null;
+        var driveTimeIssues = [];
+        var currentDriveTimeIssue = null;
+        var skipAllDriveTimeChecks = false;
+        var driveTimeResolve = null;
 
-        // Check matrix for unrealistic drive times (threshold: 50 min = 3000 seconds)
-        const DRIVE_TIME_THRESHOLD = 3000;
+        // Check matrix for unrealistic drive times (threshold: 75 min = 4500 seconds)
+        var DRIVE_TIME_THRESHOLD = 4500;
 
         async function checkForUnrealisticDriveTimes(matrix, points, startAddr, valid) {
+            var DRIVE_TIME_THRESHOLD = 4500; // 75 minutes in seconds
             if (skipAllDriveTimeChecks) return true;
 
             driveTimeIssues = [];
 
             // Build labels for addresses
-            const labels = [startAddr, ...valid.map(v => v.address.address)];
+            var labels = [startAddr].concat(valid.map(function(v) { return v.address.address; }));
 
             // Check all pairs for unusually long drive times
-            for (let i = 0; i < matrix.length; i++) {
-                for (let j = 0; j < matrix.length; j++) {
-                    const time = matrix[i][j];
+            for (var i = 0; i < matrix.length; i++) {
+                for (var j = 0; j < matrix.length; j++) {
+                    var time = matrix[i][j];
                     // Skip self, skip if not a valid number, skip if under threshold
                     if (i === j) continue;
                     if (!isFinite(time) || isNaN(time)) continue;
@@ -7443,22 +7444,24 @@
             }
 
             // Remove duplicate pairs (A->B and B->A)
-            const seen = new Set();
-            driveTimeIssues = driveTimeIssues.filter(issue => {
-                const key = [issue.fromIndex, issue.toIndex].sort().join('-');
-                if (seen.has(key)) return false;
-                seen.add(key);
+            var seen = {};
+            driveTimeIssues = driveTimeIssues.filter(function(issue) {
+                var pair = [issue.fromIndex, issue.toIndex].sort();
+                var key = pair[0] + '-' + pair[1];
+                if (seen[key]) return false;
+                seen[key] = true;
                 return true;
             });
 
             if (driveTimeIssues.length === 0) return true;
 
             // Show issues one at a time
-            for (const issue of driveTimeIssues) {
+            for (var k = 0; k < driveTimeIssues.length; k++) {
+                var issue = driveTimeIssues[k];
                 if (skipAllDriveTimeChecks) break;
 
                 currentDriveTimeIssue = issue;
-                const result = await showDriveTimeModal(issue);
+                var result = await showDriveTimeModal(issue);
 
                 if (result === 'fix') {
                     // User wants to fix - return false to stop optimization
@@ -7471,21 +7474,21 @@
         }
 
         function showDriveTimeModal(issue) {
-            return new Promise((resolve) => {
+            return new Promise(function(resolve) {
                 driveTimeResolve = resolve;
 
-                let timeStr;
+                var timeStr;
                 if (!isFinite(issue.time) || isNaN(issue.time)) {
                     timeStr = 'Unable to calculate (address may be invalid)';
                 } else {
-                    const minutes = Math.round(issue.time / 60);
-                    const hours = Math.floor(minutes / 60);
-                    const remainingMins = minutes % 60;
+                    var minutes = Math.round(issue.time / 60);
+                    var hours = Math.floor(minutes / 60);
+                    var remainingMins = minutes % 60;
 
                     if (hours > 0) {
-                        timeStr = `${hours} hour${hours > 1 ? 's' : ''} ${remainingMins} min`;
+                        timeStr = hours + ' hour' + (hours > 1 ? 's' : '') + ' ' + remainingMins + ' min';
                     } else {
-                        timeStr = `${minutes} minutes`;
+                        timeStr = minutes + ' minutes';
                     }
                 }
 
@@ -7502,7 +7505,7 @@
             currentDriveTimeIssue = null;
         }
 
-        let fixAddressIssue = null;
+        var fixAddressIssue = null;
 
         function showFixAddressForm() {
             if (!currentDriveTimeIssue) return;
@@ -7511,50 +7514,42 @@
             closeDriveTimeModal();
 
             // Build edit form for the addresses involved
-            const container = document.getElementById('fix-address-options');
-            let html = '';
+            var container = document.getElementById('fix-address-options');
+            var html = '';
 
             // From address (if not start location)
             if (!fixAddressIssue.fromIsStart && fixAddressIssue.fromAddressIdx !== null) {
-                const addr = addresses[fixAddressIssue.fromAddressIdx];
-                html += `
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Address 1:</label>
-                        <input type="text" id="fix-addr-from" value="${addr.address}"
-                            style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">
-                    </div>
-                `;
+                var addr = addresses[fixAddressIssue.fromAddressIdx];
+                html += '<div style="margin-bottom: 15px;">' +
+                    '<label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Address 1:</label>' +
+                    '<input type="text" id="fix-addr-from" value="' + addr.address + '"' +
+                    ' style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">' +
+                    '</div>';
             }
 
             // To address (if not start location)
             if (!fixAddressIssue.toIsStart && fixAddressIssue.toAddressIdx !== null) {
-                const addr = addresses[fixAddressIssue.toAddressIdx];
-                html += `
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">${fixAddressIssue.fromIsStart ? 'Address:' : 'Address 2:'}</label>
-                        <input type="text" id="fix-addr-to" value="${addr.address}"
-                            style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">
-                    </div>
-                `;
+                var addr2 = addresses[fixAddressIssue.toAddressIdx];
+                html += '<div style="margin-bottom: 15px;">' +
+                    '<label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">' + (fixAddressIssue.fromIsStart ? 'Address:' : 'Address 2:') + '</label>' +
+                    '<input type="text" id="fix-addr-to" value="' + addr2.address + '"' +
+                    ' style="width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px;">' +
+                    '</div>';
             }
 
             // If one is the start location, show it as non-editable
             if (fixAddressIssue.fromIsStart) {
-                html = `
-                    <div style="margin-bottom: 15px; opacity: 0.6;">
-                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>
-                        <p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">${fixAddressIssue.fromLabel}</p>
-                    </div>
-                ` + html;
+                html = '<div style="margin-bottom: 15px; opacity: 0.6;">' +
+                    '<label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>' +
+                    '<p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">' + fixAddressIssue.fromLabel + '</p>' +
+                    '</div>' + html;
             }
 
             if (fixAddressIssue.toIsStart) {
-                html += `
-                    <div style="margin-bottom: 15px; opacity: 0.6;">
-                        <label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>
-                        <p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">${fixAddressIssue.toLabel}</p>
-                    </div>
-                `;
+                html += '<div style="margin-bottom: 15px; opacity: 0.6;">' +
+                    '<label style="display: block; color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">Start Location (not editable here):</label>' +
+                    '<p style="color: var(--text-primary); font-size: 14px; margin: 0; padding: 14px; background: var(--bg-secondary); border-radius: 12px;">' + fixAddressIssue.toLabel + '</p>' +
+                    '</div>';
             }
 
             container.innerHTML = html;
@@ -10051,7 +10046,7 @@
             }
 
             // Clear existing markers
-            mapMarkers.forEach(m => m.remove());
+            mapMarkers.forEach(function(m) { m.remove(); });
             mapMarkers = [];
 
             // Remove existing route layer if present
@@ -10060,23 +10055,23 @@
                 routeMap.removeSource('route');
             }
 
-            const mapboxKey = getMapboxKey();
-            const bounds = new mapboxgl.LngLatBounds();
-            const routeCoords = [];
+            var mapboxKey = getMapboxKey();
+            var bounds = new mapboxgl.LngLatBounds();
+            var routeCoords = [];
 
             // Add start location marker
-            const startAddr = document.getElementById('start-location-input').value.trim();
+            var startAddr = document.getElementById('start-location-input').value.trim();
             if (startAddr) {
-                const startGeo = await geocodeMapbox(startAddr, mapboxKey);
+                var startGeo = await geocodeMapbox(startAddr, mapboxKey);
                 if (startGeo) {
-                    const el = document.createElement('div');
+                    var el = document.createElement('div');
                     el.className = 'map-marker';
                     el.style.cssText = 'width: 30px; height: 30px; background: #4caf50; border: 3px solid white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);';
                     el.innerHTML = 'S';
 
-                    const marker = new mapboxgl.Marker(el)
+                    var marker = new mapboxgl.Marker(el)
                         .setLngLat([startGeo.lon, startGeo.lat])
-                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>Start</strong><br>${startAddr}`))
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML('<strong>Start</strong><br>' + startAddr))
                         .addTo(routeMap);
 
                     mapMarkers.push(marker);
@@ -10086,28 +10081,28 @@
             }
 
             // Add address markers
-            addresses.forEach((addr, index) => {
+            addresses.forEach(function(addr, index) {
                 if (!addr.coords) return;
 
                 // Determine color based on status
-                let color = '#3b82f6'; // pending - accent-info
+                var color = '#3b82f6'; // pending - accent-info
                 if (addr.status === 'done') color = '#6b7280'; // text-muted
                 else if (addr.status === 'skipped') color = '#ef4444'; // accent-danger
                 if (index === currentIndex && addr.status === 'pending') color = '#06b6d4'; // current - accent-primary (cyan)
 
-                const el = document.createElement('div');
+                var el = document.createElement('div');
                 el.className = 'map-marker';
-                el.style.cssText = `width: 26px; height: 26px; background: ${color}; border: 2px solid white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);`;
+                el.style.cssText = 'width: 26px; height: 26px; background: ' + color + '; border: 2px solid white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);';
                 el.innerHTML = (index + 1).toString();
 
-                const marker = new mapboxgl.Marker(el)
+                var popupHtml = '<strong>' + (index + 1) + '. ' + addr.name + '</strong><br>' +
+                    addr.address + '<br>' +
+                    '<span style="color: ' + color + ';">' + addr.status + '</span>' +
+                    (addr.notes ? '<br><em>' + addr.notes + '</em>' : '');
+
+                var marker = new mapboxgl.Marker(el)
                     .setLngLat([addr.coords.lon, addr.coords.lat])
-                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                        <strong>${index + 1}. ${addr.name}</strong><br>
-                        ${addr.address}<br>
-                        <span style="color: ${color};">${addr.status}</span>
-                        ${addr.notes ? `<br><em>${addr.notes}</em>` : ''}
-                    `))
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml))
                     .addTo(routeMap);
 
                 mapMarkers.push(marker);
