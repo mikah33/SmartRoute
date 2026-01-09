@@ -5382,17 +5382,28 @@
                     return;
                 }
 
-                // Filter out any address that matches the start location
+                // Filter out any address that matches the start or end location
                 var startAddrLower = startAddr.toLowerCase().replace(/[^a-z0-9]/g, '');
+                var endAddrLower = endAddr ? endAddr.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
 
                 var geocoded = [];
-                var skippedAddresses = []; // Track addresses that match start location
+                var startMatchAddresses = []; // Addresses matching start location
+                var endMatchAddresses = []; // Addresses matching end location
                 for (var i = 0; i < addresses.length; i++) {
-                    // Skip if this address matches the start location
+                    // Check if this address matches start or end location
                     var addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                    // Check for start match
                     if (addrLower === startAddrLower || addrLower.includes(startAddrLower) || startAddrLower.includes(addrLower)) {
                         console.log('Skipping address "' + addresses[i].address + '" - matches start location');
-                        skippedAddresses.push(addresses[i]);
+                        startMatchAddresses.push(addresses[i]);
+                        continue;
+                    }
+
+                    // Check for end match
+                    if (endAddrLower && (addrLower === endAddrLower || addrLower.includes(endAddrLower) || endAddrLower.includes(addrLower))) {
+                        console.log('Skipping address "' + addresses[i].address + '" - matches end location');
+                        endMatchAddresses.push(addresses[i]);
                         continue;
                     }
 
@@ -5638,7 +5649,8 @@
                     });
                 });
 
-                addresses = reorderedAddresses.concat(invalidAddresses).concat(skippedAddresses);
+                // Order: start matches first, then optimized route, then invalid, then end matches last
+                addresses = startMatchAddresses.concat(reorderedAddresses).concat(invalidAddresses).concat(endMatchAddresses);
 
                 currentIndex = 0;
                 saveData();
