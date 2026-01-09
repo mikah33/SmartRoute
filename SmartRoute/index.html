@@ -5324,33 +5324,33 @@
                 // Step 1: Geocode all addresses
                 updateStatus('Finding locations...');
 
-                const startCoords = await geocodeMapbox(startAddr, mapboxKey);
+                var startCoords = await geocodeMapbox(startAddr, mapboxKey);
                 if (!startCoords) {
                     optimizingModal.classList.remove('active');
-                    alert(`Could not find start address: ${startAddr}`);
+                    alert('Could not find start address: ' + startAddr);
                     return;
                 }
 
                 // Filter out any address that matches the start location
-                const startAddrLower = startAddr.toLowerCase().replace(/[^a-z0-9]/g, '');
+                var startAddrLower = startAddr.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-                const geocoded = [];
-                for (let i = 0; i < addresses.length; i++) {
+                var geocoded = [];
+                for (var i = 0; i < addresses.length; i++) {
                     // Skip if this address matches the start location
-                    const addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    var addrLower = addresses[i].address.toLowerCase().replace(/[^a-z0-9]/g, '');
                     if (addrLower === startAddrLower || addrLower.includes(startAddrLower) || startAddrLower.includes(addrLower)) {
-                        console.log(`Skipping address "${addresses[i].address}" - matches start location`);
+                        console.log('Skipping address "' + addresses[i].address + '" - matches start location');
                         continue;
                     }
 
-                    updateStatus(`Locating ${i + 1}/${addresses.length}...`);
+                    updateStatus('Locating ' + (i + 1) + '/' + addresses.length + '...');
 
                     // Use saved coords if already verified
-                    let coords;
+                    var coords;
                     if (addresses[i].verified && addresses[i].coords) {
                         coords = addresses[i].coords;
                     } else {
-                        const geo = await geocodeMapbox(addresses[i].address, mapboxKey);
+                        var geo = await geocodeMapbox(addresses[i].address, mapboxKey);
                         if (geo) {
                             coords = { lat: geo.lat, lon: geo.lon };
                             // Auto-save verification AND update address to verified version
@@ -5374,13 +5374,13 @@
                 saveData();
                 renderManageList();
 
-                const valid = geocoded.filter(g => g.coords !== null);
-                const invalid = geocoded.filter(g => g.coords === null);
+                var valid = geocoded.filter(function(g) { return g.coords !== null; });
+                var invalid = geocoded.filter(function(g) { return g.coords === null; });
 
                 if (invalid.length > 0) {
-                    const failedAddrs = invalid.map(g => g.address.address).join('\n');
+                    var failedAddrs = invalid.map(function(g) { return g.address.address; }).join('\n');
                     optimizingModal.classList.remove('active');
-                    alert(`Could not find ${invalid.length} address(es):\n\n${failedAddrs}\n\nPlease fix these addresses and try again.`);
+                    alert('Could not find ' + invalid.length + ' address(es):\n\n' + failedAddrs + '\n\nPlease fix these addresses and try again.');
                     return;
                 }
 
@@ -5393,45 +5393,45 @@
                 updateStatus('Getting driving distances...');
 
                 // Step 2: Build driving distance matrix using MapBox Matrix API
-                const allPoints = [{ coords: startCoords, isStart: true }, ...valid];
+                var allPoints = [{ coords: startCoords, isStart: true }].concat(valid);
 
                 // Debug: log geocoded coordinates
                 console.log('=== GEOCODED COORDINATES ===');
                 console.log('Start:', startAddr, startCoords);
-                valid.forEach((v, i) => {
-                    console.log(`${i}: ${v.address.address}`, v.coords);
+                valid.forEach(function(v, i) {
+                    console.log(i + ': ' + v.address.address, v.coords);
                 });
 
                 // Check for duplicate coordinates (same location addresses)
-                const coordGroups = {};
-                valid.forEach((v, i) => {
-                    const key = `${v.coords.lat.toFixed(5)},${v.coords.lon.toFixed(5)}`;
+                var coordGroups = {};
+                valid.forEach(function(v, i) {
+                    var key = v.coords.lat.toFixed(5) + ',' + v.coords.lon.toFixed(5);
                     if (!coordGroups[key]) coordGroups[key] = [];
                     coordGroups[key].push(i);
                 });
-                const duplicateLocations = Object.entries(coordGroups).filter(([k, v]) => v.length > 1);
+                var duplicateLocations = Object.entries(coordGroups).filter(function(entry) { return entry[1].length > 1; });
                 if (duplicateLocations.length > 0) {
                     console.log('=== DUPLICATE LOCATION GROUPS ===');
-                    duplicateLocations.forEach(([coords, indices]) => {
-                        console.log(`Location ${coords}: addresses at indices ${indices.join(', ')}`);
+                    duplicateLocations.forEach(function(entry) {
+                        console.log('Location ' + entry[0] + ': addresses at indices ' + entry[1].join(', '));
                     });
                 }
 
-                const distanceMatrix = await buildDrivingMatrix(allPoints, mapboxKey, btn);
+                var distanceMatrix = await buildDrivingMatrix(allPoints, mapboxKey, btn);
 
                 // Debug: log distance matrix
                 console.log('=== DRIVING TIME MATRIX (seconds) ===');
-                const labels = ['START', ...valid.map(v => v.address.address.substring(0, 20))];
-                console.table(distanceMatrix.map((row, i) => {
-                    const obj = { from: labels[i] };
-                    row.forEach((val, j) => obj[labels[j]] = Math.round(val));
+                var labels = ['START'].concat(valid.map(function(v) { return v.address.address.substring(0, 20); }));
+                console.table(distanceMatrix.map(function(row, i) {
+                    var obj = { from: labels[i] };
+                    row.forEach(function(val, j) { obj[labels[j]] = Math.round(val); });
                     return obj;
                 }));
 
                 // Check for unrealistic drive times
                 updateStatus('Checking drive times...');
                 skipAllDriveTimeChecks = false; // Reset for new optimization
-                const driveTimeOk = await checkForUnrealisticDriveTimes(distanceMatrix, allPoints, startAddr, valid);
+                var driveTimeOk = await checkForUnrealisticDriveTimes(distanceMatrix, allPoints, startAddr, valid);
 
                 if (!driveTimeOk) {
                     // User chose to fix an address
@@ -5444,10 +5444,10 @@
                 updateStatus('Calculating best route...');
 
                 // Step 3: Handle priority addresses - they should come first but still be optimized
-                const priorityIndices = [];
-                const normalIndices = [];
+                var priorityIndices = [];
+                var normalIndices = [];
 
-                valid.forEach((v, idx) => {
+                valid.forEach(function(v, idx) {
                     if (v.address.priority === true) {
                         priorityIndices.push(idx);
                     } else {
@@ -5456,20 +5456,20 @@
                 });
 
                 console.log('=== PRIORITY HANDLING ===');
-                console.log(`Priority addresses: ${priorityIndices.length}, Normal: ${normalIndices.length}`);
+                console.log('Priority addresses: ' + priorityIndices.length + ', Normal: ' + normalIndices.length);
 
-                let optimizedIndices;
+                var optimizedIndices;
 
                 if (priorityIndices.length > 0 && normalIndices.length > 0) {
                     // Build sub-matrices for priority and normal addresses
                     // First optimize priority addresses from start
-                    const priorityMatrixSize = priorityIndices.length + 1;
-                    const priorityMatrix = [];
+                    var priorityMatrixSize = priorityIndices.length + 1;
+                    var priorityMatrix = [];
 
                     // Build priority matrix (start + priority addresses only)
-                    for (let i = 0; i <= priorityIndices.length; i++) {
+                    for (var i = 0; i <= priorityIndices.length; i++) {
                         priorityMatrix[i] = [];
-                        for (let j = 0; j <= priorityIndices.length; j++) {
+                        for (var j = 0; j <= priorityIndices.length; j++) {
                             if (i === 0 && j === 0) {
                                 priorityMatrix[i][j] = 0;
                             } else if (i === 0) {
@@ -5486,21 +5486,21 @@
                     }
 
                     // Solve TSP for priority addresses (returns 0-based indices)
-                    const priorityOrder = solveTSP(priorityMatrix, priorityIndices.length);
-                    const orderedPriority = priorityOrder.map(i => priorityIndices[i]);
+                    var priorityOrder = solveTSP(priorityMatrix, priorityIndices.length);
+                    var orderedPriority = priorityOrder.map(function(i) { return priorityIndices[i]; });
 
-                    console.log('Priority order:', orderedPriority.map(i => valid[i].address.address));
+                    console.log('Priority order:', orderedPriority.map(function(i) { return valid[i].address.address; }));
 
                     // Now optimize normal addresses starting from last priority address
-                    const lastPriorityIdx = orderedPriority[orderedPriority.length - 1];
+                    var lastPriorityIdx = orderedPriority[orderedPriority.length - 1];
 
                     // Build normal matrix with last priority as "start"
-                    const normalMatrixSize = normalIndices.length + 1;
-                    const normalMatrix = [];
+                    var normalMatrixSize = normalIndices.length + 1;
+                    var normalMatrix = [];
 
-                    for (let i = 0; i <= normalIndices.length; i++) {
+                    for (var i = 0; i <= normalIndices.length; i++) {
                         normalMatrix[i] = [];
-                        for (let j = 0; j <= normalIndices.length; j++) {
+                        for (var j = 0; j <= normalIndices.length; j++) {
                             if (i === 0 && j === 0) {
                                 normalMatrix[i][j] = 0;
                             } else if (i === 0) {
@@ -5517,13 +5517,13 @@
                     }
 
                     // Solve TSP for normal addresses (returns 0-based indices)
-                    const normalOrder = solveTSP(normalMatrix, normalIndices.length);
-                    const orderedNormal = normalOrder.map(i => normalIndices[i]);
+                    var normalOrder = solveTSP(normalMatrix, normalIndices.length);
+                    var orderedNormal = normalOrder.map(function(i) { return normalIndices[i]; });
 
-                    console.log('Normal order:', orderedNormal.map(i => valid[i].address.address));
+                    console.log('Normal order:', orderedNormal.map(function(i) { return valid[i].address.address; }));
 
                     // Combine: priority first, then normal
-                    optimizedIndices = [...orderedPriority, ...orderedNormal];
+                    optimizedIndices = orderedPriority.concat(orderedNormal);
                 } else {
                     // All same priority - just run normal TSP
                     // solveTSP already returns 0-based indices
@@ -5534,84 +5534,87 @@
                 // This handles duplicate addresses that should be consecutive
                 if (duplicateLocations.length > 0) {
                     console.log('=== GROUPING DUPLICATE LOCATIONS ===');
-                    const finalOrder = [];
-                    const used = new Set();
+                    var finalOrderGroup = [];
+                    var used = {};
 
-                    for (const idx of optimizedIndices) {
-                        if (used.has(idx)) continue;
+                    for (var ii = 0; ii < optimizedIndices.length; ii++) {
+                        var idx = optimizedIndices[ii];
+                        if (used[idx]) continue;
 
                         // Find all addresses at this same location
-                        const v = valid[idx];
-                        const key = `${v.coords.lat.toFixed(5)},${v.coords.lon.toFixed(5)}`;
-                        const group = coordGroups[key];
+                        var v = valid[idx];
+                        var key = v.coords.lat.toFixed(5) + ',' + v.coords.lon.toFixed(5);
+                        var group = coordGroups[key];
 
                         if (group && group.length > 1) {
                             // Add all addresses at this location consecutively
-                            for (const groupIdx of group) {
-                                if (!used.has(groupIdx)) {
-                                    finalOrder.push(groupIdx);
-                                    used.add(groupIdx);
+                            for (var jj = 0; jj < group.length; jj++) {
+                                var groupIdx = group[jj];
+                                if (!used[groupIdx]) {
+                                    finalOrderGroup.push(groupIdx);
+                                    used[groupIdx] = true;
                                 }
                             }
                         } else {
-                            finalOrder.push(idx);
-                            used.add(idx);
+                            finalOrderGroup.push(idx);
+                            used[idx] = true;
                         }
                     }
-                    optimizedIndices = finalOrder;
+                    optimizedIndices = finalOrderGroup;
                     console.log('After grouping:', optimizedIndices);
                 }
 
                 // Step 4: Reorder addresses
-                const finalOrder = optimizedIndices.map(i => valid[i]);
+                var finalOrder = optimizedIndices.map(function(i) { return valid[i]; });
 
                 // Preserve the address objects but reorder them
-                const reorderedAddresses = finalOrder.map(p => {
+                var reorderedAddresses = finalOrder.map(function(p) {
                     // Find the original address object and copy it
-                    const original = p.address;
-                    return {
-                        ...original,
+                    var original = p.address;
+                    return Object.assign({}, original, {
                         status: 'pending',
                         completedAt: undefined
-                    };
+                    });
                 });
 
                 // Add invalid addresses at the end
-                const invalidAddresses = invalid.map(p => ({
-                    ...p.address,
-                    status: 'pending',
-                    completedAt: undefined
-                }));
+                var invalidAddresses = invalid.map(function(p) {
+                    return Object.assign({}, p.address, {
+                        status: 'pending',
+                        completedAt: undefined
+                    });
+                });
 
-                addresses = [...reorderedAddresses, ...invalidAddresses];
+                addresses = reorderedAddresses.concat(invalidAddresses);
 
                 currentIndex = 0;
                 saveData();
                 renderAll();
 
                 // Calculate total drive time for display
-                let totalDriveTime = 0;
-                let prevIdx = 0; // start
-                for (const addrIdx of optimizedIndices) {
+                var totalDriveTime = 0;
+                var prevIdx = 0; // start
+                for (var k = 0; k < optimizedIndices.length; k++) {
+                    var addrIdx = optimizedIndices[k];
                     totalDriveTime += distanceMatrix[prevIdx][addrIdx + 1];
                     prevIdx = addrIdx + 1;
                 }
-                const totalMins = Math.round(totalDriveTime / 60);
-                const hours = Math.floor(totalMins / 60);
-                const mins = totalMins % 60;
-                const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
+                var totalMins = Math.round(totalDriveTime / 60);
+                var hours = Math.floor(totalMins / 60);
+                var mins = totalMins % 60;
+                var timeStr = hours > 0 ? hours + 'h ' + mins + 'm' : mins + ' min';
 
                 // Save route stats
                 allLists[currentListId].totalDriveTime = totalDriveTime;
                 allLists[currentListId].lastOptimized = new Date().toISOString();
 
-                let msg = `Route optimized!\n\n`;
-                msg += `${valid.length} addresses reordered for minimum drive time\n`;
-                msg += `Total drive time: ${timeStr}`;
+                var msg = 'Route optimized!\n\n';
+                msg += valid.length + ' addresses reordered for minimum drive time\n';
+                msg += 'Total drive time: ' + timeStr;
                 if (invalid.length > 0) {
-                    msg += `\n${invalid.length} couldn't be located (placed at end)`;
+                    msg += '\n' + invalid.length + ' couldn\'t be located (placed at end)';
                 }
-                msg += `\n\nCheck the Map tab to see your route!`;
+                msg += '\n\nCheck the Map tab to see your route!';
                 alert(msg);
 
                 // Update route map if initialized
