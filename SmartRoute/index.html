@@ -56,6 +56,21 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        button {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button svg {
+            pointer-events: none;
+        }
+
+        /* Ensure all clickable elements have proper touch handling */
+        [onclick] {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
             margin: 0;
@@ -72,8 +87,8 @@
             max-width: 500px;
             margin: 0 auto;
             padding: 15px;
-            padding-top: calc(55px + env(safe-area-inset-top)); /* Space for fixed header */
-            padding-bottom: calc(140px + env(safe-area-inset-bottom)); /* Extra space for bottom nav + scrolling */
+            padding-top: calc(75px + env(safe-area-inset-top, 47px)); /* Space for fixed header (header height: ~68px + safe area) */
+            padding-bottom: calc(140px + env(safe-area-inset-bottom, 34px)); /* Extra space for bottom nav + scrolling */
         }
 
         /* Bottom Navigation Bar */
@@ -82,14 +97,14 @@
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: calc(68px + env(safe-area-inset-bottom));
+            height: calc(68px + env(safe-area-inset-bottom, 34px));
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-around;
             align-items: center;
             padding: 0 8px;
-            padding-top: calc(env(safe-area-inset-bottom) / 2);
+            padding-top: calc(env(safe-area-inset-bottom, 34px) / 2);
             z-index: 9999;
             -webkit-transform: translate3d(0,0,0);
             transform: translate3d(0,0,0);
@@ -208,23 +223,42 @@
             z-index: 9998;
             text-align: center;
             padding: 12px 15px;
-            padding-top: calc(12px + env(safe-area-inset-top));
+            padding-top: calc(12px + env(safe-area-inset-top, 47px));
             background: var(--bg-primary);
             border-bottom: 1px solid var(--border-subtle);
             -webkit-transform: translate3d(0,0,0);
             transform: translate3d(0,0,0);
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
+            pointer-events: auto;
         }
 
         #profile-settings-btn {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            pointer-events: auto;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         #profile-settings-btn:active {
             background: var(--bg-hover) !important;
-            transform: translateY(-50%) scale(0.95);
+            transform: scale(0.95);
+        }
+
+        #profile-settings-btn svg {
+            pointer-events: none;
+        }
+
+        /* Login modal buttons */
+        #sign-in-btn:active {
+            opacity: 0.7 !important;
+            transform: scale(0.98) !important;
+        }
+
+        #create-account-btn:active {
+            opacity: 0.7 !important;
+            transform: scale(0.98) !important;
         }
 
         header h1 {
@@ -984,6 +1018,59 @@
             display: flex;
         }
 
+        /* iOS-style settings rows */
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+
+        .settings-row:active {
+            background: var(--bg-card);
+        }
+
+        .settings-input-row {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-input-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-input-row label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .settings-input-row input,
+        .settings-input-row select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .settings-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
         .modal {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -1052,6 +1139,8 @@
             cursor: pointer;
             font-family: inherit;
             transition: transform 0.1s, opacity 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .modal-btn:active {
@@ -1263,14 +1352,17 @@
 </head>
 <body>
     <!-- Fixed Header - hidden until login -->
-    <header id="app-header" style="display: none; position: relative;">
-        <h1 style="margin: 0; pointer-events: none;">SmartRoute</h1>
-        <button id="profile-settings-btn" onclick="openSettingsModal()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: var(--radius-sm); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: auto;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-        </button>
+    <header id="app-header" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 500px; margin: 0 auto; pointer-events: auto;">
+            <div style="width: 44px;"></div>
+            <h1 style="margin: 0; flex: 1; text-align: center;">SmartRoute</h1>
+            <button type="button" id="profile-settings-btn" onclick="openSettingsModal()" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: var(--radius-sm); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; z-index: 100; position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent; pointer-events: auto;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" style="pointer-events: none;">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+        </div>
         <!-- Hidden elements for compatibility -->
         <p id="current-list-name" style="display: none;"></p>
         <select class="list-dropdown" id="list-select" onchange="switchList()" style="display: none;"></select>
@@ -1371,37 +1463,37 @@
                     <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Folders</p>
                     <div id="smart-folders-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <!-- Lists Folder -->
-                        <div onclick="openSmartFolder('lists')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s;">
-                            <div style="width: 40px; height: 40px; background: rgba(59, 130, 246, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#3b82f6"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
+                        <button onclick="openSmartFolder('lists')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                            <div style="width: 40px; height: 40px; background: rgba(59, 130, 246, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; pointer-events: none;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#3b82f6" style="pointer-events: none;"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
                             </div>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">Lists</p>
-                            <p id="smart-folder-lists-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">0 routes</p>
-                        </div>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); pointer-events: none;">Lists</p>
+                            <p id="smart-folder-lists-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted); pointer-events: none;">0 routes</p>
+                        </button>
                         <!-- Addresses Folder -->
-                        <div onclick="openSmartFolder('accounts')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s;">
-                            <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <button onclick="openSmartFolder('accounts')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                            <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; pointer-events: none;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#10b981" style="pointer-events: none;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                             </div>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">Addresses</p>
-                            <p id="smart-folder-accounts-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">0 addresses</p>
-                        </div>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); pointer-events: none;">Addresses</p>
+                            <p id="smart-folder-accounts-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted); pointer-events: none;">0 addresses</p>
+                        </button>
                         <!-- Employees Folder -->
-                        <div onclick="openSmartFolder('employees')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s;">
-                            <div style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
+                        <button onclick="openSmartFolder('employees')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                            <div style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; pointer-events: none;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#f59e0b" style="pointer-events: none;"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
                             </div>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">Employees</p>
-                            <p id="smart-folder-employees-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">0 employees</p>
-                        </div>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); pointer-events: none;">Employees</p>
+                            <p id="smart-folder-employees-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted); pointer-events: none;">0 employees</p>
+                        </button>
                         <!-- Reports Folder -->
-                        <div onclick="openSmartFolder('reports')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s;">
-                            <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#8b5cf6"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
+                        <button onclick="openSmartFolder('reports')" style="background: var(--bg-card); border-radius: 12px; padding: 16px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.1s; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                            <div style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; pointer-events: none;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#8b5cf6" style="pointer-events: none;"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
                             </div>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">Reports</p>
-                            <p id="smart-folder-reports-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">0 storms</p>
-                        </div>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); pointer-events: none;">Reports</p>
+                            <p id="smart-folder-reports-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted); pointer-events: none;">0 storms</p>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1772,6 +1864,23 @@
         </div>
     </div>
 
+    <!-- Add Account to List Modal -->
+    <div class="modal-overlay" id="add-account-to-list-modal">
+        <div class="modal">
+            <h3>Add to List</h3>
+            <p class="modal-address" id="add-account-address"></p>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Select list to add this address to:</p>
+
+            <div id="add-account-list-options">
+                <!-- List options populated by JS -->
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn cancel" onclick="closeAddAccountToListModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Unrealistic Drive Time Modal -->
     <div class="modal-overlay" id="drivetime-modal">
         <div class="modal">
@@ -1860,10 +1969,10 @@
 
                 <!-- Tabs -->
                 <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <button id="newlist-tab-none" onclick="switchNewListTab('none')" style="flex: 1; padding: 10px; border: none; border-radius: 10px; background: var(--accent-primary); color: white; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">Empty</button>
-                    <button id="newlist-tab-paste" onclick="switchNewListTab('paste')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">Paste</button>
-                    <button id="newlist-tab-file" onclick="switchNewListTab('file')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">Files</button>
-                    <button id="newlist-tab-manual" onclick="switchNewListTab('manual')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">Manual</button>
+                    <button id="newlist-tab-none" onclick="switchNewListTab('none')" style="flex: 1; padding: 10px; border: none; border-radius: 10px; background: var(--accent-primary); color: white; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Empty</button>
+                    <button id="newlist-tab-paste" onclick="switchNewListTab('paste')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Paste</button>
+                    <button id="newlist-tab-file" onclick="switchNewListTab('file')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Files</button>
+                    <button id="newlist-tab-manual" onclick="switchNewListTab('manual')" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Manual</button>
                 </div>
 
                 <!-- None Content -->
@@ -1878,8 +1987,8 @@
 
                 <!-- File Content -->
                 <div id="newlist-content-file" style="display: none;">
-                    <button onclick="openNewListFilePicker()" id="newlist-file-btn" style="width: 100%; padding: 16px; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-info) 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <button onclick="openNewListFilePicker()" id="newlist-file-btn" style="width: 100%; padding: 16px; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-info) 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
                             <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
                         </svg>
                         Browse Files
@@ -1902,7 +2011,7 @@
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="newlist-manual-input" placeholder="Enter address..." style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit;">
-                        <button onclick="addNewListManualAddress()" style="padding: 12px 16px; border: none; border-radius: 10px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer;">Add</button>
+                        <button onclick="addNewListManualAddress()" style="padding: 12px 16px; border: none; border-radius: 10px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Add</button>
                     </div>
                 </div>
             </div>
@@ -2162,148 +2271,178 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div class="modal-overlay" id="settings-modal">
-        <div class="modal" style="max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: var(--text-primary);">Settings</h3>
-                <button onclick="closeSettingsModal()" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 0;">&times;</button>
+    <!-- Settings Modal - iOS Style (Full Screen) -->
+    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 10000; overflow-y: auto;">
+        <!-- Settings Header -->
+        <div style="position: sticky; top: 0; background: var(--bg-primary); padding: 16px 20px; padding-top: calc(env(safe-area-inset-top, 20px) + 16px); border-bottom: 1px solid var(--border-color); z-index: 10;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="width: 60px;"></div>
+                <h3 style="margin: 0; color: var(--text-primary); font-size: 17px; font-weight: 600;">Settings</h3>
+                <button onclick="closeSettingsModal()" style="background: none; border: none; color: var(--accent-primary); font-size: 17px; cursor: pointer; padding: 0; font-weight: 500; -webkit-tap-highlight-color: transparent;">Done</button>
             </div>
+        </div>
 
-            <!-- Profile Section -->
-            <div style="margin-bottom: 20px;">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">PROFILE</p>
-                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px;">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Your Name</label>
-                        <input type="text" id="settings-name" placeholder="Enter your name"
-                            style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; box-sizing: border-box;">
+        <div style="padding: 20px; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);">
+            <!-- Account Card -->
+                <div onclick="openSettingsPage('account')" style="background: var(--bg-secondary); border-radius: 12px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success)); display: flex; align-items: center; justify-content: center;">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Company Name</label>
-                        <input type="text" id="settings-company" placeholder="Enter company name"
-                            style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; box-sizing: border-box;">
+                    <div style="flex: 1;">
+                        <p id="settings-user-name" style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-primary);">-</p>
+                        <p id="settings-user-role" style="margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted);">-</p>
                     </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
-            </div>
 
-            <!-- MapBox API Section - Hidden (using built-in key) -->
-            <div id="settings-mapbox-section" style="display: none;">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">MAP SETTINGS</p>
-                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px;">
-                    <div style="margin-bottom: 10px;">
-                        <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">MapBox API Key</label>
-                        <input type="text" id="settings-mapbox-key" placeholder="pk.xxxxx..."
-                            style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box;">
-                    </div>
-                    <p style="margin: 0; font-size: 11px; color: var(--text-muted);">
-                        Get a free key at <a href="https://account.mapbox.com/access-tokens/" target="_blank" style="color: var(--accent-info);">mapbox.com</a>
-                    </p>
-                    <p style="margin: 6px 0 0 0; font-size: 11px; color: var(--text-muted);">
-                        This key will be shared with your employees automatically.
-                    </p>
-                    <div id="mapbox-status" style="margin-top: 10px;"></div>
-                </div>
-            </div>
-
-            <!-- Route Settings -->
-            <div style="margin-bottom: 20px;">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">ROUTE SETTINGS</p>
-                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px;">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Default Start Location</label>
-                        <input type="text" id="settings-start-location" placeholder="Your shop or home address"
-                            style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; box-sizing: border-box;">
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Default End Location <span style="color: var(--text-muted); font-weight: 400;">(optional)</span></label>
-                        <input type="text" id="settings-end-location" placeholder="Leave blank to end at last stop"
-                            style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; box-sizing: border-box;">
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <p style="margin: 0; font-size: 14px; color: var(--text-primary);">Auto-optimize on import</p>
-                            <p style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-muted);">Automatically optimize route when addresses are added</p>
+                <!-- General Section -->
+                <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">General</p>
+                <div style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 24px; overflow: hidden;">
+                    <div onclick="openSettingsPage('profile')" class="settings-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-info); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            </div>
+                            <span style="font-size: 16px; color: var(--text-primary);">Profile</span>
                         </div>
-                        <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
-                            <input type="checkbox" id="settings-auto-optimize" style="opacity: 0; width: 0; height: 0;">
-                            <span id="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-card); border-radius: 28px; transition: 0.3s;"></span>
-                        </label>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
-                    <div id="timezone-setting-container" style="margin-top: 15px;">
-                        <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--text-primary);">Timezone</p>
-                        <select id="settings-timezone" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit;">
-                            <option value="America/New_York">Eastern Time (ET)</option>
-                            <option value="America/Chicago">Central Time (CT)</option>
-                            <option value="America/Denver">Mountain Time (MT)</option>
-                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                            <option value="America/Anchorage">Alaska Time (AKT)</option>
-                            <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
-                            <option value="America/Phoenix">Arizona (no DST)</option>
-                            <option value="America/Puerto_Rico">Atlantic Time (AT)</option>
-                        </select>
-                        <p style="margin: 6px 0 0 0; font-size: 11px; color: var(--text-muted);">Used for timestamps on completed addresses</p>
+                    <div onclick="openSettingsPage('routes')" class="settings-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-success); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+                            </div>
+                            <span style="font-size: 16px; color: var(--text-primary);">Route Preferences</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div onclick="openSettingsPage('services')" class="settings-row" style="border-bottom: none;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-warning); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+                            </div>
+                            <span style="font-size: 16px; color: var(--text-primary);">Services</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="services-count-badge" style="font-size: 14px; color: var(--text-muted);">5</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Services You Offer -->
-            <div style="margin-bottom: 20px;">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">SERVICES YOU OFFER</p>
-                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px;">
-                    <div id="services-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                        <!-- Services will be rendered here -->
+                <!-- Team Section (Boss only) -->
+                <div id="settings-team-section" style="display: none;">
+                    <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Team</p>
+                    <div style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 24px; overflow: hidden;">
+                        <div onclick="openSettingsPage('employees')" class="settings-row">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 30px; height: 30px; border-radius: 8px; background: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                                </div>
+                                <span style="font-size: 16px; color: var(--text-primary);">Employees</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="employees-count-badge" style="font-size: 14px; color: var(--text-muted);">0</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+                        <div onclick="openSettingsPage('view-as-employee')" class="settings-row" style="border-bottom: none;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-primary); display: flex; align-items: center; justify-content: center;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                                </div>
+                                <span style="font-size: 16px; color: var(--text-primary);">View as Employee</span>
+                            </div>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="new-service-input" placeholder="Add a service..." style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-family: inherit;">
-                        <button onclick="addCustomService()" style="padding: 10px 16px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">Add</button>
+                </div>
+
+                <!-- Viewing as Employee Banner -->
+                <div id="viewing-as-employee-banner" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-warning); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-warning)"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--accent-warning);">Viewing as: <span id="viewing-employee-name"></span></span>
                     </div>
-                    <p style="margin: 10px 0 0 0; font-size: 11px; color: var(--text-muted);">These services will appear when assigning services to addresses.</p>
+                    <button onclick="exitEmployeeView()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-warning); color: var(--bg-primary); font-size: 14px; font-weight: 600; cursor: pointer;">Exit Employee View</button>
                 </div>
-            </div>
 
-            <!-- Save Button -->
-            <button onclick="saveSettings()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--accent-success) 0%, #00b894 100%); color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;">Save Settings</button>
-
-            <!-- Data Management -->
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">DATA</p>
-                <button onclick="exportAllData()" style="width: 100%; padding: 12px; border: 1px solid var(--accent-info); border-radius: 10px; background: transparent; color: var(--accent-info); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: 10px;">Export All Data</button>
-                <button onclick="confirmClearAllData()" style="width: 100%; padding: 12px; border: 1px solid var(--accent-danger); border-radius: 10px; background: transparent; color: var(--accent-danger); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;">Clear All Data</button>
-            </div>
-
-            <!-- View as Employee Section (Boss only) -->
-            <div id="settings-view-as-employee" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--accent-info); text-transform: uppercase; letter-spacing: 0.5px;">VIEW AS EMPLOYEE</p>
-                <p style="margin: 0 0 12px 0; font-size: 12px; color: var(--text-secondary);">Quick switch to an employee's view to check their routes, override their active route, or verify touch up lists.</p>
-                <div id="employee-quick-switch-list" style="margin-bottom: 12px;">
-                    <!-- Employees will be listed here -->
+                <!-- Data Section -->
+                <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Data</p>
+                <div style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 24px; overflow: hidden;">
+                    <div onclick="exportAllData()" class="settings-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-info); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            </div>
+                            <span style="font-size: 16px; color: var(--text-primary);">Export All Data</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                    <div onclick="confirmClearAllData()" class="settings-row" style="border-bottom: none;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 30px; height: 30px; border-radius: 8px; background: var(--accent-danger); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            </div>
+                            <span style="font-size: 16px; color: var(--accent-danger);">Clear All Data</span>
+                        </div>
+                    </div>
                 </div>
-                <div id="viewing-as-employee-banner" style="display: none; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-warning); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                    <p style="margin: 0; font-size: 13px; color: var(--accent-warning); font-weight: 600;">Currently viewing as: <span id="viewing-employee-name"></span></p>
-                    <button onclick="exitEmployeeView()" style="margin-top: 8px; width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-warning); color: var(--bg-primary); font-size: 13px; font-weight: 600; cursor: pointer;">Exit Employee View</button>
-                </div>
-            </div>
 
-            <!-- Account -->
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">ACCOUNT</p>
-                <div id="settings-user-info" style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);" id="settings-user-name">-</p>
-                    <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);" id="settings-user-role">-</p>
+                <!-- Sign Out -->
+                <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                    <div onclick="closeSettingsModal(); logout();" class="settings-row" style="border-bottom: none; justify-content: center;">
+                        <span style="font-size: 16px; color: var(--accent-danger); font-weight: 500;">Sign Out</span>
+                    </div>
                 </div>
-                <button onclick="openChangePasswordModal()" style="width: 100%; padding: 12px; border: 1px solid var(--accent-primary); border-radius: 10px; background: transparent; color: var(--accent-primary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: 10px;">Change My Password</button>
-                <button onclick="closeSettingsModal(); logout();" style="width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--bg-card); color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;">Sign Out</button>
-            </div>
 
-            <!-- Employee Passwords Section (Boss only) -->
-            <div id="settings-employee-passwords" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 600; color: var(--accent-warning); text-transform: uppercase; letter-spacing: 0.5px;">EMPLOYEE PASSWORDS</p>
-                <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-muted);">View or reset passwords for your employee accounts.</p>
-                <div id="employee-passwords-list">
-                    <!-- Employee passwords will be listed here -->
-                </div>
+            <!-- Hidden inputs for settings data -->
+            <input type="hidden" id="settings-name-data">
+            <input type="hidden" id="settings-company-data">
+            <input type="hidden" id="settings-start-location-data">
+            <input type="hidden" id="settings-end-location-data">
+            <input type="hidden" id="settings-auto-optimize-data">
+            <input type="hidden" id="settings-timezone-data">
+        </div>
+    </div>
+
+    <!-- Settings Sub-Pages (Full Screen) -->
+    <div id="settings-page-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 10001; overflow-y: auto;">
+        <!-- Sub-page Header -->
+        <div style="position: sticky; top: 0; background: var(--bg-primary); padding: 16px 20px; padding-top: calc(env(safe-area-inset-top, 20px) + 16px); border-bottom: 1px solid var(--border-color); z-index: 10;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="closeSettingsPage()" style="background: none; border: none; color: var(--accent-primary); font-size: 17px; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Settings
+                </button>
+                <h3 id="settings-page-title" style="margin: 0; color: var(--text-primary); font-size: 17px; font-weight: 600;">Profile</h3>
+                <button id="settings-page-save-btn" onclick="saveCurrentSettingsPage()" style="background: none; border: none; color: var(--accent-primary); font-size: 17px; cursor: pointer; padding: 0; font-weight: 500; -webkit-tap-highlight-color: transparent;">Save</button>
             </div>
+        </div>
+
+        <!-- Sub-page Content -->
+        <div id="settings-page-content" style="padding: 20px; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);">
+            <!-- Content will be dynamically loaded -->
+        </div>
+    </div>
+
+    <!-- Files Folder Page (Full Screen) -->
+    <div id="files-folder-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 10000; overflow-y: auto;">
+        <!-- Folder Header -->
+        <div style="position: sticky; top: 0; background: var(--bg-primary); padding: 16px 20px; padding-top: calc(env(safe-area-inset-top, 47px) + 16px); border-bottom: 1px solid var(--border-color); z-index: 10;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="closeFilesFolder()" style="background: none; border: none; color: var(--accent-primary); font-size: 17px; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Files
+                </button>
+                <h3 id="files-folder-title" style="margin: 0; color: var(--text-primary); font-size: 17px; font-weight: 600;">Lists</h3>
+                <div style="width: 60px;"></div>
+            </div>
+        </div>
+
+        <!-- Folder Content -->
+        <div id="files-folder-page-content" style="padding: 20px; padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 20px);">
+            <!-- Content will be dynamically loaded -->
         </div>
     </div>
 
@@ -2624,7 +2763,7 @@
     </div>
 
     <!-- Login Modal - Full screen opaque -->
-    <div id="login-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+    <div id="login-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; pointer-events: auto;">
         <div style="width: 100%; max-width: 360px;">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="margin: 0; font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SmartRoute</h2>
@@ -2645,14 +2784,20 @@
                         <input type="checkbox" id="login-remember" checked style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
                         <span style="font-size: 13px; color: var(--text-secondary);">Remember me</span>
                     </label>
-                    <button onclick="showForgotPassword()" style="background: none; border: none; color: var(--accent-info); font-size: 13px; cursor: pointer; padding: 0;">Forgot Password?</button>
+                    <button type="button" onclick="showForgotPassword()" style="background: none; border: none; color: var(--accent-info); font-size: 13px; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Forgot Password?</button>
                 </div>
                 <p id="login-error" style="display: none; color: var(--accent-danger); font-size: 13px; margin: 0 0 15px 0; text-align: center;"></p>
-                <button onclick="handleLogin()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);">Sign In</button>
+                <button type="button" id="sign-in-btn" onclick="handleLogin()" style="width: 100%; padding: 18px; min-height: 56px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); -webkit-tap-highlight-color: transparent; touch-action: manipulation; pointer-events: auto; -webkit-user-select: none; user-select: none; position: relative;">Sign In</button>
 
                 <!-- Create Account Link -->
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">Don't have an account? <button onclick="showBossSetup()" style="background: none; border: none; color: var(--accent-success); font-size: 14px; font-weight: 600; cursor: pointer; padding: 0;">Create Account</button></p>
+                    <span style="color: var(--text-secondary); font-size: 14px;">Don't have an account?</span>
+                    <button type="button" id="create-account-btn" onclick="showBossSetup()" style="background: none; border: none; color: var(--accent-success); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 16px; min-height: 44px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; pointer-events: auto; -webkit-user-select: none; user-select: none; position: relative;">Create Account</button>
+                </div>
+
+                <!-- Dev Bypass - REMOVE BEFORE PRODUCTION -->
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <button type="button" onclick="devBypassLogin()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #ef4444; font-size: 12px; font-weight: 600; cursor: pointer; padding: 10px 20px; border-radius: 8px; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">DEV BYPASS</button>
                 </div>
             </div>
 
@@ -2670,8 +2815,8 @@
                     <input type="text" id="forgot-username" placeholder="Enter your username" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <div id="forgot-password-result" style="display: none; margin-bottom: 16px;"></div>
-                <button onclick="lookupAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: var(--accent-info); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px;">Look Up Account</button>
-                <button onclick="cancelForgotPassword()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit;">Back to Sign In</button>
+                <button type="button" onclick="lookupAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: var(--accent-info); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Look Up Account</button>
+                <button type="button" onclick="cancelForgotPassword()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Back to Sign In</button>
             </div>
 
             <div id="boss-setup-form" style="display: none;">
@@ -2687,8 +2832,8 @@
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
                     <input type="password" id="setup-password" placeholder="Choose a password" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
-                <button onclick="createBossAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Create Account</button>
-                <button onclick="cancelBossSetup()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit;">Cancel</button>
+                <button type="button" id="submit-create-account-btn" onclick="createBossAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Create Account</button>
+                <button type="button" onclick="cancelBossSetup()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Cancel</button>
             </div>
         </div>
     </div>
@@ -2812,6 +2957,151 @@
     </style>
 
     <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        // Set USE_SUPABASE to true when ready to switch to cloud backend
+        const USE_SUPABASE = false;
+
+        // Supabase credentials - replace with your project credentials
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+
+        // Initialize Supabase client (only if enabled)
+        let supabase = null;
+        if (USE_SUPABASE && typeof window.supabase !== 'undefined') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // ============================================
+        // BACKEND ABSTRACTION LAYER
+        // ============================================
+        // These functions abstract localStorage vs Supabase operations
+        // When USE_SUPABASE is true, they will use Supabase instead
+
+        const Backend = {
+            // Auth functions
+            async signUp(email, password, userData) {
+                if (USE_SUPABASE && supabase) {
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: { data: userData }
+                    });
+                    if (error) throw error;
+                    return data;
+                } else {
+                    // Local mode - uses existing localStorage auth
+                    return { user: userData, session: null };
+                }
+            },
+
+            async signIn(email, password) {
+                if (USE_SUPABASE && supabase) {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+                    if (error) throw error;
+                    return data;
+                } else {
+                    // Local mode - handled by existing handleLogin()
+                    return null;
+                }
+            },
+
+            async signOut() {
+                if (USE_SUPABASE && supabase) {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+                }
+                // Local cleanup always happens
+                localStorage.removeItem('smartRouteSession');
+                sessionStorage.removeItem('smartRouteSession');
+            },
+
+            async getSession() {
+                if (USE_SUPABASE && supabase) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    return session;
+                }
+                return null;
+            },
+
+            // Data functions - for future Supabase table operations
+            async saveRoutes(routes, folders, listId, folderId) {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase routes table upsert
+                    // const { error } = await supabase.from('routes').upsert(routes);
+                }
+                // Always save locally as backup/offline cache
+                localStorage.setItem('plowRouteDataV2', JSON.stringify({
+                    allLists: routes,
+                    allFolders: folders,
+                    currentListId: listId,
+                    currentFolderId: folderId
+                }));
+            },
+
+            async loadRoutes() {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase routes table fetch
+                    // const { data, error } = await supabase.from('routes').select('*');
+                }
+                // Fall back to localStorage
+                const saved = localStorage.getItem('plowRouteDataV2');
+                return saved ? JSON.parse(saved) : null;
+            },
+
+            async saveUsers(users) {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase users table upsert
+                }
+                localStorage.setItem('smartRouteUsers', JSON.stringify(users));
+            },
+
+            async loadUsers() {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase users table fetch
+                }
+                const saved = localStorage.getItem('smartRouteUsers');
+                return saved ? JSON.parse(saved) : {};
+            },
+
+            async saveReports(reports) {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase reports table upsert
+                }
+                localStorage.setItem('smartRouteEmployeeReports', JSON.stringify(reports));
+            },
+
+            async loadReports() {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase reports table fetch
+                }
+                const saved = localStorage.getItem('smartRouteEmployeeReports');
+                return saved ? JSON.parse(saved) : [];
+            },
+
+            async saveSettings(settings) {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase user_settings table upsert
+                }
+                localStorage.setItem('smartRouteSettings', JSON.stringify(settings));
+            },
+
+            async loadSettings() {
+                if (USE_SUPABASE && supabase) {
+                    // TODO: Implement Supabase user_settings table fetch
+                }
+                const saved = localStorage.getItem('smartRouteSettings');
+                return saved ? JSON.parse(saved) : null;
+            }
+        };
+
+        // ============================================
+        // APP DATA STRUCTURES
+        // ============================================
         // Data structure - now supports multiple lists and folders
         let allLists = {};
         let allFolders = {};
@@ -2830,6 +3120,26 @@
         // User authentication
         let allUsers = {}; // { username: { username, password, role, name, assignedRoutes } }
         let currentUser = null; // Currently logged in user
+        let originalBossUser = null; // Store boss user when viewing as employee
+
+        // Smart folders variables (must be declared early to avoid TDZ errors)
+        let currentSmartFolder = null;
+        let smartFolderHistory = [];
+        let currentViewingReport = null;
+        let currentViewingList = null;
+        let expandedCities = {}; // Track which city dropdowns are expanded
+        let viewingAsEmployee = false;
+
+        // Folder import tab variables (must be declared early to avoid TDZ errors)
+        let currentFolderImportTab = 'single';
+        let folderSelectedFileContent = null;
+        let folderSelectedFileName = null;
+        let folderFileListId = null;
+
+        // Account import tab variables (must be declared early to avoid TDZ errors)
+        let currentAccountImportTab = 'single';
+        let accountSelectedFileContent = null;
+        let accountSelectedFileName = null;
 
         // Employee reports storage
         let employeeReports = []; // Array of { id, employeeName, employeeUsername, date, routeName, routeTime, addresses, submittedAt }
@@ -3125,6 +3435,30 @@
             switchToTab('home');
         }
 
+        // DEV BYPASS - REMOVE BEFORE PRODUCTION
+        function devBypassLogin() {
+            // Create or use dev account
+            const devUsername = 'dev';
+            if (!allUsers[devUsername]) {
+                allUsers[devUsername] = {
+                    username: devUsername,
+                    password: simpleHash('dev'),
+                    plainPassword: 'dev',
+                    role: 'boss',
+                    name: 'Dev User',
+                    assignedRoutes: []
+                };
+                saveUsers();
+            }
+
+            currentUser = { ...allUsers[devUsername] };
+            delete currentUser.password;
+            localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
+
+            hideLoginModal();
+            updateUIForRole();
+        }
+
         // Update UI based on user role
         function updateUIForRole() {
             const isBoss = currentUser && currentUser.role === 'boss';
@@ -3371,43 +3705,330 @@
             localStorage.setItem('smartRouteSettings', JSON.stringify(userSettings));
         }
 
+        // Current settings page being viewed
+        let currentSettingsPage = null;
+
         // Open settings modal
         function openSettingsModal() {
-            loadSettings();
-            document.getElementById('settings-name').value = userSettings.name || '';
-            document.getElementById('settings-company').value = userSettings.company || '';
-            document.getElementById('settings-start-location').value = userSettings.defaultStartLocation || '';
-            document.getElementById('settings-end-location').value = userSettings.defaultEndLocation || '';
-            document.getElementById('settings-auto-optimize').checked = userSettings.autoOptimize !== false;
+            try {
+                loadSettings();
 
-            // Timezone - only show for boss
-            const timezoneContainer = document.getElementById('timezone-setting-container');
-            const timezoneEl = document.getElementById('settings-timezone');
-            if (timezoneContainer && timezoneEl) {
-                if (currentUser && currentUser.role === 'boss') {
-                    timezoneContainer.style.display = 'block';
-                    timezoneEl.value = userSettings.timezone || 'America/New_York';
-                } else {
-                    timezoneContainer.style.display = 'none';
+                // Hide main app header and bottom nav
+                document.getElementById('app-header').style.display = 'none';
+                document.getElementById('bottom-nav').style.display = 'none';
+
+                // Update account info
+                if (currentUser) {
+                    document.getElementById('settings-user-name').textContent = currentUser.name || currentUser.username;
+                    document.getElementById('settings-user-role').textContent = currentUser.role === 'boss' ? 'Boss Account' : 'Employee Account';
                 }
+
+                // Show team section for boss only
+                const teamSection = document.getElementById('settings-team-section');
+                if (teamSection) {
+                    teamSection.style.display = (currentUser && currentUser.role === 'boss') ? 'block' : 'none';
+                }
+
+                // Update badges
+                const servicesCount = (userSettings.services || []).length;
+                const servicesBadge = document.getElementById('services-count-badge');
+                if (servicesBadge) servicesBadge.textContent = servicesCount;
+
+                const employees = Object.values(allUsers).filter(u => u.role === 'employee');
+                const employeesBadge = document.getElementById('employees-count-badge');
+                if (employeesBadge) employeesBadge.textContent = employees.length;
+
+                // Show viewing-as-employee banner if applicable
+                const banner = document.getElementById('viewing-as-employee-banner');
+                if (banner) {
+                    if (viewingAsEmployee && originalBossUser) {
+                        banner.style.display = 'block';
+                        document.getElementById('viewing-employee-name').textContent = currentUser.name || currentUser.username;
+                    } else {
+                        banner.style.display = 'none';
+                    }
+                }
+
+                document.getElementById('settings-modal').style.display = 'block';
+            } catch(e) {
+                alert('openSettingsModal error: ' + e.message);
             }
+        }
 
-            updateToggleSlider();
-            renderServicesList();
+        // Open a settings sub-page (full screen)
+        function openSettingsPage(page) {
+            currentSettingsPage = page;
+            const titleEl = document.getElementById('settings-page-title');
+            const contentEl = document.getElementById('settings-page-content');
+            const saveBtn = document.getElementById('settings-page-save-btn');
 
-            // Update account info
-            if (currentUser) {
-                document.getElementById('settings-user-name').textContent = currentUser.name || currentUser.username;
-                document.getElementById('settings-user-role').textContent = currentUser.role === 'boss' ? 'Boss Account' : 'Employee Account';
+            // Set title and show/hide save button based on page
+            const pageConfig = {
+                'account': { title: 'Account', showSave: false },
+                'profile': { title: 'Profile', showSave: true },
+                'routes': { title: 'Route Preferences', showSave: true },
+                'services': { title: 'Services', showSave: false },
+                'employees': { title: 'Employees', showSave: false },
+                'view-as-employee': { title: 'View as Employee', showSave: false }
+            };
+
+            const config = pageConfig[page] || { title: page, showSave: false };
+            titleEl.textContent = config.title;
+            saveBtn.style.display = config.showSave ? 'block' : 'none';
+
+            // Load content
+            contentEl.innerHTML = getSettingsPageContent(page);
+
+            // Hide main settings modal
+            document.getElementById('settings-modal').style.display = 'none';
+
+            // Show full-screen sub-page
+            document.getElementById('settings-page-modal').style.display = 'block';
+        }
+
+        // Close settings sub-page
+        function closeSettingsPage() {
+            // Hide sub-page
+            document.getElementById('settings-page-modal').style.display = 'none';
+            currentSettingsPage = null;
+            // Show main settings modal again
+            openSettingsModal();
+        }
+
+        // Get content for a settings page
+        function getSettingsPageContent(page) {
+            switch(page) {
+                case 'account':
+                    return `
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success)); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <p style="margin: 0; font-size: 22px; font-weight: 600; color: var(--text-primary);">${currentUser?.name || currentUser?.username || '-'}</p>
+                            <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--text-muted);">${currentUser?.role === 'boss' ? 'Boss Account' : 'Employee Account'}</p>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                            <div onclick="openChangePasswordModal(); closeSettingsPage();" class="settings-row" style="border-bottom: none;">
+                                <span style="font-size: 16px; color: var(--accent-primary);">Change Password</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+                        <p style="margin: 0 16px; font-size: 13px; color: var(--text-muted);">Username: @${currentUser?.username || '-'}</p>
+                    `;
+
+                case 'profile':
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                            <div class="settings-input-row">
+                                <label>Your Name</label>
+                                <input type="text" id="settings-name" value="${userSettings.name || ''}" placeholder="Enter your name">
+                            </div>
+                            <div class="settings-input-row" style="border-bottom: none;">
+                                <label>Company Name</label>
+                                <input type="text" id="settings-company" value="${userSettings.company || ''}" placeholder="Enter company name">
+                            </div>
+                        </div>
+                    `;
+
+                case 'routes':
+                    const timezoneOptions = [
+                        { value: 'America/New_York', label: 'Eastern Time (ET)' },
+                        { value: 'America/Chicago', label: 'Central Time (CT)' },
+                        { value: 'America/Denver', label: 'Mountain Time (MT)' },
+                        { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+                        { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+                        { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+                        { value: 'America/Phoenix', label: 'Arizona (no DST)' },
+                        { value: 'America/Puerto_Rico', label: 'Atlantic Time (AT)' }
+                    ];
+                    const timezoneSelect = timezoneOptions.map(tz =>
+                        `<option value="${tz.value}" ${userSettings.timezone === tz.value ? 'selected' : ''}>${tz.label}</option>`
+                    ).join('');
+
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                            <div class="settings-input-row">
+                                <label>Default Start Location</label>
+                                <input type="text" id="settings-start-location" value="${userSettings.defaultStartLocation || ''}" placeholder="Your shop or home address">
+                            </div>
+                            <div class="settings-input-row" style="border-bottom: none;">
+                                <label>Default End Location (optional)</label>
+                                <input type="text" id="settings-end-location" value="${userSettings.defaultEndLocation || ''}" placeholder="Leave blank to end at last stop">
+                            </div>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                            <div class="settings-toggle-row" style="border-bottom: none;">
+                                <div>
+                                    <p style="margin: 0; font-size: 16px; color: var(--text-primary);">Auto-optimize on import</p>
+                                    <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">Optimize route when addresses are added</p>
+                                </div>
+                                <label style="position: relative; display: inline-block; width: 50px; height: 30px;">
+                                    <input type="checkbox" id="settings-auto-optimize" ${userSettings.autoOptimize !== false ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;" onchange="updateSettingsToggle(this)">
+                                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: ${userSettings.autoOptimize !== false ? 'var(--accent-success)' : 'var(--bg-card)'}; border-radius: 30px; transition: 0.3s;">
+                                        <span style="position: absolute; ${userSettings.autoOptimize !== false ? 'right: 4px' : 'left: 4px'}; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; background: white; border-radius: 50%;"></span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        ${currentUser?.role === 'boss' ? `
+                        <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Timezone</p>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                            <div class="settings-input-row" style="border-bottom: none;">
+                                <select id="settings-timezone">${timezoneSelect}</select>
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--text-muted);">Used for timestamps on completed addresses</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    `;
+
+                case 'services':
+                    const services = userSettings.services || [];
+                    const servicesList = services.length === 0
+                        ? '<p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 14px;">No services added yet</p>'
+                        : services.map((service, idx) => `
+                            <div class="settings-row" style="${idx === services.length - 1 ? 'border-bottom: none;' : ''}">
+                                <span style="font-size: 16px; color: var(--text-primary);">${service}</span>
+                                <button onclick="removeServiceAndRefresh(${idx})" style="background: none; border: none; color: var(--accent-danger); font-size: 14px; cursor: pointer; padding: 4px 8px;">Remove</button>
+                            </div>
+                        `).join('');
+
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                            ${servicesList}
+                        </div>
+                        <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Add Service</p>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                            <div style="padding: 12px 16px; display: flex; gap: 10px;">
+                                <input type="text" id="new-service-input" placeholder="Enter service name..." style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 16px; font-family: inherit;">
+                                <button onclick="addServiceAndRefresh()" style="padding: 10px 16px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; font-size: 14px; font-weight: 600; cursor: pointer;">Add</button>
+                            </div>
+                        </div>
+                    `;
+
+                case 'employees':
+                    const employees = Object.values(allUsers).filter(u => u.role === 'employee');
+                    if (employees.length === 0) {
+                        return `
+                            <div style="text-align: center; padding: 40px 20px;">
+                                <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                    <svg width="30" height="30" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                                </div>
+                                <p style="margin: 0; font-size: 16px; color: var(--text-primary); font-weight: 500;">No Employees Yet</p>
+                                <p style="margin: 8px 0 20px 0; font-size: 14px; color: var(--text-muted);">Add employees to assign them routes</p>
+                                <button onclick="closeSettingsPage(); closeSettingsModal(); openEmployeeModal();" style="padding: 12px 24px; border: none; border-radius: 10px; background: var(--accent-primary); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">Add Employee</button>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                            ${employees.map((emp, idx) => `
+                                <div class="settings-row" style="${idx === employees.length - 1 ? 'border-bottom: none;' : ''}">
+                                    <div>
+                                        <p style="margin: 0; font-size: 16px; color: var(--text-primary);">${emp.name || emp.username}</p>
+                                        <p style="margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted);">@${emp.username} • ${(emp.assignedRoutes || []).length} routes</p>
+                                    </div>
+                                    <span style="font-size: 13px; color: var(--text-muted);">Password: ${emp.plainPassword || '••••'}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button onclick="closeSettingsPage(); closeSettingsModal(); openEmployeeModal();" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent-primary); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">Manage Employees</button>
+                    `;
+
+                case 'view-as-employee':
+                    const emps = Object.values(allUsers).filter(u => u.role === 'employee');
+                    if (emps.length === 0) {
+                        return `
+                            <div style="text-align: center; padding: 40px 20px;">
+                                <p style="margin: 0; font-size: 16px; color: var(--text-muted);">No employees to view as</p>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <p style="margin: 0 0 16px 0; font-size: 14px; color: var(--text-muted);">Switch to an employee's view to check their routes or verify touch up lists.</p>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                            ${emps.map((emp, idx) => `
+                                <div onclick="viewAsEmployee('${emp.username}'); closeSettingsPage(); closeSettingsModal();" class="settings-row" style="${idx === emps.length - 1 ? 'border-bottom: none;' : ''}">
+                                    <div>
+                                        <p style="margin: 0; font-size: 16px; color: var(--text-primary);">${emp.name || emp.username}</p>
+                                        <p style="margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted);">${(emp.assignedRoutes || []).length} routes assigned</p>
+                                    </div>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                default:
+                    return '<p style="color: var(--text-muted);">Page not found</p>';
             }
+        }
 
-            // Render employee quick switch for boss
-            renderEmployeeQuickSwitch();
+        // Save current settings page
+        function saveCurrentSettingsPage() {
+            if (currentSettingsPage === 'profile') {
+                userSettings.name = document.getElementById('settings-name').value.trim();
+                userSettings.company = document.getElementById('settings-company').value.trim();
+                saveSettingsToStorage();
+                closeSettingsPage();
+            } else if (currentSettingsPage === 'routes') {
+                userSettings.defaultStartLocation = document.getElementById('settings-start-location').value.trim();
+                userSettings.defaultEndLocation = document.getElementById('settings-end-location').value.trim();
+                userSettings.autoOptimize = document.getElementById('settings-auto-optimize').checked;
+                const timezoneEl = document.getElementById('settings-timezone');
+                if (timezoneEl) {
+                    userSettings.timezone = timezoneEl.value;
+                    if (currentUser && currentUser.role === 'boss') {
+                        localStorage.setItem('smartRouteBossTimezone', timezoneEl.value);
+                    }
+                }
+                // Update start location in current list
+                if (userSettings.defaultStartLocation) {
+                    const startInput = document.getElementById('start-location-input');
+                    if (startInput) startInput.value = userSettings.defaultStartLocation;
+                    startLocation = userSettings.defaultStartLocation;
+                    saveData();
+                }
+                saveSettingsToStorage();
+                closeSettingsPage();
+            }
+        }
 
-            // Render employee passwords for boss
-            renderEmployeePasswordsList();
+        // Update toggle visual
+        function updateSettingsToggle(checkbox) {
+            const slider = checkbox.nextElementSibling;
+            const knob = slider.querySelector('span');
+            if (checkbox.checked) {
+                slider.style.backgroundColor = 'var(--accent-success)';
+                knob.style.left = 'auto';
+                knob.style.right = '4px';
+            } else {
+                slider.style.backgroundColor = 'var(--bg-card)';
+                knob.style.right = 'auto';
+                knob.style.left = '4px';
+            }
+        }
 
-            document.getElementById('settings-modal').classList.add('active');
+        // Add service and refresh page
+        function addServiceAndRefresh() {
+            const input = document.getElementById('new-service-input');
+            const service = input.value.trim();
+            if (!service) return;
+            if (!userSettings.services) userSettings.services = [];
+            if (userSettings.services.some(s => s.toLowerCase() === service.toLowerCase())) {
+                alert('This service already exists');
+                return;
+            }
+            userSettings.services.push(service);
+            saveSettingsToStorage();
+            openSettingsPage('services');
+        }
+
+        // Remove service and refresh page
+        function removeServiceAndRefresh(index) {
+            if (!userSettings.services) return;
+            userSettings.services.splice(index, 1);
+            saveSettingsToStorage();
+            openSettingsPage('services');
         }
 
         // Render services list in settings
@@ -3461,7 +4082,10 @@
 
         // Close settings modal
         function closeSettingsModal() {
-            document.getElementById('settings-modal').classList.remove('active');
+            document.getElementById('settings-modal').style.display = 'none';
+            // Show main app header and bottom nav again
+            document.getElementById('app-header').style.display = 'flex';
+            document.getElementById('bottom-nav').style.display = 'flex';
         }
 
         // Update toggle slider visual
@@ -3695,6 +4319,17 @@
                 totalDriveTime: existingList.totalDriveTime
             };
 
+            localStorage.setItem('plowRouteDataV2', JSON.stringify({
+                lists: allLists,
+                folders: allFolders,
+                currentListId: currentListId,
+                currentFolderId: currentFolderId
+            }));
+        }
+
+        // Save lists directly without overwriting from global addresses array
+        // Use this when modifying lists from Files folder view
+        function saveListsDirectly() {
             localStorage.setItem('plowRouteDataV2', JSON.stringify({
                 lists: allLists,
                 folders: allFolders,
@@ -7604,6 +8239,13 @@
                 return;
             }
 
+            // Check if this is for the account/master addresses file picker
+            if (window.accountFilePickerActive) {
+                window.accountFilePickerActive = false;
+                receiveAccountFileContent(fileName, content);
+                return;
+            }
+
             // Otherwise, it's for the quick import modal
             selectedFileName = fileName;
             selectedFileContent = content;
@@ -10573,10 +11215,6 @@
         // SMART FOLDERS SYSTEM
         // =====================
 
-        let currentSmartFolder = null;
-        let smartFolderHistory = [];
-        let currentViewingReport = null;
-
         function saveArchivedReports() {
             localStorage.setItem('smartRouteArchivedReports', JSON.stringify(archivedReports));
         }
@@ -10608,6 +11246,14 @@
             if (reportsEl) reportsEl.textContent = `${archivedReports.length} storm${archivedReports.length !== 1 ? 's' : ''}`;
         }
 
+        // Helper function to get the correct files folder content container
+        function getFilesFolderContentEl() {
+            const fullScreenModal = document.getElementById('files-folder-modal');
+            return (fullScreenModal && fullScreenModal.style.display === 'block')
+                ? document.getElementById('files-folder-page-content')
+                : document.getElementById('files-folder-content');
+        }
+
         function navigateToFilesRoot() {
             currentSmartFolder = null;
             smartFolderHistory = [];
@@ -10618,17 +11264,103 @@
             document.getElementById('files-breadcrumb').style.display = 'none';
         }
 
+        // Close files folder full-screen page (or go back within the modal)
+        function closeFilesFolder() {
+            // If viewing a sub-item (like list detail or report detail), go back to folder listing
+            if (currentViewingList || currentViewingReport) {
+                const folderType = currentSmartFolder;
+                currentViewingList = null;
+                currentViewingReport = null;
+                smartFolderHistory = [folderType];
+
+                // Update title back to folder name
+                const folderNames = { lists: 'Lists', accounts: 'Addresses', employees: 'Employees', reports: 'Reports' };
+                document.getElementById('files-folder-title').textContent = folderNames[folderType] || folderType;
+
+                // Re-render the folder listing
+                renderFolderFullScreen(folderType);
+                return;
+            }
+
+            // Otherwise, close the modal entirely
+            currentSmartFolder = null;
+            smartFolderHistory = [];
+            currentViewingReport = null;
+
+            // Hide full-screen modal
+            document.getElementById('files-folder-modal').style.display = 'none';
+
+            // Show header and bottom nav again
+            document.getElementById('app-header').style.display = 'flex';
+            document.getElementById('bottom-nav').style.display = 'flex';
+        }
+
         function openSmartFolder(folderType) {
             currentSmartFolder = folderType;
             smartFolderHistory = [folderType];
             currentViewingReport = null;
 
-            // Hide main content, show folder content
-            document.getElementById('files-main-content').style.display = 'none';
-            document.getElementById('files-folder-content').style.display = 'block';
-            document.getElementById('files-breadcrumb').style.display = 'block';
+            // Hide header and bottom nav
+            document.getElementById('app-header').style.display = 'none';
+            document.getElementById('bottom-nav').style.display = 'none';
 
-            renderFolderInline(folderType);
+            // Set title
+            const folderNames = { lists: 'Lists', accounts: 'Addresses', employees: 'Employees', reports: 'Reports' };
+            document.getElementById('files-folder-title').textContent = folderNames[folderType] || folderType;
+
+            // Show full-screen modal
+            document.getElementById('files-folder-modal').style.display = 'block';
+
+            // Render content
+            renderFolderFullScreen(folderType);
+        }
+
+        // Render folder content to full-screen modal
+        function renderFolderFullScreen(folderType, subData) {
+            const contentEl = document.getElementById('files-folder-page-content');
+            const folderNames = { lists: 'Lists', accounts: 'Addresses', employees: 'Employees', reports: 'Reports' };
+
+            // Update title for sub-pages
+            if (subData) {
+                document.getElementById('files-folder-title').textContent = subData.dateRange || folderNames[folderType];
+            } else {
+                document.getElementById('files-folder-title').textContent = folderNames[folderType] || folderType;
+            }
+
+            if (folderType === 'lists') {
+                renderListsFolderFullScreen(contentEl);
+            } else if (folderType === 'accounts') {
+                renderAccountsFolderFullScreen(contentEl);
+            } else if (folderType === 'employees') {
+                renderEmployeesFolderFullScreen(contentEl);
+            } else if (folderType === 'reports') {
+                if (subData) {
+                    renderReportDetailFullScreen(contentEl, subData);
+                } else {
+                    renderReportsFolderFullScreen(contentEl);
+                }
+            }
+        }
+
+        // Full-screen render functions (wrappers that use the inline render logic)
+        function renderListsFolderFullScreen(contentEl) {
+            renderListsFolderInline(contentEl);
+        }
+
+        function renderAccountsFolderFullScreen(contentEl) {
+            renderAccountsFolderInline(contentEl);
+        }
+
+        function renderEmployeesFolderFullScreen(contentEl) {
+            renderEmployeesFolderInline(contentEl);
+        }
+
+        function renderReportsFolderFullScreen(contentEl) {
+            renderReportsFolderInline(contentEl);
+        }
+
+        function renderReportDetailFullScreen(contentEl, reportData) {
+            renderReportDetailInline(contentEl, reportData);
         }
 
         function renderFolderInline(folderType, subData) {
@@ -10733,7 +11465,7 @@
                 addresses: [],
                 createdAt: new Date().toISOString()
             };
-            saveData();
+            saveListsDirectly();
             renderFolderInline('lists');
             updateSmartFolderCounts();
         }
@@ -10741,7 +11473,15 @@
         function openListDetailInline(listId) {
             currentViewingList = listId;
             smartFolderHistory.push({ type: 'list', id: listId });
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+
+            // Update title in full-screen mode
+            const fullScreenModal = document.getElementById('files-folder-modal');
+            if (fullScreenModal && fullScreenModal.style.display === 'block') {
+                const list = allLists[listId];
+                document.getElementById('files-folder-title').textContent = list ? list.name : 'List Detail';
+            }
+
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function renderListDetailInline(contentEl, listId) {
@@ -10916,11 +11656,6 @@
             contentEl.innerHTML = html;
         }
 
-        let currentFolderImportTab = 'single';
-        let folderSelectedFileContent = null;
-        let folderSelectedFileName = null;
-        let folderFileListId = null;
-
         function switchFolderImportTab(tab, listId) {
             currentFolderImportTab = tab;
 
@@ -10942,17 +11677,26 @@
             });
 
             // Show/hide content
-            document.getElementById('folder-import-content-single').style.display = tab === 'single' ? 'block' : 'none';
-            document.getElementById('folder-import-content-paste').style.display = tab === 'paste' ? 'block' : 'none';
-            document.getElementById('folder-import-content-file').style.display = tab === 'file' ? 'block' : 'none';
+            const singleContent = document.getElementById('folder-import-content-single');
+            const pasteContent = document.getElementById('folder-import-content-paste');
+            const fileContent = document.getElementById('folder-import-content-file');
+
+            if (singleContent) singleContent.style.display = tab === 'single' ? 'block' : 'none';
+            if (pasteContent) pasteContent.style.display = tab === 'paste' ? 'block' : 'none';
+            if (fileContent) fileContent.style.display = tab === 'file' ? 'block' : 'none';
         }
 
         function addAddressToListFromFolder(listId) {
             const addressInput = document.getElementById('folder-add-address');
             const nameInput = document.getElementById('folder-add-name');
 
+            if (!addressInput) {
+                alert('Address input not found');
+                return;
+            }
+
             const address = addressInput.value.trim();
-            const name = nameInput.value.trim();
+            const name = nameInput ? nameInput.value.trim() : '';
 
             if (!address) {
                 alert('Please enter an address');
@@ -10960,7 +11704,10 @@
             }
 
             const list = allLists[listId];
-            if (!list) return;
+            if (!list) {
+                alert('List not found');
+                return;
+            }
 
             if (!list.addresses) list.addresses = [];
 
@@ -10973,20 +11720,27 @@
                 photos: []
             });
 
-            saveData();
+            // Use saveListsDirectly to avoid overwriting with global addresses array
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
-            // Re-render the list detail
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            // Clear inputs and re-render the list detail
+            addressInput.value = '';
+            if (nameInput) nameInput.value = '';
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function importPastedAddressesToList(listId) {
             const textarea = document.getElementById('folder-paste-text');
+            if (!textarea) {
+                alert('Paste area not found');
+                return;
+            }
             const text = textarea.value.trim();
 
             if (!text) {
@@ -11001,7 +11755,10 @@
             }
 
             const list = allLists[listId];
-            if (!list) return;
+            if (!list) {
+                alert('List not found');
+                return;
+            }
 
             if (!list.addresses) list.addresses = [];
 
@@ -11016,18 +11773,19 @@
                 });
             });
 
-            saveData();
+            // Use saveListsDirectly to avoid overwriting with global addresses array
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
             alert(`${lines.length} addresses imported`);
 
             // Re-render the list detail
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function openFolderFilePicker(listId) {
@@ -11050,19 +11808,30 @@
 
             const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            document.getElementById('folder-selected-file').style.display = 'block';
-            document.getElementById('folder-file-name').textContent = fileName;
-            document.getElementById('folder-file-count').textContent = lines.length + ' addresses found';
-            document.getElementById('folder-file-picker-btn').style.display = 'none';
-            document.getElementById('folder-import-file-btn').style.display = 'block';
+            const selectedFileEl = document.getElementById('folder-selected-file');
+            const fileNameEl = document.getElementById('folder-file-name');
+            const fileCountEl = document.getElementById('folder-file-count');
+            const filePickerBtn = document.getElementById('folder-file-picker-btn');
+            const importFileBtn = document.getElementById('folder-import-file-btn');
+
+            if (selectedFileEl) selectedFileEl.style.display = 'block';
+            if (fileNameEl) fileNameEl.textContent = fileName;
+            if (fileCountEl) fileCountEl.textContent = lines.length + ' addresses found';
+            if (filePickerBtn) filePickerBtn.style.display = 'none';
+            if (importFileBtn) importFileBtn.style.display = 'block';
         }
 
         function clearFolderSelectedFile() {
             folderSelectedFileContent = null;
             folderSelectedFileName = null;
-            document.getElementById('folder-selected-file').style.display = 'none';
-            document.getElementById('folder-file-picker-btn').style.display = 'flex';
-            document.getElementById('folder-import-file-btn').style.display = 'none';
+
+            const selectedFileEl = document.getElementById('folder-selected-file');
+            const filePickerBtn = document.getElementById('folder-file-picker-btn');
+            const importFileBtn = document.getElementById('folder-import-file-btn');
+
+            if (selectedFileEl) selectedFileEl.style.display = 'none';
+            if (filePickerBtn) filePickerBtn.style.display = 'flex';
+            if (importFileBtn) importFileBtn.style.display = 'none';
         }
 
         function importFileToList(listId) {
@@ -11093,11 +11862,12 @@
                 });
             });
 
-            saveData();
+            // Use saveListsDirectly to avoid overwriting with global addresses array
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
@@ -11105,7 +11875,7 @@
 
             // Clear file selection and re-render
             clearFolderSelectedFile();
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function deleteAddressFromListFolder(listId, index) {
@@ -11119,16 +11889,16 @@
             if (!confirm(`Delete "${shortAddr}"?`)) return;
 
             list.addresses.splice(index, 1);
-            saveData();
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
             // Re-render the list detail
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function toggleFolderAddressDropdown(listId, index) {
@@ -11148,16 +11918,16 @@
             if (!list || !list.addresses || !list.addresses[index]) return;
 
             list.addresses[index].priority = !list.addresses[index].priority;
-            saveData();
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
             // Re-render the list detail
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function saveFolderAddressEdit(listId, index) {
@@ -11183,16 +11953,16 @@
             const checkboxes = document.querySelectorAll('.folder-service-checkbox-' + listId + '-' + index + ':checked');
             addr.services = Array.from(checkboxes).map(cb => cb.value);
 
-            saveData();
+            saveListsDirectly();
 
-            // If this is the active list, reload it
+            // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
-                loadCurrentList();
+                addresses = list.addresses;
                 renderAll();
             }
 
             // Re-render the list detail to show updated info
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            renderListDetailInline(getFilesFolderContentEl(), listId);
         }
 
         function selectListFromFolder(listId) {
@@ -11202,7 +11972,7 @@
             renderAll();
             // Re-render list detail to update active status
             if (currentViewingList === listId) {
-                renderListDetailInline(document.getElementById('files-folder-content'), listId);
+                renderListDetailInline(getFilesFolderContentEl(), listId);
             }
         }
 
@@ -11214,8 +11984,8 @@
             if (!newName || !newName.trim() || newName.trim() === list.name) return;
 
             list.name = newName.trim();
-            saveData();
-            renderListDetailInline(document.getElementById('files-folder-content'), listId);
+            saveListsDirectly();
+            renderListDetailInline(getFilesFolderContentEl(), listId);
             updateSmartFolderCounts();
         }
 
@@ -11238,18 +12008,15 @@
                     const defaultId = 'list_' + Date.now();
                     allLists[defaultId] = { name: 'My Route', addresses: [], createdAt: new Date().toISOString() };
                     currentListId = defaultId;
-                    loadCurrentList();
+                    addresses = [];
                 }
             }
 
-            saveData();
+            saveListsDirectly();
             currentViewingList = null;
             renderFolderInline('lists');
             updateSmartFolderCounts();
         }
-
-        let currentViewingList = null;
-        let expandedCities = {}; // Track which city dropdowns are expanded
 
         function renderAccountsFolderInline(contentEl) {
             const availableServices = userSettings.services || [];
@@ -11278,12 +12045,50 @@
                 '</div>' +
             '</div>';
 
-            // Add Address Section
+            // Add Address Section with tabs
             html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 15px;">' +
-                '<p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Add Address</p>' +
-                '<input type="text" id="folder-add-account-address" placeholder="Enter address..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
-                '<input type="text" id="folder-add-account-name" placeholder="Name (optional)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
-                '<button onclick="addAccountFromFolder()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">+ Add Address</button>' +
+                '<p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Add Addresses</p>' +
+
+                // Tab buttons
+                '<div style="display: flex; gap: 8px; margin-bottom: 12px;">' +
+                    '<button id="account-import-tab-single" onclick="switchAccountImportTab(\'single\')" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; font-size: 12px; font-weight: 600; cursor: pointer;">Single</button>' +
+                    '<button id="account-import-tab-paste" onclick="switchAccountImportTab(\'paste\')" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer;">Paste</button>' +
+                    '<button id="account-import-tab-file" onclick="switchAccountImportTab(\'file\')" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer;">File</button>' +
+                '</div>' +
+
+                // Single address content
+                '<div id="account-import-content-single">' +
+                    '<input type="text" id="folder-add-account-address" placeholder="Enter address..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
+                    '<input type="text" id="folder-add-account-name" placeholder="Name (optional)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
+                    '<button onclick="addAccountFromFolder()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">+ Add Address</button>' +
+                '</div>' +
+
+                // Paste content
+                '<div id="account-import-content-paste" style="display: none;">' +
+                    '<textarea id="account-paste-text" placeholder="Paste addresses here (one per line)..." style="width: 100%; height: 120px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px; resize: none;"></textarea>' +
+                    '<button onclick="importPastedAddressesToMaster()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">Import Addresses</button>' +
+                '</div>' +
+
+                // File import content
+                '<div id="account-import-content-file" style="display: none;">' +
+                    '<div id="account-file-picker-area">' +
+                        '<button onclick="openAccountFilePicker()" id="account-file-picker-btn" style="width: 100%; padding: 20px; border: 2px dashed var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 8px;">' +
+                            '<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-muted)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>' +
+                            'Select File' +
+                        '</button>' +
+                        '<p style="margin: 8px 0 0 0; font-size: 11px; color: var(--text-muted); text-align: center;">Supports .txt, .csv, .xlsx files</p>' +
+                    '</div>' +
+                    '<div id="account-selected-file" style="display: none; background: var(--bg-secondary); border-radius: 8px; padding: 12px; margin-bottom: 8px;">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                            '<div>' +
+                                '<p id="account-file-name" style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);"></p>' +
+                                '<p id="account-file-count" style="margin: 2px 0 0 0; font-size: 11px; color: var(--accent-success);"></p>' +
+                            '</div>' +
+                            '<button onclick="clearAccountSelectedFile()" style="background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer;">×</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button id="account-import-file-btn" onclick="importFileToMaster()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; display: none;">Import Addresses</button>' +
+                '</div>' +
             '</div>';
 
             if (masterAccounts.length === 0) {
@@ -11362,10 +12167,11 @@
                                         servicesHtml +
                                     '</div>' +
                                 '</div>' +
-                                '<div style="display: flex; gap: 6px;">' +
+                                '<div style="display: flex; gap: 6px; margin-bottom: 6px;">' +
                                     '<button onclick="saveAccountEdit(' + idx + ')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: var(--accent-success); color: white; font-size: 11px; font-weight: 600; cursor: pointer;">Save</button>' +
                                     '<button onclick="deleteAccountFromFolder(' + idx + ')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: var(--accent-danger); color: white; font-size: 11px; font-weight: 600; cursor: pointer;">Delete</button>' +
                                 '</div>' +
+                                '<button onclick="showAddAccountToListModal(' + idx + ')" style="width: 100%; padding: 8px; border: none; border-radius: 6px; background: var(--accent-primary); color: white; font-size: 11px; font-weight: 600; cursor: pointer;">+ Add to List</button>' +
                             '</div>' +
                         '</div>';
                     });
@@ -11425,7 +12231,7 @@
             account.services = Array.from(checkboxes).map(cb => cb.value);
 
             saveMasterAccounts();
-            renderAccountsFolderInline(document.getElementById('files-folder-content'));
+            renderAccountsFolderInline(getFilesFolderContentEl());
         }
 
         function toggleCityDropdown(city) {
@@ -11435,7 +12241,7 @@
             if (container) {
                 container.style.display = expandedCities[city] ? 'block' : 'none';
             }
-            renderAccountsFolderInline(document.getElementById('files-folder-content'));
+            renderAccountsFolderInline(getFilesFolderContentEl());
         }
 
         function addAccountFromFolder() {
@@ -11458,7 +12264,136 @@
             });
 
             saveMasterAccounts();
-            renderAccountsFolderInline(document.getElementById('files-folder-content'));
+            renderAccountsFolderInline(getFilesFolderContentEl());
+            updateSmartFolderCounts();
+        }
+
+        function switchAccountImportTab(tab) {
+            currentAccountImportTab = tab;
+
+            // Update tab buttons
+            const tabs = ['single', 'paste', 'file'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('account-import-tab-' + t);
+                if (btn) {
+                    if (t === tab) {
+                        btn.style.background = 'var(--accent-primary)';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                    } else {
+                        btn.style.background = 'transparent';
+                        btn.style.color = 'var(--text-secondary)';
+                        btn.style.border = '1px solid var(--border-color)';
+                    }
+                }
+            });
+
+            // Show/hide content with null checks
+            const singleContent = document.getElementById('account-import-content-single');
+            const pasteContent = document.getElementById('account-import-content-paste');
+            const fileContent = document.getElementById('account-import-content-file');
+
+            if (singleContent) singleContent.style.display = tab === 'single' ? 'block' : 'none';
+            if (pasteContent) pasteContent.style.display = tab === 'paste' ? 'block' : 'none';
+            if (fileContent) fileContent.style.display = tab === 'file' ? 'block' : 'none';
+        }
+
+        function importPastedAddressesToMaster() {
+            const textarea = document.getElementById('account-paste-text');
+            if (!textarea) {
+                alert('Paste area not found');
+                return;
+            }
+            const text = textarea.value.trim();
+
+            if (!text) {
+                alert('Please paste some addresses');
+                return;
+            }
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) {
+                alert('No valid addresses found');
+                return;
+            }
+
+            lines.forEach(line => {
+                masterAccounts.push({
+                    address: line,
+                    name: '',
+                    services: [],
+                    status: 'pending'
+                });
+            });
+
+            saveMasterAccounts();
+            alert(`${lines.length} addresses imported`);
+            textarea.value = '';
+            renderAccountsFolderInline(getFilesFolderContentEl());
+            updateSmartFolderCounts();
+        }
+
+        function openAccountFilePicker() {
+            window.accountFilePickerActive = true;
+
+            // Send message to native Swift code to open document picker
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.openDocumentPicker) {
+                window.webkit.messageHandlers.openDocumentPicker.postMessage('open');
+            } else {
+                alert('File picker is only available in the SmartRoute app. Please use the Paste tab instead.');
+                window.accountFilePickerActive = false;
+            }
+        }
+
+        // Called from Swift when file is selected for account import
+        function receiveAccountFileContent(fileName, content) {
+            accountSelectedFileName = fileName;
+            accountSelectedFileContent = content;
+
+            const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            document.getElementById('account-selected-file').style.display = 'block';
+            document.getElementById('account-file-name').textContent = fileName;
+            document.getElementById('account-file-count').textContent = lines.length + ' addresses found';
+            document.getElementById('account-file-picker-btn').style.display = 'none';
+            document.getElementById('account-import-file-btn').style.display = 'block';
+        }
+
+        function clearAccountSelectedFile() {
+            accountSelectedFileContent = null;
+            accountSelectedFileName = null;
+            document.getElementById('account-selected-file').style.display = 'none';
+            document.getElementById('account-file-picker-btn').style.display = 'flex';
+            document.getElementById('account-import-file-btn').style.display = 'none';
+        }
+
+        function importFileToMaster() {
+            if (!accountSelectedFileContent) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const lines = accountSelectedFileContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) {
+                alert('No valid addresses found in file');
+                return;
+            }
+
+            lines.forEach(line => {
+                masterAccounts.push({
+                    address: line,
+                    name: '',
+                    services: [],
+                    status: 'pending'
+                });
+            });
+
+            saveMasterAccounts();
+            alert(`${lines.length} addresses imported from ${accountSelectedFileName}`);
+
+            // Clear file selection and re-render
+            clearAccountSelectedFile();
+            renderAccountsFolderInline(getFilesFolderContentEl());
             updateSmartFolderCounts();
         }
 
@@ -11473,9 +12408,100 @@
 
             masterAccounts.splice(index, 1);
             saveMasterAccounts();
-            renderAccountsFolderInline(document.getElementById('files-folder-content'));
+            renderAccountsFolderInline(getFilesFolderContentEl());
             updateSmartFolderCounts();
         }
+
+        // Track which account we're adding to a list
+        let addingAccountIndex = null;
+
+        function showAddAccountToListModal(accountIndex) {
+            const account = masterAccounts[accountIndex];
+            if (!account) return;
+
+            addingAccountIndex = accountIndex;
+
+            // Display the address in the modal
+            const addrParts = account.address.split(',');
+            const shortAddr = addrParts[0].trim();
+            document.getElementById('add-account-address').textContent = account.name ? `${account.name} - ${shortAddr}` : shortAddr;
+
+            // Render list options
+            const container = document.getElementById('add-account-list-options');
+            const listIds = Object.keys(allLists);
+
+            if (listIds.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center;">No lists available. Create a list first.</p>';
+            } else {
+                container.innerHTML = listIds.map(id => {
+                    const list = allLists[id];
+                    const count = list.addresses ? list.addresses.length : 0;
+                    return `
+                        <div class="list-item" style="cursor: pointer; padding: 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;" onclick="addAccountToList(${accountIndex}, '${id}')">
+                            <div class="list-item-name" style="font-weight: 600; color: var(--text-primary); font-size: 14px;">${list.name}</div>
+                            <div class="list-item-count" style="font-size: 12px; color: var(--text-muted);">${count} address${count !== 1 ? 'es' : ''}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('add-account-to-list-modal').classList.add('active');
+        }
+
+        function closeAddAccountToListModal() {
+            addingAccountIndex = null;
+            document.getElementById('add-account-to-list-modal').classList.remove('active');
+        }
+
+        function addAccountToList(accountIndex, listId) {
+            const account = masterAccounts[accountIndex];
+            if (!account) {
+                alert('Account not found.');
+                return;
+            }
+
+            if (!allLists[listId]) {
+                alert('List not found.');
+                return;
+            }
+
+            // Create address object for the list
+            const newAddress = {
+                id: 'addr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                address: account.address,
+                name: account.name || '',
+                email: account.email || '',
+                price: account.price || '',
+                services: Array.isArray(account.services) ? [...account.services] : (account.services ? [account.services] : []),
+                completed: false,
+                addedAt: new Date().toISOString()
+            };
+
+            // Ensure addresses array exists
+            if (!allLists[listId].addresses) {
+                allLists[listId].addresses = [];
+            }
+
+            // Add to the list
+            allLists[listId].addresses.push(newAddress);
+
+            // Save the lists
+            saveListsDirectly();
+
+            // Close modal
+            closeAddAccountToListModal();
+
+            // Show confirmation
+            const listName = allLists[listId].name;
+            alert(`Added to "${listName}"`);
+        }
+
+        // Close modal when clicking overlay
+        document.getElementById('add-account-to-list-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'add-account-to-list-modal') {
+                closeAddAccountToListModal();
+            }
+        });
 
         function renderEmployeesFolderInline(contentEl) {
             const employees = Object.values(allUsers).filter(u => u.role === 'employee');
@@ -11570,7 +12596,7 @@
             };
 
             saveUsers();
-            renderEmployeesFolderInline(document.getElementById('files-folder-content'));
+            renderEmployeesFolderInline(getFilesFolderContentEl());
             updateSmartFolderCounts();
         }
 
@@ -11587,7 +12613,7 @@
 
             delete allUsers[username];
             saveUsers();
-            renderEmployeesFolderInline(document.getElementById('files-folder-content'));
+            renderEmployeesFolderInline(getFilesFolderContentEl());
             updateSmartFolderCounts();
         }
 
@@ -11636,7 +12662,17 @@
             if (!report) return;
 
             currentViewingReport = report;
-            renderFolderInline('reports', report);
+
+            // Check if we're in full-screen mode
+            const fullScreenModal = document.getElementById('files-folder-modal');
+            if (fullScreenModal && fullScreenModal.style.display === 'block') {
+                // Update title
+                document.getElementById('files-folder-title').textContent = report.dateRange;
+                // Render to full-screen container
+                renderReportDetailInline(getFilesFolderContentEl(), report);
+            } else {
+                renderFolderInline('reports', report);
+            }
         }
 
         function renderReportDetailInline(contentEl, report) {
@@ -13151,9 +14187,6 @@
         // BOSS VIEW AS EMPLOYEE
         // =====================
 
-        let originalBossUser = null; // Store boss user when viewing as employee
-        let viewingAsEmployee = false;
-
         // Render the employee quick switch list in settings
         function renderEmployeeQuickSwitch() {
             const section = document.getElementById('settings-view-as-employee');
@@ -13648,6 +14681,7 @@
         renderAll();
         renderHomeView();
         renderTouchUpMasterLists(); // Render touch up master lists for boss
+
     </script>
 </body>
 </html>
