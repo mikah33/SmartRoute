@@ -2951,6 +2951,43 @@
         }
 
         // ============================================
+        // SCROLL-SAFE CLICK DETECTION
+        // ============================================
+        // Prevents accidental clicks when scrolling on mobile
+        var touchStartY = 0;
+        var touchStartX = 0;
+        var touchStartTime = 0;
+        var isTouchScrolling = false;
+        var SCROLL_THRESHOLD = 10; // pixels of movement to consider it a scroll
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            touchStartTime = Date.now();
+            isTouchScrolling = false;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            var deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+            var deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+            if (deltaY > SCROLL_THRESHOLD || deltaX > SCROLL_THRESHOLD) {
+                isTouchScrolling = true;
+            }
+        }, { passive: true });
+
+        function safeClick(callback) {
+            return function(e) {
+                // If this was a scroll gesture, don't trigger the click
+                if (isTouchScrolling) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                callback();
+            };
+        }
+
+        // ============================================
         // BACKEND ABSTRACTION LAYER
         // ============================================
         // These functions abstract localStorage vs Supabase operations
@@ -6571,10 +6608,12 @@
 
         var allStopsToggleLock = false;
         function toggleAllStopsDropdown() {
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
             // Prevent double-firing from touch + click
             if (allStopsToggleLock) return;
             allStopsToggleLock = true;
-            setTimeout(() => { allStopsToggleLock = false; }, 300);
+            setTimeout(function() { allStopsToggleLock = false; }, 300);
 
             var container = document.getElementById('route-addresses-container');
             var arrow = document.getElementById('all-stops-arrow');
@@ -6591,13 +6630,15 @@
 
         var routeDropdownLock = false;
         function toggleRouteDropdown(index) {
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
             // Prevent double-firing from touch + click
             if (routeDropdownLock) return;
             routeDropdownLock = true;
-            setTimeout(() => { routeDropdownLock = false; }, 300);
+            setTimeout(function() { routeDropdownLock = false; }, 300);
 
-            var dropdown = document.getElementById(`route-dropdown-${index}`);
-            var arrow = document.getElementById(`route-arrow-${index}`);
+            var dropdown = document.getElementById('route-dropdown-' + index);
+            var arrow = document.getElementById('route-arrow-' + index);
             if (!dropdown || !arrow) return;
 
             if (dropdown.style.display === 'none') {
@@ -8331,6 +8372,8 @@
         var myRoutesOpen = false;
 
         function toggleMyRoutesDropdown() {
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
             myRoutesOpen = !myRoutesOpen;
             var listContainer = document.getElementById('home-recent-lists');
             var arrow = document.getElementById('my-routes-arrow');
@@ -8665,8 +8708,10 @@
         }
 
         function toggleEditDropdown(index) {
-            var dropdown = document.getElementById(`edit-dropdown-${index}`);
-            var arrow = document.getElementById(`edit-arrow-${index}`);
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
+            var dropdown = document.getElementById('edit-dropdown-' + index);
+            var arrow = document.getElementById('edit-arrow-' + index);
             if (dropdown.style.display === 'none') {
                 dropdown.style.display = 'block';
                 arrow.style.transform = 'rotate(180deg)';
@@ -10045,8 +10090,10 @@
         // ============ ADDRESS DROPDOWN TOGGLE ============
 
         function toggleAddressDropdown(idx) {
-            var dropdown = document.getElementById(`dropdown-${idx}`);
-            var arrow = document.getElementById(`arrow-${idx}`);
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
+            var dropdown = document.getElementById('dropdown-' + idx);
+            var arrow = document.getElementById('arrow-' + idx);
             var isOpen = dropdown.style.display !== 'none';
 
             // Close all other dropdowns
@@ -12155,6 +12202,8 @@
         }
 
         function toggleFolderAddressDropdown(listId, index) {
+            // Prevent accidental clicks while scrolling
+            if (isTouchScrolling) return;
             var dropdown = document.getElementById('folder-addr-dropdown-' + listId + '-' + index);
             var arrow = document.getElementById('folder-addr-arrow-' + listId + '-' + index);
             if (!dropdown) return;
