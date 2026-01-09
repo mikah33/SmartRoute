@@ -3466,32 +3466,32 @@
             }
 
             // Create test list with addresses if it doesn't exist
-            if (!allLists['test']) {
-                var testAddresses = [
-                    '649 Putnam Pike Greenville ri',
-                    '685 Admiral St Providence ri',
-                    '712 Smith St Providence ri',
-                    '20 Oakdale St Providence',
-                    '41 Yorkshire St, Providence ri',
-                    '118 Vandewater St, Providence ri',
-                    '48 Greeley St, Providence ri',
-                    '45 Greeley St, Providence ri',
-                    '45 Opper St, Providence ri',
-                    '44 Cambridge St, Providence ri',
-                    '422 Smithfield Ave, Pawtucket ri',
-                    '221 Parkside Ave, Pawtucket ri',
-                    '80 Vineyard St, Pawtucket',
-                    '18 Eleventh St, Providence ri',
-                    '59 8th St, Providence RI',
-                    '111 Medway st Providence ri',
-                    '96 E Manning St, Providence ri',
-                    '1000 Willett Ave, Riverside ri',
-                    '7 Forbes St, Riverside ri',
-                    '1228 Westminster St, Providence ri',
-                    '1510 Westminster st Providence ri',
-                    '44 Cambridge St, Providence ri'
-                ];
+            var testAddresses = [
+                '649 Putnam Pike Greenville ri',
+                '685 Admiral St Providence ri',
+                '712 Smith St Providence ri',
+                '20 Oakdale St Providence',
+                '41 Yorkshire St, Providence ri',
+                '118 Vandewater St, Providence ri',
+                '48 Greeley St, Providence ri',
+                '45 Greeley St, Providence ri',
+                '45 Opper St, Providence ri',
+                '44 Cambridge St, Providence ri',
+                '422 Smithfield Ave, Pawtucket ri',
+                '221 Parkside Ave, Pawtucket ri',
+                '80 Vineyard St, Pawtucket',
+                '18 Eleventh St, Providence ri',
+                '59 8th St, Providence RI',
+                '111 Medway st Providence ri',
+                '96 E Manning St, Providence ri',
+                '1000 Willett Ave, Riverside ri',
+                '7 Forbes St, Riverside ri',
+                '1228 Westminster St, Providence ri',
+                '1510 Westminster st Providence ri',
+                '44 Cambridge St, Providence ri'
+            ];
 
+            if (!allLists['test']) {
                 allLists['test'] = {
                     id: 'test',
                     name: 'Test',
@@ -3515,6 +3515,9 @@
                 startLocation = allLists['test'].startLocation;
                 saveData();
             }
+
+            // Always sync test addresses to master list (handles existing lists too)
+            syncAddressesToMaster(testAddresses);
 
             currentUser = Object.assign({}, allUsers[devUsername]);
             delete currentUser.password;
@@ -4575,7 +4578,7 @@
             // Prevent double-firing from touch + click
             if (markDoneLock) return;
             markDoneLock = true;
-            setTimeout(() => { markDoneLock = false; }, 300);
+            setTimeout(function() { markDoneLock = false; }, 300);
 
             var idx = index !== undefined ? index : currentIndex;
             if (!addresses[idx]) return;
@@ -4598,7 +4601,7 @@
             // Show service completion modal
             serviceCompletionIndex = idx;
             serviceCompletionFromList = index !== undefined;
-            selectedCompletedServices = [...requiredServices]; // Pre-check all services
+            selectedCompletedServices = requiredServices.slice(); // Pre-check all services
             showServiceCompletionModal(addr, requiredServices);
         }
 
@@ -4640,13 +4643,13 @@
         function updateServiceCompletionUI() {
             var addr = addresses[serviceCompletionIndex];
             var requiredServices = parseServices(addr.services);
-            var incompleteServices = requiredServices.filter(s => !selectedCompletedServices.includes(s));
+            var incompleteServices = requiredServices.filter(function(s) { return selectedCompletedServices.indexOf(s) === -1; });
 
             // Update each service status text
-            requiredServices.forEach((service, idx) => {
-                var statusEl = document.querySelector(`.service-status-${idx}`);
+            requiredServices.forEach(function(service, idx) {
+                var statusEl = document.querySelector('.service-status-' + idx);
                 if (statusEl) {
-                    if (selectedCompletedServices.includes(service)) {
+                    if (selectedCompletedServices.indexOf(service) !== -1) {
                         statusEl.textContent = 'Completed';
                         statusEl.style.color = 'var(--accent-success)';
                     } else {
@@ -4685,7 +4688,7 @@
         function confirmServiceCompletion() {
             var addr = addresses[serviceCompletionIndex];
             var requiredServices = parseServices(addr.services);
-            var incompleteServices = requiredServices.filter(s => !selectedCompletedServices.includes(s));
+            var incompleteServices = requiredServices.filter(function(s) { return selectedCompletedServices.indexOf(s) === -1; });
 
             if (incompleteServices.length > 0) {
                 // Show warning modal - DON'T reset state, just hide the modal
@@ -4703,12 +4706,12 @@
         // Show incomplete services warning modal
         function showIncompleteServicesModal(incompleteServices) {
             var container = document.getElementById('incomplete-services-list');
-            container.innerHTML = incompleteServices.map(service => `
-                <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--accent-danger)"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                    <span style="font-size: 14px; color: var(--text-primary);">${service}</span>
-                </div>
-            `).join('');
+            container.innerHTML = incompleteServices.map(function(service) {
+                return '<div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-color);">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="var(--accent-danger)"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>' +
+                    '<span style="font-size: 14px; color: var(--text-primary);">' + service + '</span>' +
+                '</div>';
+            }).join('');
 
             document.getElementById('incomplete-services-modal').classList.add('active');
         }
@@ -4722,11 +4725,11 @@
             showServiceCompletionModal(addr, requiredServices);
 
             // Restore unchecked state for incomplete services
-            setTimeout(() => {
-                requiredServices.forEach((service, idx) => {
-                    var checkbox = document.getElementById(`service-check-${idx}`);
+            setTimeout(function() {
+                requiredServices.forEach(function(service, idx) {
+                    var checkbox = document.getElementById('service-check-' + idx);
                     if (checkbox) {
-                        checkbox.checked = selectedCompletedServices.includes(service);
+                        checkbox.checked = selectedCompletedServices.indexOf(service) !== -1;
                     }
                 });
                 updateServiceCompletionUI();
@@ -4740,12 +4743,12 @@
             // Save values before resetting
             var idx = serviceCompletionIndex;
             var fromList = serviceCompletionFromList;
-            var completedServices = [...selectedCompletedServices];
+            var completedServices = selectedCompletedServices.slice();
 
             // Store completed and incomplete services on the address
             var addr = addresses[idx];
             var requiredServices = parseServices(addr.services);
-            var incompleteServices = requiredServices.filter(s => !completedServices.includes(s));
+            var incompleteServices = requiredServices.filter(function(s) { return completedServices.indexOf(s) === -1; });
 
             addr.completedServices = completedServices;
             addr.incompleteServices = incompleteServices;
@@ -4798,7 +4801,7 @@
                 }
 
                 // Check if all addresses are now done or skipped (route complete)
-                var allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
+                var allComplete = addresses.every(function(a) { return a.status === 'done' || a.status === 'skipped'; });
                 if (allComplete && routeTimerRunning) {
                     stopRouteTimer(true); // Route completed
                 }
@@ -4819,7 +4822,7 @@
             // Prevent double-firing from touch + click
             if (markSkipLock) return;
             markSkipLock = true;
-            setTimeout(() => { markSkipLock = false; }, 300);
+            setTimeout(function() { markSkipLock = false; }, 300);
 
             if (addresses[currentIndex]) {
                 addresses[currentIndex].status = 'skipped';
@@ -4836,7 +4839,7 @@
                 }
 
                 // Check if all addresses are now done or skipped (route complete)
-                var allComplete = addresses.every(a => a.status === 'done' || a.status === 'skipped');
+                var allComplete = addresses.every(function(a) { return a.status === 'done' || a.status === 'skipped'; });
                 if (allComplete && routeTimerRunning) {
                     stopRouteTimer(true); // Route completed
                 }
@@ -11846,7 +11849,12 @@
 
             // Show addresses
             html += '<div style="background: var(--bg-card); border-radius: 14px; padding: 14px;">';
-            html += '<p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Addresses (' + (list.addresses ? list.addresses.length : 0) + ')</p>';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">';
+            html += '<p style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Addresses (' + (list.addresses ? list.addresses.length : 0) + ')</p>';
+            if (list.addresses && list.addresses.length > 0 && availableServices.length > 0) {
+                html += '<button onclick="openMassAddServiceModal(\'' + listId + '\')" style="padding: 6px 12px; border: none; border-radius: 6px; background: var(--accent-primary); color: white; font-size: 11px; font-weight: 600; cursor: pointer;">Mass Add Service</button>';
+            }
+            html += '</div>';
 
             if (!list.addresses || list.addresses.length === 0) {
                 html += '<p style="margin: 0; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No addresses in this list yet.</p>';
@@ -12001,6 +12009,10 @@
             // Use saveListsDirectly to avoid overwriting with global addresses array
             saveListsDirectly();
 
+            // Sync to master list
+            syncAddressToMaster(address, name, []);
+            saveMasterAccounts();
+
             // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
                 addresses = list.addresses;
@@ -12047,7 +12059,7 @@
 
             if (!list.addresses) list.addresses = [];
 
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 list.addresses.push({
                     address: line,
                     name: '',
@@ -12061,13 +12073,16 @@
             // Use saveListsDirectly to avoid overwriting with global addresses array
             saveListsDirectly();
 
+            // Sync to master list
+            syncAddressesToMaster(lines);
+
             // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
                 addresses = list.addresses;
                 renderAll();
             }
 
-            alert(`${lines.length} addresses imported`);
+            alert(lines.length + ' addresses imported');
 
             // Re-render the list detail with timeout to ensure DOM updates
             setTimeout(() => {
@@ -12141,7 +12156,7 @@
 
             if (!list.addresses) list.addresses = [];
 
-            lines.forEach(line => {
+            lines.forEach(function(line) {
                 list.addresses.push({
                     address: line,
                     name: '',
@@ -12155,13 +12170,16 @@
             // Use saveListsDirectly to avoid overwriting with global addresses array
             saveListsDirectly();
 
+            // Sync to master list
+            syncAddressesToMaster(lines);
+
             // If this is the active list, sync the global addresses array
             if (listId === currentListId) {
                 addresses = list.addresses;
                 renderAll();
             }
 
-            alert(`${lines.length} addresses imported from ${folderSelectedFileName}`);
+            alert(lines.length + ' addresses imported from ' + folderSelectedFileName);
 
             // Clear file selection and re-render with timeout
             clearFolderSelectedFile();
@@ -12213,6 +12231,119 @@
             if (arrow) {
                 arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
             }
+        }
+
+        // Mass Add Service Modal
+        var massAddServiceListId = null;
+
+        function openMassAddServiceModal(listId) {
+            massAddServiceListId = listId;
+            var availableServices = userSettings.services || [];
+
+            if (availableServices.length === 0) {
+                alert('No services configured. Please add services in Settings first.');
+                return;
+            }
+
+            var servicesHtml = '';
+            availableServices.forEach(function(service) {
+                servicesHtml += '<label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; cursor: pointer; margin-bottom: 8px;">' +
+                    '<input type="checkbox" class="mass-service-checkbox" value="' + service + '" style="width: 18px; height: 18px; accent-color: var(--accent-primary);">' +
+                    '<span style="color: var(--text-primary); font-size: 14px;">' + service + '</span>' +
+                '</label>';
+            });
+
+            var modalHtml = '<div id="mass-add-service-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">' +
+                '<div style="background: var(--bg-card); border-radius: 16px; width: 100%; max-width: 340px; max-height: 80vh; overflow-y: auto;">' +
+                    '<div style="padding: 20px; border-bottom: 1px solid var(--border-color);">' +
+                        '<h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">Mass Add Service</h3>' +
+                        '<p style="margin: 6px 0 0 0; font-size: 13px; color: var(--text-muted);">Select services to add to all addresses</p>' +
+                    '</div>' +
+                    '<div style="padding: 20px;">' +
+                        servicesHtml +
+                        '<div style="margin-top: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">' +
+                            '<label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">' +
+                                '<input type="checkbox" id="mass-service-replace" style="width: 16px; height: 16px; accent-color: var(--accent-warning);">' +
+                                '<span style="color: var(--text-secondary); font-size: 12px;">Replace existing services (uncheck to add)</span>' +
+                            '</label>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="padding: 20px; border-top: 1px solid var(--border-color); display: flex; gap: 10px;">' +
+                        '<button onclick="closeMassAddServiceModal()" style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button>' +
+                        '<button onclick="applyMassService()" style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: var(--accent-primary); color: white; font-size: 14px; font-weight: 600; cursor: pointer;">Apply</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeMassAddServiceModal() {
+            var modal = document.getElementById('mass-add-service-modal');
+            if (modal) modal.remove();
+            massAddServiceListId = null;
+        }
+
+        function applyMassService() {
+            if (!massAddServiceListId) {
+                closeMassAddServiceModal();
+                return;
+            }
+
+            var list = allLists[massAddServiceListId];
+            if (!list || !list.addresses) {
+                closeMassAddServiceModal();
+                return;
+            }
+
+            var checkboxes = document.querySelectorAll('.mass-service-checkbox:checked');
+            var selectedServices = Array.from(checkboxes).map(function(cb) { return cb.value; });
+
+            if (selectedServices.length === 0) {
+                alert('Please select at least one service');
+                return;
+            }
+
+            var replaceCheckbox = document.getElementById('mass-service-replace');
+            var replaceExisting = replaceCheckbox ? replaceCheckbox.checked : false;
+
+            list.addresses.forEach(function(addr) {
+                if (replaceExisting) {
+                    addr.services = selectedServices.slice();
+                } else {
+                    var existingServices = Array.isArray(addr.services) ? addr.services : (addr.services ? [addr.services] : []);
+                    selectedServices.forEach(function(service) {
+                        var alreadyHas = existingServices.some(function(s) { return s.toLowerCase() === service.toLowerCase(); });
+                        if (!alreadyHas) {
+                            existingServices.push(service);
+                        }
+                    });
+                    addr.services = existingServices;
+                }
+            });
+
+            saveListsDirectly();
+
+            // Save listId before closing modal (which clears it)
+            var savedListId = massAddServiceListId;
+            var addrCount = list.addresses.length;
+
+            // If this is the active list, sync the global addresses array
+            if (savedListId === currentListId) {
+                addresses = list.addresses;
+                renderAll();
+            }
+
+            // Close the modal (this sets massAddServiceListId to null)
+            closeMassAddServiceModal();
+
+            // Re-render the list detail using saved listId
+            var contentEl = getFilesFolderContentEl();
+            if (contentEl) {
+                renderListDetailInline(contentEl, savedListId);
+            }
+
+            alert('Services added to ' + addrCount + ' addresses');
         }
 
         function toggleFolderAddressPriority(listId, index) {
@@ -13171,6 +13302,45 @@
             localStorage.setItem('smartRouteMasterAccounts', JSON.stringify(masterAccounts));
         }
 
+        // Sync address to master list (add if not duplicate)
+        function syncAddressToMaster(address, name, services) {
+            if (!address) return false;
+            var addrLower = address.trim().toLowerCase();
+
+            // Check if already exists in master
+            var exists = masterAccounts.some(function(acc) {
+                return acc.address && acc.address.trim().toLowerCase() === addrLower;
+            });
+
+            if (!exists) {
+                masterAccounts.push({
+                    address: address.trim(),
+                    name: name || '',
+                    services: Array.isArray(services) ? services : (services ? [services] : []),
+                    status: 'pending'
+                });
+                return true;
+            }
+            return false;
+        }
+
+        // Sync multiple addresses to master list, returns count of new addresses added
+        function syncAddressesToMaster(addressArray) {
+            var addedCount = 0;
+            addressArray.forEach(function(addr) {
+                var address = typeof addr === 'string' ? addr : (addr.address || '');
+                var name = typeof addr === 'string' ? '' : (addr.name || '');
+                var services = typeof addr === 'string' ? [] : (addr.services || []);
+                if (syncAddressToMaster(address, name, services)) {
+                    addedCount++;
+                }
+            });
+            if (addedCount > 0) {
+                saveMasterAccounts();
+            }
+            return addedCount;
+        }
+
         // Open master list upload modal
         function openMasterListModal() {
             // Populate the route checkboxes
@@ -13769,11 +13939,12 @@
 
             // Find matching account in master list by address
             var normalizedAddr = address.trim().toLowerCase();
-            var matchingAccount = masterAccounts.find(m =>
-                m.address.trim().toLowerCase() === normalizedAddr ||
-                m.address.trim().toLowerCase().includes(normalizedAddr) ||
-                normalizedAddr.includes(m.address.trim().toLowerCase())
-            );
+            var matchingAccount = masterAccounts.find(function(m) {
+                var mAddr = m.address.trim().toLowerCase();
+                return mAddr === normalizedAddr ||
+                    mAddr.indexOf(normalizedAddr) !== -1 ||
+                    normalizedAddr.indexOf(mAddr) !== -1;
+            });
 
             if (matchingAccount) {
                 matchingAccount.status = status;
@@ -13786,7 +13957,8 @@
 
                 // Merge photos
                 if (photos && photos.length > 0) {
-                    matchingAccount.photos = [...(matchingAccount.photos || []), ...photos];
+                    var existingPhotos = matchingAccount.photos || [];
+                    matchingAccount.photos = existingPhotos.concat(photos);
                 }
 
                 // Update notes if provided
