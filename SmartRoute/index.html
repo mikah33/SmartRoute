@@ -3615,7 +3615,7 @@
 
             container.innerHTML = employees.map(function(emp) {
                 var routeCount = (emp.assignedRoutes || []).length;
-                var routeNames = (emp.assignedRoutes || []).map(function(id) { return allLists[id]?.name || 'Unknown'; }).join(', '; });
+                var routeNames = (emp.assignedRoutes || []).map(function(id) { return (allLists[id] ? allLists[id].name : null) || 'Unknown'; }).join(', ');
                 return `
                     <div style="background: var(--bg-secondary); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3872,8 +3872,8 @@
                             <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-success)); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             </div>
-                            <p style="margin: 0; font-size: 22px; font-weight: 600; color: var(--text-primary);">${currentUser?.name || currentUser?.username || '-'}</p>
-                            <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--text-muted);">${currentUser?.role === 'boss' ? 'Boss Account' : 'Employee Account'}</p>
+                            <p style="margin: 0; font-size: 22px; font-weight: 600; color: var(--text-primary);">${(currentUser ? currentUser.name : null) || (currentUser ? currentUser.username : null) || '-'}</p>
+                            <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--text-muted);">${(currentUser ? currentUser.role : null) === 'boss' ? 'Boss Account' : 'Employee Account'}</p>
                         </div>
                         <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
                             <div onclick="openChangePasswordModal(); closeSettingsPage();" class="settings-row" style="border-bottom: none;">
@@ -3881,7 +3881,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </div>
                         </div>
-                        <p style="margin: 0 16px; font-size: 13px; color: var(--text-muted);">Username: @${currentUser?.username || '-'}</p>
+                        <p style="margin: 0 16px; font-size: 13px; color: var(--text-muted);">Username: @${(currentUser ? currentUser.username : null) || '-'}</p>
                     `;
 
                 case 'profile':
@@ -3938,7 +3938,7 @@
                                 </label>
                             </div>
                         </div>
-                        ${currentUser?.role === 'boss' ? `
+                        ${(currentUser ? currentUser.role : null) === 'boss' ? `
                         <p style="margin: 0 0 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase;">Timezone</p>
                         <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
                             <div class="settings-input-row" style="border-bottom: none;">
@@ -4494,8 +4494,8 @@
         // Tab switching
         document.querySelectorAll('.tab').forEach(function(tab) {
             tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
-                document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
+                document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+                document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
                 tab.classList.add('active');
                 document.getElementById(`${tab.dataset.tab}-view`).classList.add('active');
                 renderAll();
@@ -4563,7 +4563,7 @@
             if (Array.isArray(services)) {
                 return services.filter(function(s) { return s; });
             } else if (typeof services === 'string' && services) {
-                return services.split(',').map(function(s) { return s.trim()).filter(function(s) { return s; });
+                return services.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
             }
             return [];
         }
@@ -6797,7 +6797,7 @@
             // Update drop indicator
             if (newIndex !== dragState.currentIndex) {
                 // Remove old indicator
-                dragState.items.forEach(function(item) { return item.classList.remove('route-item-drag-over'); });
+                dragState.items.forEach(function(item) { item.classList.remove('route-item-drag-over'); });
 
                 // Add new indicator
                 if (newIndex < dragState.items.length && newIndex !== dragState.startIndex) {
@@ -6828,7 +6828,7 @@
                 dragState.draggedElement.style.zIndex = '';
             }
 
-            dragState.items.forEach(function(item) { return item.classList.remove('route-item-drag-over'); });
+            dragState.items.forEach(function(item) { item.classList.remove('route-item-drag-over'); });
 
             // Reorder if moved to different position
             if (dragState.currentIndex !== dragState.startIndex) {
@@ -7107,8 +7107,8 @@
         // Import tab switching
         document.querySelectorAll('.import-tab').forEach(function(tab) {
             tab.addEventListener('click', function() {
-                document.querySelectorAll('.import-tab').forEach(function(t) { return t.classList.remove('active'); });
-                document.querySelectorAll('.import-content').forEach(function(c) { return c.classList.remove('active'); });
+                document.querySelectorAll('.import-tab').forEach(function(t) { t.classList.remove('active'); });
+                document.querySelectorAll('.import-content').forEach(function(c) { c.classList.remove('active'); });
                 tab.classList.add('active');
                 document.getElementById(`import-${tab.dataset.import}`).classList.add('active');
             });
@@ -8935,8 +8935,8 @@
 
         function showImportModal() {
             // Switch to manage tab which has the import section
-            document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
-            document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
+            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
             document.querySelector('.tab[data-tab="manage"]').classList.add('active');
             document.getElementById('manage-view').classList.add('active');
         }
@@ -9338,7 +9338,7 @@
                     return;
                 }
 
-                var listName = allLists[currentListId]?.name || 'Route';
+                var listName = (allLists[currentListId] ? allLists[currentListId].name : null) || 'Route';
                 csv = 'Name,Address,Services Completed,Completed Date,Notes,Photos\n';
 
                 done.forEach(function(a) {
@@ -9381,7 +9381,7 @@
                 return;
             }
 
-            var listName = allLists[currentListId]?.name || 'Route';
+            var listName = (allLists[currentListId] ? allLists[currentListId].name : null) || 'Route';
 
             // Build professional HTML report
             var html = `<!DOCTYPE html>
@@ -9731,7 +9731,7 @@
                 return;
             }
 
-            var listName = allLists[currentListId]?.name || 'Route';
+            var listName = (allLists[currentListId] ? allLists[currentListId].name : null) || 'Route';
             var date = new Date().toLocaleDateString();
             var companyName = userSettings.company || 'SmartRoute';
             var userName = userSettings.name || '';
@@ -10100,7 +10100,7 @@
             var isOpen = dropdown.style.display !== 'none';
 
             // Close all other dropdowns
-            document.querySelectorAll('[id^="dropdown-"]').forEach(function(d) { return d.style.display = 'none'; });
+            document.querySelectorAll('[id^="dropdown-"]').forEach(function(d) { d.style.display = 'none'; });
             document.querySelectorAll('[id^="arrow-"]').forEach(function(a) {
                 a.textContent = '▼';
                 a.style.transform = 'rotate(0deg)';
@@ -10344,8 +10344,8 @@
             if (!addr || !addr.coords) return;
 
             // Switch to map tab
-            document.querySelectorAll('.tab').forEach(function(t) { return t.classList.remove('active'); });
-            document.querySelectorAll('.view').forEach(function(v) { return v.classList.remove('active'); });
+            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
             document.querySelector('.tab[data-tab="map"]').classList.add('active');
             document.getElementById('map-view').classList.add('active');
 
@@ -10419,7 +10419,7 @@
             }
 
             // Clear existing markers
-            previewMarkers.forEach(function(m) { return m.remove(); });
+            previewMarkers.forEach(function(m) { m.remove(); });
             previewMarkers = [];
 
             // Remove existing route layer if present
@@ -14168,7 +14168,7 @@
             var allIncompleteServices = new Set();
             incompleteAccounts.forEach(function(a) {
                 if (a.incompleteServices) {
-                    a.incompleteServices.forEach(function(s) { return allIncompleteServices.add(s); });
+                    a.incompleteServices.forEach(function(s) { allIncompleteServices.add(s); });
                 }
             });
 
