@@ -1384,7 +1384,7 @@
 
             <!-- My Lists Dropdown -->
             <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; margin-bottom: 16px; overflow: hidden;">
-                <div onclick="toggleMyRoutesDropdown()" style="display: flex; justify-content: space-between; align-items: center; padding: 18px; cursor: pointer;">
+                <div onclick="toggleMyRoutesDropdown()" style="display: flex; justify-content: space-between; align-items: center; padding: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 16px; color: var(--accent-primary);">≡</span>
                         <p style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary);">My Routes</p>
@@ -1422,11 +1422,6 @@
                         <p style="margin: 0; font-size: 13px; font-weight: 500;">Optimize route to see map</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Current Stop Preview (only shows when route is active) -->
-            <div id="home-current-stop-container" style="display: none;">
-                <!-- Will be populated by renderHomeCurrentStop() -->
             </div>
 
             <!-- Employee Tracking Section (Boss only) -->
@@ -1507,21 +1502,16 @@
 
         <!-- Route View -->
         <div id="route-view" class="view">
-            <!-- Route Stats Bar -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                <div style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, var(--bg-card) 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 10px 8px; text-align: center;">
-                    <p style="margin: 0; font-size: 20px; font-weight: 800; color: var(--accent-info);" id="route-total-count">0</p>
-                    <p style="margin: 2px 0 0 0; font-size: 10px; font-weight: 600; color: var(--text-secondary);">Total</p>
-                </div>
-                <div style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.15) 0%, var(--bg-card) 100%); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 10px 8px; text-align: center;">
-                    <p style="margin: 0; font-size: 20px; font-weight: 800; color: var(--accent-success);" id="route-done-count">0</p>
-                    <p style="margin: 2px 0 0 0; font-size: 10px; font-weight: 600; color: var(--text-secondary);">Done</p>
-                </div>
-                <div style="background: linear-gradient(145deg, rgba(245, 158, 11, 0.15) 0%, var(--bg-card) 100%); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 10px; padding: 10px 8px; text-align: center;">
-                    <p style="margin: 0; font-size: 20px; font-weight: 800; color: var(--accent-warning);" id="route-left-count">0</p>
-                    <p style="margin: 2px 0 0 0; font-size: 10px; font-weight: 600; color: var(--text-secondary);">Left</p>
-                </div>
+            <!-- Route Timer Box -->
+            <div id="route-timer-box" style="background: linear-gradient(145deg, rgba(0, 206, 201, 0.12) 0%, var(--bg-card) 100%); border: 1px solid rgba(0, 206, 201, 0.25); border-radius: 14px; padding: 20px; margin-bottom: 12px; text-align: center;">
+                <p style="margin: 0; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Route Timer</p>
+                <p id="route-timer" style="margin: 8px 0 0 0; font-size: 42px; font-weight: 700; color: var(--accent-primary); font-family: 'SF Mono', 'Menlo', monospace; letter-spacing: 2px;">0:00:00</p>
+                <p id="timer-status" style="margin: 6px 0 0 0; font-size: 11px; color: var(--text-muted);">Starts automatically on first navigate</p>
             </div>
+            <!-- Hidden elements for compatibility -->
+            <span id="route-total-count" style="display: none;">0</span>
+            <span id="route-done-count" style="display: none;">0</span>
+            <span id="route-left-count" style="display: none;">0</span>
 
             <!-- Optimize and Reset Buttons -->
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
@@ -1542,23 +1532,9 @@
                 </button>
             </div>
 
-            <div id="route-stats" style="display: none; background: linear-gradient(135deg, rgba(0, 206, 201, 0.15) 0%, var(--bg-card) 100%); border-radius: 14px; padding: 14px 18px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <p style="margin: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Est. Drive</p>
-                        <p id="total-drive-time" style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700; color: var(--accent-success);">--</p>
-                    </div>
-                    <div style="text-align: center;" onclick="toggleRouteTimer()">
-                        <p style="margin: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Timer</p>
-                        <p id="route-timer" style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700; color: var(--accent-warning); cursor: pointer;">0:00:00</p>
-                        <p id="timer-status" style="margin: 2px 0 0 0; font-size: 9px; color: var(--text-muted);">Starts on navigate</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <p style="margin: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;">Stops</p>
-                        <p id="total-stops" style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700; color: var(--accent-info);">0</p>
-                    </div>
-                </div>
-            </div>
+            <!-- Hidden elements for compatibility -->
+            <span id="total-drive-time" style="display: none;">--</span>
+            <span id="total-stops" style="display: none;">0</span>
             <div class="progress-container">
                 <div class="progress-text">
                     <span id="progress-label">0 of 0 completed</span>
@@ -1575,7 +1551,7 @@
 
             <!-- Full Address List - Collapsible -->
             <div id="route-address-list" style="margin-top: 20px; background: var(--bg-card); border-radius: 14px; overflow: hidden;">
-                <div onclick="toggleAllStopsDropdown()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                <div onclick="toggleAllStopsDropdown()" ontouchend="event.preventDefault(); toggleAllStopsDropdown();" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">All Stops</span>
                         <span id="all-stops-count" style="font-size: 12px; color: var(--text-muted);">(0)</span>
@@ -3439,7 +3415,7 @@
         // DEV BYPASS - REMOVE BEFORE PRODUCTION
         function devBypassLogin() {
             // Create or use dev account
-            const devUsername = 'dev';
+            var devUsername = 'dev';
             if (!allUsers[devUsername]) {
                 allUsers[devUsername] = {
                     username: devUsername,
@@ -3452,7 +3428,7 @@
                 saveUsers();
             }
 
-            currentUser = { ...allUsers[devUsername] };
+            currentUser = Object.assign({}, allUsers[devUsername]);
             delete currentUser.password;
             localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
 
@@ -4206,7 +4182,7 @@
 
             addresses.forEach(addr => {
                 // Add services to address services field, avoiding duplicates
-                const existingServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+                const existingServices = parseServices(addr.services);
 
                 services.forEach(service => {
                     if (!existingServices.some(s => s.toLowerCase() === service.toLowerCase())) {
@@ -4280,7 +4256,8 @@
                 addresses = list.addresses || [];
                 currentIndex = list.currentIndex || 0;
                 startLocation = list.startLocation || userSettings.defaultStartLocation || '';
-                document.getElementById('start-location-input').value = startLocation;
+                var startInput = document.getElementById('start-location-input');
+                if (startInput) startInput.value = startLocation;
 
                 // Restore route timer state
                 stopRouteTimer(); // Stop any running timer first
@@ -4324,7 +4301,8 @@
                 }
             }
             // Set built-in MapBox key
-            document.getElementById('mapbox-key').value = getMapboxKey();
+            var mapboxKeyEl = document.getElementById('mapbox-key');
+            if (mapboxKeyEl) mapboxKeyEl.value = getMapboxKey();
         }
 
         // Save to localStorage
@@ -4489,19 +4467,41 @@
 
         // ============ SERVICE COMPLETION SYSTEM ============
 
+        // Helper function to parse services (handles both array and string formats)
+        function parseServices(services) {
+            if (Array.isArray(services)) {
+                return services.filter(s => s);
+            } else if (typeof services === 'string' && services) {
+                return services.split(',').map(s => s.trim()).filter(s => s);
+            }
+            return [];
+        }
+
         let serviceCompletionIndex = null; // Index of address being marked done
         let serviceCompletionFromList = false; // Whether marking from list view (with index) or route view
         let selectedCompletedServices = []; // Services checked as completed
 
-        // Mark current as done - now shows service completion modal first if address has services
+        // Mark current as done - shows service completion modal if services are available
+        let markDoneLock = false;
         function markDone(index) {
+            // Prevent double-firing from touch + click
+            if (markDoneLock) return;
+            markDoneLock = true;
+            setTimeout(() => { markDoneLock = false; }, 300);
+
             const idx = index !== undefined ? index : currentIndex;
             if (!addresses[idx]) return;
 
             const addr = addresses[idx];
-            const requiredServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+            // Use address-specific services, or fall back to user's available services
+            let requiredServices = parseServices(addr.services);
 
-            // If no services assigned, mark done directly
+            // If no address-specific services, use available services from settings
+            if (requiredServices.length === 0) {
+                requiredServices = userSettings.services || [];
+            }
+
+            // If still no services available, mark done directly
             if (requiredServices.length === 0) {
                 executeMarkDone(idx, index !== undefined);
                 return;
@@ -4551,7 +4551,7 @@
         // Update UI based on selected services
         function updateServiceCompletionUI() {
             const addr = addresses[serviceCompletionIndex];
-            const requiredServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+            const requiredServices = parseServices(addr.services);
             const incompleteServices = requiredServices.filter(s => !selectedCompletedServices.includes(s));
 
             // Update each service status text
@@ -4596,7 +4596,7 @@
         // Confirm service completion - check for incomplete services
         function confirmServiceCompletion() {
             const addr = addresses[serviceCompletionIndex];
-            const requiredServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+            const requiredServices = parseServices(addr.services);
             const incompleteServices = requiredServices.filter(s => !selectedCompletedServices.includes(s));
 
             if (incompleteServices.length > 0) {
@@ -4630,7 +4630,7 @@
             document.getElementById('incomplete-services-modal').classList.remove('active');
             // Re-open service completion modal to let them fix it
             const addr = addresses[serviceCompletionIndex];
-            const requiredServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+            const requiredServices = parseServices(addr.services);
             showServiceCompletionModal(addr, requiredServices);
 
             // Restore unchecked state for incomplete services
@@ -4656,7 +4656,7 @@
 
             // Store completed and incomplete services on the address
             const addr = addresses[idx];
-            const requiredServices = (addr.services || '').split(',').map(s => s.trim()).filter(s => s);
+            const requiredServices = parseServices(addr.services);
             const incompleteServices = requiredServices.filter(s => !completedServices.includes(s));
 
             addr.completedServices = completedServices;
@@ -4726,7 +4726,13 @@
         }
 
         // Skip current
+        let markSkipLock = false;
         function markSkip() {
+            // Prevent double-firing from touch + click
+            if (markSkipLock) return;
+            markSkipLock = true;
+            setTimeout(() => { markSkipLock = false; }, 300);
+
             if (addresses[currentIndex]) {
                 addresses[currentIndex].status = 'skipped';
                 addresses[currentIndex].completedAt = new Date().toISOString();
@@ -5057,7 +5063,7 @@
             }
 
             // Check for duplicate addresses first
-            const duplicates = findDuplicateAddresses();
+            var duplicates = findDuplicateAddresses();
             if (duplicates.length > 0) {
                 showDuplicateAddressModal(duplicates);
                 return;
@@ -5072,13 +5078,13 @@
         }
 
         function startOptimization() {
-            const startSelect = document.getElementById('optimize-start-select');
-            const endSelect = document.getElementById('optimize-end-select');
-            const startCustom = document.getElementById('optimize-start-custom');
-            const endCustom = document.getElementById('optimize-end-custom');
+            var startSelect = document.getElementById('optimize-start-select');
+            var endSelect = document.getElementById('optimize-end-select');
+            var startCustom = document.getElementById('optimize-start-custom');
+            var endCustom = document.getElementById('optimize-end-custom');
 
-            let startAddr = '';
-            let endAddr = null;
+            var startAddr = '';
+            var endAddr = null;
 
             // Get start address
             if (startSelect.value === 'custom') {
@@ -5090,10 +5096,10 @@
             } else if (startSelect.value === 'settings_start') {
                 startAddr = userSettings.defaultStartLocation;
             } else if (startSelect.value.startsWith('addr_')) {
-                const idx = parseInt(startSelect.value.replace('addr_', ''));
+                var idx = parseInt(startSelect.value.replace('addr_', ''));
                 startAddr = addresses[idx].address;
                 // Save as start address
-                const currentList = allLists[currentListId];
+                var currentList = allLists[currentListId];
                 if (currentList) {
                     currentList.startAddressId = addresses[idx].id;
                 }
@@ -5113,12 +5119,12 @@
                     return;
                 }
             } else if (endSelect.value.startsWith('addr_')) {
-                const idx = parseInt(endSelect.value.replace('addr_', ''));
-                endAddr = addresses[idx].address;
+                var idx2 = parseInt(endSelect.value.replace('addr_', ''));
+                endAddr = addresses[idx2].address;
                 // Save as end address
-                const currentList = allLists[currentListId];
-                if (currentList) {
-                    currentList.endAddressId = addresses[idx].id;
+                var currentList2 = allLists[currentListId];
+                if (currentList2) {
+                    currentList2.endAddressId = addresses[idx2].id;
                 }
             }
 
@@ -5207,13 +5213,13 @@
 
             // If this is the first start (no existing start time), record it
             const list = allLists[currentListId];
-            if (!list.routeStartTime) {
+            if (list && !list.routeStartTime) {
                 list.routeStartTime = Date.now();
                 list.routeEndTime = null; // Clear any previous end time
                 list.routeTotalTime = null; // Clear previous total
             }
 
-            routeTimerStartTime = list.routeStartTime;
+            routeTimerStartTime = list ? list.routeStartTime : Date.now();
             routeTimerSeconds = Math.floor((Date.now() - routeTimerStartTime) / 1000);
 
             routeTimerInterval = setInterval(() => {
@@ -5221,8 +5227,10 @@
                 updateTimerDisplay();
             }, 1000);
 
-            document.getElementById('timer-status').textContent = 'Tap to pause';
-            document.getElementById('route-timer').style.color = 'var(--accent-success)';
+            var statusEl = document.getElementById('timer-status');
+            var timerEl = document.getElementById('route-timer');
+            if (statusEl) statusEl.textContent = 'Running...';
+            if (timerEl) timerEl.style.color = 'var(--accent-success)';
 
             // Save the timer state
             saveData();
@@ -5255,7 +5263,7 @@
             } else {
                 // Just paused
                 if (statusEl) {
-                    statusEl.textContent = routeTimerSeconds > 0 ? 'Paused - tap to resume' : 'Starts on navigate';
+                    statusEl.textContent = routeTimerSeconds > 0 ? 'Paused' : 'Starts automatically on first navigate';
                 }
                 if (timerEl) {
                     timerEl.style.color = 'var(--accent-warning)';
@@ -5284,10 +5292,11 @@
             }
 
             // Use built-in MapBox API key
-            const mapboxKey = getMapboxKey();
+            var mapboxKey = getMapboxKey();
 
             // Get start location from parameter or fallback
-            let startAddr = startAddrParam || document.getElementById('start-location-input').value.trim() || userSettings.defaultStartLocation;
+            var startInputEl = document.getElementById('start-location-input');
+            var startAddr = startAddrParam || (startInputEl ? startInputEl.value.trim() : '') || userSettings.defaultStartLocation;
             if (!startAddr) {
                 // If no start address, show the modal
                 showOptimizeModal();
@@ -5295,16 +5304,16 @@
             }
 
             // End address is optional
-            let endAddr = endAddrParam;
+            var endAddr = endAddrParam;
 
-            const btn = document.querySelector('.optimize-btn');
-            const originalText = btn ? btn.textContent : 'Optimize';
+            var btn = document.querySelector('.optimize-btn');
+            var originalText = btn ? btn.textContent : 'Optimize';
             if (btn) btn.disabled = true;
 
             // Show optimizing modal
-            const optimizingModal = document.getElementById('optimizing-modal');
-            const optimizingStatus = document.getElementById('optimizing-status');
-            optimizingModal.classList.add('active');
+            var optimizingModal = document.getElementById('optimizing-modal');
+            var optimizingStatus = document.getElementById('optimizing-status');
+            if (optimizingModal) optimizingModal.classList.add('active');
 
             function updateStatus(text) {
                 if (optimizingStatus) optimizingStatus.textContent = text;
@@ -5605,10 +5614,13 @@
                 msg += `\n\nCheck the Map tab to see your route!`;
                 alert(msg);
 
-                // Update map if it's initialized
+                // Update route map if initialized
                 if (routeMap) {
                     updateMapMarkers();
                 }
+
+                // Re-render home view to update preview map
+                renderHomeView();
 
             } catch (error) {
                 console.error('Optimization error:', error);
@@ -6054,11 +6066,26 @@
                         <span>Navigate</span>
                     </button>
                     <div class="action-buttons">
-                        <button class="action-btn done-btn" onclick="markDone()">Done</button>
-                        <button class="action-btn skip-btn" onclick="markSkip()">Skip</button>
+                        <button class="action-btn done-btn" onclick="markDone()" ontouchend="event.preventDefault(); markDone();">Done</button>
+                        <button class="action-btn skip-btn" onclick="markSkip()" ontouchend="event.preventDefault(); markSkip();">Skip</button>
                     </div>
                 </div>
             `;
+        }
+
+        // Debounce for Done/Skip buttons to prevent double-firing
+        let markActionLock = false;
+        function markDoneDebounced() {
+            if (markActionLock) return;
+            markActionLock = true;
+            setTimeout(() => { markActionLock = false; }, 300);
+            markDone();
+        }
+        function markSkipDebounced() {
+            if (markActionLock) return;
+            markActionLock = true;
+            setTimeout(() => { markActionLock = false; }, 300);
+            markSkip();
         }
 
         function renderProgress() {
@@ -6080,7 +6107,11 @@
 
         function renderManageList() {
             const container = document.getElementById('manage-list');
-            document.getElementById('total-count').textContent = addresses.length;
+            const totalCountEl = document.getElementById('total-count');
+
+            // These elements may not exist in current UI - skip if missing
+            if (!container) return;
+            if (totalCountEl) totalCountEl.textContent = addresses.length;
 
             if (addresses.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No addresses added yet</p>';
@@ -6351,15 +6382,17 @@
             renderManageList();
             renderSummary();
             renderRouteAddressList();
-            renderHomeCurrentStop();
 
             // Update current list name in header
             const currentList = allLists[currentListId];
             if (currentList) {
-                document.getElementById('current-list-name').textContent = currentList.name;
+                var listNameEl = document.getElementById('current-list-name');
+                if (listNameEl) listNameEl.textContent = currentList.name;
 
                 // Show route stats bar - always show if there are addresses (to display timer)
                 const statsEl = document.getElementById('route-stats');
+                var driveTimeEl = document.getElementById('total-drive-time');
+                var totalStopsEl = document.getElementById('total-stops');
 
                 if (addresses.length > 0) {
                     // Show estimated drive time if optimized, otherwise show "--"
@@ -6368,32 +6401,32 @@
                         const hours = Math.floor(totalMins / 60);
                         const mins = totalMins % 60;
                         const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
-                        document.getElementById('total-drive-time').textContent = timeStr;
+                        if (driveTimeEl) driveTimeEl.textContent = timeStr;
                     } else {
-                        document.getElementById('total-drive-time').textContent = '--';
+                        if (driveTimeEl) driveTimeEl.textContent = '--';
                     }
 
-                    document.getElementById('total-stops').textContent = addresses.length;
-                    statsEl.style.display = 'block';
+                    if (totalStopsEl) totalStopsEl.textContent = addresses.length;
+                    if (statsEl) statsEl.style.display = 'block';
 
                     // Update timer display to show current state
                     updateTimerDisplay();
                 } else {
-                    statsEl.style.display = 'none';
+                    if (statsEl) statsEl.style.display = 'none';
                 }
             }
         }
 
         function renderRouteAddressList() {
-            const container = document.getElementById('route-addresses-container');
-            if (!container) return;
-
-            // Always update the count in header first
+            // Always update the count in header first - do this regardless of container
             const countEl = document.getElementById('all-stops-count');
             if (countEl) {
                 const doneCount = addresses.filter(a => a.status === 'done').length;
                 countEl.textContent = `(${doneCount}/${addresses.length})`;
             }
+
+            const container = document.getElementById('route-addresses-container');
+            if (!container) return;
 
             if (addresses.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No addresses yet. Add some in the Addresses tab.</p>';
@@ -6427,7 +6460,7 @@
                 return `
                     <div class="route-item" data-index="${index}" style="background: var(--bg-secondary); border-radius: 12px; margin-bottom: 8px; overflow: hidden; border-left: 3px solid ${isPriority ? '#ef4444' : statusColor};">
                         <div style="display: flex; align-items: center; padding: 12px;">
-                            <div onclick="toggleRouteDropdown(${index})" style="display: flex; align-items: center; flex: 1; cursor: pointer;">
+                            <div onclick="toggleRouteDropdown(${index})" ontouchend="event.preventDefault(); toggleRouteDropdown(${index});" style="display: flex; align-items: center; flex: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
                                 <span id="route-arrow-${index}" style="color: var(--text-muted); margin-right: 10px; transition: transform 0.2s; flex-shrink: 0;">▼</span>
                                 <span style="width: 24px; height: 24px; background: ${isPriority ? '#ef4444' : statusColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; margin-right: 10px; flex-shrink: 0;">${index + 1}</span>
                                 <div style="flex: 1; min-width: 0;">
@@ -6468,9 +6501,17 @@
             }).join('');
         }
 
+        let allStopsToggleLock = false;
         function toggleAllStopsDropdown() {
+            // Prevent double-firing from touch + click
+            if (allStopsToggleLock) return;
+            allStopsToggleLock = true;
+            setTimeout(() => { allStopsToggleLock = false; }, 300);
+
             const container = document.getElementById('route-addresses-container');
             const arrow = document.getElementById('all-stops-arrow');
+            if (!container || !arrow) return;
+
             if (container.style.display === 'none') {
                 container.style.display = 'block';
                 arrow.style.transform = 'rotate(180deg)';
@@ -6480,9 +6521,17 @@
             }
         }
 
+        let routeDropdownLock = false;
         function toggleRouteDropdown(index) {
+            // Prevent double-firing from touch + click
+            if (routeDropdownLock) return;
+            routeDropdownLock = true;
+            setTimeout(() => { routeDropdownLock = false; }, 300);
+
             const dropdown = document.getElementById(`route-dropdown-${index}`);
             const arrow = document.getElementById(`route-arrow-${index}`);
+            if (!dropdown || !arrow) return;
+
             if (dropdown.style.display === 'none') {
                 dropdown.style.display = 'block';
                 arrow.style.transform = 'rotate(180deg)';
@@ -7702,13 +7751,23 @@
 
             // Special handling for tabs
             if (tabName === 'map') {
-                setTimeout(initializeMap, 100);
+                setTimeout(() => {
+                    initializeMap();
+                    // Resize map after showing (fixes WebGL display issues)
+                    if (routeMap) {
+                        routeMap.resize();
+                    }
+                }, 100);
             }
             if (tabName === 'files') {
                 renderFilesView();
             }
             if (tabName === 'home') {
                 renderHomeView();
+                // Resize preview map after showing (fixes WebGL display issues)
+                if (previewMap) {
+                    setTimeout(() => previewMap.resize(), 150);
+                }
             }
             if (tabName === 'summary') {
                 renderSummary();
@@ -8039,9 +8098,6 @@
                 initializePreviewMap();
             }, 100);
 
-            // Render current stop preview on home
-            renderHomeCurrentStop();
-
             // Render employee tracking for boss
             renderEmployeeTracking();
         }
@@ -8200,8 +8256,8 @@
                         <span>Navigate</span>
                     </button>
                     <div class="action-buttons">
-                        <button class="action-btn done-btn" onclick="markDone()">Done</button>
-                        <button class="action-btn skip-btn" onclick="markSkip()">Skip</button>
+                        <button class="action-btn done-btn" onclick="markDone()" ontouchend="event.preventDefault(); markDone();">Done</button>
+                        <button class="action-btn skip-btn" onclick="markSkip()" ontouchend="event.preventDefault(); markSkip();">Skip</button>
                     </div>
                 </div>
             `;
@@ -8209,15 +8265,19 @@
 
         // ============ MY ROUTES DROPDOWN ============
 
-        let myRoutesOpen = false;
+        var myRoutesOpen = false;
 
         function toggleMyRoutesDropdown() {
             myRoutesOpen = !myRoutesOpen;
-            const listContainer = document.getElementById('home-recent-lists');
-            const arrow = document.getElementById('my-routes-arrow');
+            var listContainer = document.getElementById('home-recent-lists');
+            var arrow = document.getElementById('my-routes-arrow');
 
-            listContainer.style.display = myRoutesOpen ? 'block' : 'none';
-            arrow.style.transform = myRoutesOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            if (listContainer) {
+                listContainer.style.display = myRoutesOpen ? 'block' : 'none';
+            }
+            if (arrow) {
+                arrow.style.transform = myRoutesOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
         }
 
         // ============ ADD SECTION TOGGLE ============
@@ -11585,6 +11645,10 @@
         }
 
         function renderListDetailInline(contentEl, listId) {
+            if (!contentEl) {
+                console.error('renderListDetailInline: contentEl is null');
+                return;
+            }
             const list = allLists[listId];
             if (!list) return;
 
@@ -11612,7 +11676,7 @@
                     <p style="margin: 0; font-size: 13px; color: var(--text-muted);">${addrCount} address${addrCount !== 1 ? 'es' : ''}</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button onclick="selectListFromFolder('${listId}')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: ${isActive ? 'var(--bg-secondary)' : 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)'}; color: ${isActive ? 'var(--text-muted)' : 'white'}; font-size: 13px; font-weight: 600; cursor: pointer;">${isActive ? 'Currently Active' : 'Set as Active'}</button>
+                    <button id="set-active-btn-${listId}" onclick="selectListFromFolder('${listId}')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: ${isActive ? 'var(--bg-secondary)' : 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)'}; color: ${isActive ? 'var(--text-muted)' : 'white'}; font-size: 13px; font-weight: 600; cursor: pointer;">${isActive ? 'Currently Active' : 'Set as Active'}</button>
                     <button onclick="renameListFromFolder('${listId}')" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer;">Rename</button>
                     <button onclick="deleteListFromFolder('${listId}')" style="padding: 12px 16px; border: 1px solid var(--accent-danger); border-radius: 10px; background: transparent; color: var(--accent-danger); font-size: 13px; font-weight: 600; cursor: pointer;">Delete</button>
                 </div>
@@ -11829,10 +11893,17 @@
                 renderAll();
             }
 
-            // Clear inputs and re-render the list detail
+            // Clear inputs
             addressInput.value = '';
             if (nameInput) nameInput.value = '';
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+
+            // Re-render the list detail with timeout to ensure DOM updates
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function importPastedAddressesToList(listId) {
@@ -11884,8 +11955,13 @@
 
             alert(`${lines.length} addresses imported`);
 
-            // Re-render the list detail
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+            // Re-render the list detail with timeout to ensure DOM updates
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function openFolderFilePicker(listId) {
@@ -11973,9 +12049,14 @@
 
             alert(`${lines.length} addresses imported from ${folderSelectedFileName}`);
 
-            // Clear file selection and re-render
+            // Clear file selection and re-render with timeout
             clearFolderSelectedFile();
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function deleteAddressFromListFolder(listId, index) {
@@ -11997,8 +12078,13 @@
                 renderAll();
             }
 
-            // Re-render the list detail
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+            // Re-render the list detail with timeout
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function toggleFolderAddressDropdown(listId, index) {
@@ -12026,8 +12112,13 @@
                 renderAll();
             }
 
-            // Re-render the list detail
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+            // Re-render the list detail with timeout to ensure DOM updates
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function saveFolderAddressEdit(listId, index) {
@@ -12061,8 +12152,13 @@
                 renderAll();
             }
 
-            // Re-render the list detail to show updated info
-            renderListDetailInline(getFilesFolderContentEl(), listId);
+            // Re-render the list detail with timeout to ensure DOM updates
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function selectListFromFolder(listId) {
@@ -12070,9 +12166,13 @@
             loadCurrentList();
             saveData();
             renderAll();
-            // Re-render list detail to update active status
-            if (currentViewingList === listId) {
-                renderListDetailInline(getFilesFolderContentEl(), listId);
+            renderHomeView();
+
+            var btn = document.getElementById('set-active-btn-' + listId);
+            if (btn) {
+                btn.textContent = 'Currently Active';
+                btn.style.background = 'var(--bg-secondary)';
+                btn.style.color = 'var(--text-muted)';
             }
         }
 
@@ -12085,8 +12185,14 @@
 
             list.name = newName.trim();
             saveListsDirectly();
-            renderListDetailInline(getFilesFolderContentEl(), listId);
             updateSmartFolderCounts();
+            // Re-render with timeout
+            setTimeout(() => {
+                const contentEl = getFilesFolderContentEl();
+                if (contentEl) {
+                    renderListDetailInline(contentEl, listId);
+                }
+            }, 50);
         }
 
         function deleteListFromFolder(listId) {
