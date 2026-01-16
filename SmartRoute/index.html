@@ -6,6 +6,7 @@
     <title>SmartRoute</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+    <!-- Supabase disabled - uses localStorage instead -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
@@ -2731,8 +2732,8 @@
 
             <div id="login-form">
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
-                    <input type="text" id="login-username" placeholder="Enter username" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Email</label>
+                    <input type="email" id="login-email" placeholder="Enter email" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 12px;">
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
@@ -2784,13 +2785,14 @@
                     <input type="text" id="setup-name" placeholder="e.g. John Smith" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
-                    <input type="text" id="setup-username" placeholder="Choose a username" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Email</label>
+                    <input type="email" id="setup-email" placeholder="your@email.com" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 24px;">
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
-                    <input type="password" id="setup-password" placeholder="Choose a password" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
+                    <input type="password" id="setup-password" placeholder="Choose a password (min 6 chars)" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
+                <p id="setup-error" style="display: none; color: var(--accent-danger); font-size: 13px; margin: 0 0 15px 0; text-align: center;"></p>
                 <button type="button" id="submit-create-account-btn" onclick="createBossAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Create Account</button>
                 <button type="button" onclick="cancelBossSetup()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Cancel</button>
             </div>
@@ -2919,17 +2921,31 @@
         // ============================================
         // SUPABASE CONFIGURATION
         // ============================================
-        // Set USE_SUPABASE to true when ready to switch to cloud backend
+        // Set USE_SUPABASE to false to use localStorage (Supabase has ES6 compatibility issues with WKWebView)
         var USE_SUPABASE = false;
 
-        // Supabase credentials - replace with your project credentials
-        var SUPABASE_URL = 'https://your-project.supabase.co';
-        var SUPABASE_ANON_KEY = 'your-anon-key';
+        // Supabase credentials
+        var SUPABASE_URL = 'https://lpemwqbqdidlatjnqvfu.supabase.co';
+        var SUPABASE_ANON_KEY = 'sb_publishable_y1jGzUjLtv9-FfCMSAm1EQ_ZdsTrWBZ';
 
-        // Initialize Supabase client (only if enabled)
+        // Initialize Supabase client
         var supabase = null;
-        if (USE_SUPABASE && typeof window.supabase !== 'undefined') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function initSupabase() {
+
+            // The Supabase UMD build exposes createClient on window.supabase
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    return true;
+                } catch (e) {
+                    alert('Error creating client: ' + e.message);
+                    return false;
+                }
+            }
+
+            alert('createClient not found');
+            return false;
         }
 
         // ============================================
@@ -3258,44 +3274,61 @@
             return Object.keys(allUsers).length > 0;
         }
 
-        // Initialize auth on page load
+        // Initialize auth on page load (Supabase)
         function initAuth() {
-            loadUsers();
+            // Check if Supabase client is ready
+            if (!supabase) {
+                // Supabase not ready, show login modal
+                showLoginModal();
+                return;
+            }
 
-            // Check for existing session (localStorage for "remember me", sessionStorage for current session only)
-            var session = localStorage.getItem('smartRouteSession') || sessionStorage.getItem('smartRouteSession');
-            if (session) {
-                try {
-                    var parsedSession = JSON.parse(session);
-                    // Verify user still exists in allUsers
-                    if (parsedSession && parsedSession.username && allUsers[parsedSession.username]) {
-                        currentUser = parsedSession;
+            // Check for existing Supabase session
+            supabase.auth.getSession().then(function(result) {
+                if (result.data.session) {
+                    var user = result.data.session.user;
+
+                    // Fetch user profile
+                    supabase.from('profiles').select('*').eq('id', user.id).single().then(function(profileResult) {
+                        var profile = profileResult.data || {};
+                        currentUser = {
+                            id: user.id,
+                            email: user.email,
+                            name: profile.name || user.user_metadata.name || user.email.split('@')[0],
+                            role: profile.role || user.user_metadata.role || 'boss',
+                            boss_id: profile.boss_id
+                        };
+
                         hideLoginModal();
                         updateUIForRole();
-                        return;
-                    } else {
-                        // User no longer exists, clear invalid session
-                        localStorage.removeItem('smartRouteSession');
-                        sessionStorage.removeItem('smartRouteSession');
-                    }
-                } catch (e) {
-                    // Invalid session data, clear it
-                    localStorage.removeItem('smartRouteSession');
-                    sessionStorage.removeItem('smartRouteSession');
+                    }).catch(function(err) {
+                        console.error('Profile fetch error:', err);
+                        // Still log in with basic info
+                        currentUser = {
+                            id: user.id,
+                            email: user.email,
+                            name: user.user_metadata.name || user.email.split('@')[0],
+                            role: user.user_metadata.role || 'boss'
+                        };
+                        hideLoginModal();
+                        updateUIForRole();
+                    });
+                } else {
+                    // No session, show login
+                    showLoginModal();
                 }
-            }
+            }).catch(function(err) {
+                console.error('Session check error:', err);
+                showLoginModal();
+            });
 
-            // Check for saved credentials if remember me was used previously
-            var savedUsername = localStorage.getItem('smartRouteRememberedUsername');
-            if (savedUsername) {
-                var usernameInput = document.getElementById('login-username');
-                if (usernameInput) {
-                    usernameInput.value = savedUsername;
+            // Listen for auth state changes
+            supabase.auth.onAuthStateChange(function(event, session) {
+                if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    showLoginModal();
                 }
-            }
-
-            // Show login modal
-            showLoginModal();
+            });
         }
 
         // Show login modal
@@ -3318,7 +3351,7 @@
             document.getElementById('bottom-nav').style.display = 'flex';
             document.getElementById('app-container').style.display = 'block';
             // Check if employee has multiple routes
-            setTimeout(() => {
+            setTimeout(function() {
                 checkMultipleRoutes();
             }, 100);
         }
@@ -3336,100 +3369,190 @@
             document.getElementById('login-form').style.display = 'block';
         }
 
-        // Create boss account
+        // Create boss account (Supabase)
         function createBossAccount() {
             var name = document.getElementById('setup-name').value.trim();
-            var username = document.getElementById('setup-username').value.trim().toLowerCase();
+            var email = document.getElementById('setup-email').value.trim().toLowerCase();
             var password = document.getElementById('setup-password').value;
+            var errorEl = document.getElementById('setup-error');
 
-            if (!name || !username || !password) {
-                alert('Please fill in all fields');
+            if (!name || !email || !password) {
+                errorEl.textContent = 'Please fill in all fields';
+                errorEl.style.display = 'block';
                 return;
             }
 
-            if (username.length < 3) {
-                alert('Username must be at least 3 characters');
+            if (password.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters';
+                errorEl.style.display = 'block';
                 return;
             }
 
-            if (password.length < 4) {
-                alert('Password must be at least 4 characters');
-                return;
-            }
+            // Disable button while processing
+            var btn = document.getElementById('submit-create-account-btn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
 
-            // Create boss user
-            allUsers[username] = {
-                username: username,
-                password: simpleHash(password),
-                plainPassword: password, // Store for password recovery
-                role: 'boss',
-                name: name,
-                assignedRoutes: []
-            };
+            // Sign up with Supabase
+            supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        name: name,
+                        role: 'boss'
+                    }
+                }
+            }).then(function(result) {
+                if (result.error) {
+                    errorEl.textContent = result.error.message;
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                    return;
+                }
 
-            saveUsers();
+                // Check if email confirmation is required
+                if (result.data.user && !result.data.session) {
+                    errorEl.style.color = 'var(--accent-success)';
+                    errorEl.textContent = 'Check your email to confirm your account!';
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                    return;
+                }
 
-            // Auto-login
-            currentUser = { ...allUsers[username] };
-            delete currentUser.password;
-            localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
+                // Auto-login successful
+                currentUser = {
+                    id: result.data.user.id,
+                    email: result.data.user.email,
+                    name: name,
+                    role: 'boss'
+                };
 
-            hideLoginModal();
-            updateUIForRole();
-            alert('Boss account created! You are now logged in.');
+                hideLoginModal();
+                updateUIForRole();
+                alert('Boss account created! You are now logged in.');
+            }).catch(function(err) {
+                errorEl.textContent = err.message || 'Failed to create account';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            });
         }
 
-        // Handle login
+        // Handle login (localStorage fallback when Supabase disabled)
         function handleLogin() {
-            var username = document.getElementById('login-username').value.trim().toLowerCase();
+            var email = document.getElementById('login-email').value.trim().toLowerCase();
             var password = document.getElementById('login-password').value;
-            var rememberMe = document.getElementById('login-remember').checked;
             var errorEl = document.getElementById('login-error');
 
-            if (!username || !password) {
-                errorEl.textContent = 'Please enter username and password';
+            if (!email || !password) {
+                errorEl.textContent = 'Please enter email and password';
                 errorEl.style.display = 'block';
                 return;
             }
 
-            var user = allUsers[username];
-            if (!user || user.password !== simpleHash(password)) {
-                errorEl.textContent = 'Invalid username or password';
-                errorEl.style.display = 'block';
+            // Disable button while processing
+            var btn = document.getElementById('sign-in-btn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+
+            // Use localStorage when Supabase is not available
+            if (!USE_SUPABASE || !supabase) {
+                // localStorage-based auth - find user by email
+                var foundUser = null;
+                for (var username in allUsers) {
+                    if (allUsers[username].email === email || username === email.split('@')[0]) {
+                        if (allUsers[username].password === simpleHash(password) || allUsers[username].plainPassword === password) {
+                            foundUser = allUsers[username];
+                            foundUser.username = username;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundUser) {
+                    currentUser = {
+                        id: foundUser.username,
+                        email: foundUser.email || email,
+                        name: foundUser.name,
+                        role: foundUser.role,
+                        username: foundUser.username
+                    };
+                    hideLoginModal();
+                    updateUIForRole();
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                } else {
+                    errorEl.textContent = 'Invalid email or password';
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                }
                 return;
             }
 
-            // Login successful
-            currentUser = { ...user };
-            delete currentUser.password;
+            // Sign in with Supabase
+            supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            }).then(function(result) {
+                if (result.error) {
+                    errorEl.textContent = result.error.message;
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                    return;
+                }
 
-            // Save session based on remember me preference
-            if (rememberMe) {
-                localStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
-                localStorage.setItem('smartRouteRememberedUsername', username);
-            } else {
-                sessionStorage.setItem('smartRouteSession', JSON.stringify(currentUser));
-                localStorage.removeItem('smartRouteSession');
-                localStorage.removeItem('smartRouteRememberedUsername');
-            }
+                // Fetch user profile from profiles table
+                return supabase.from('profiles').select('*').eq('id', result.data.user.id).single().then(function(profileResult) {
+                    if (profileResult.error) {
+                        console.error('Profile fetch error:', profileResult.error);
+                    }
 
-            hideLoginModal();
-            updateUIForRole();
+                    var profile = profileResult.data || {};
+                    currentUser = {
+                        id: result.data.user.id,
+                        email: result.data.user.email,
+                        name: profile.name || result.data.user.user_metadata.name || email.split('@')[0],
+                        role: profile.role || result.data.user.user_metadata.role || 'boss',
+                        boss_id: profile.boss_id
+                    };
 
-            // Clear form
-            document.getElementById('login-username').value = '';
-            document.getElementById('login-password').value = '';
-            errorEl.style.display = 'none';
+                    hideLoginModal();
+                    updateUIForRole();
+
+                    // Clear form
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                    errorEl.style.display = 'none';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                });
+            }).catch(function(err) {
+                errorEl.textContent = err.message || 'Failed to sign in';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            });
         }
 
-        // Logout
+        // Logout (Supabase)
         function logout() {
-            localStorage.removeItem('smartRouteSession');
-            sessionStorage.removeItem('smartRouteSession');
-            localStorage.removeItem('smartRouteRememberedUsername');
-            currentUser = null;
-            showLoginModal();
-            switchToTab('home');
+            supabase.auth.signOut().then(function() {
+                currentUser = null;
+                showLoginModal();
+                switchToTab('home');
+            }).catch(function(err) {
+                console.error('Logout error:', err);
+                currentUser = null;
+                showLoginModal();
+                switchToTab('home');
+            });
         }
 
         // DEV BYPASS - REMOVE BEFORE PRODUCTION
@@ -15891,6 +16014,19 @@
                 hash = hash & hash;
             }
             return hash.toString(16);
+        }
+
+        // Initialize Supabase before auth
+        if (USE_SUPABASE) {
+            // Try immediately, then retry after a delay if SDK isn't ready
+            if (!initSupabase()) {
+                // Wait a moment for SDK to load
+                setTimeout(function() {
+                    if (!initSupabase()) {
+                        alert('Supabase SDK failed to load. Check internet connection.');
+                    }
+                }, 500);
+            }
         }
 
         // Initialize
