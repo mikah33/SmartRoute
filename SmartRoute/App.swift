@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct SmartRouteApp: App {
-    @State private var showLanding = true
+    @State private var showLanding: Bool = true
 
     var body: some Scene {
         WindowGroup {
@@ -11,7 +11,7 @@ struct SmartRouteApp: App {
                     .ignoresSafeArea()
                     .statusBarHidden(true)
             } else {
-                ContentView()
+                ContentView(showLanding: $showLanding)
                     .ignoresSafeArea()
                     .statusBarHidden(true)
             }

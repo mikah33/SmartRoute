@@ -6,5 +6,7 @@
 	<string>SmartRoute needs camera access to take photos of job sites</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SmartRoute needs photo library access to attach photos to addresses</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>SmartRoute uses Face ID for quick and secure sign in</string>
 </dict>
 </plist>

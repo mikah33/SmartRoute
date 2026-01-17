@@ -6,9 +6,13 @@ import MessageUI
 // Global reference to webview for communication
 var globalWebView: WKWebView?
 
+// Shared process pool to maintain localStorage across app launches
+let sharedProcessPool = WKProcessPool()
+
 struct WebView: UIViewRepresentable {
     @Binding var showDocumentPicker: Bool
     @Binding var emailData: EmailData?
+    @Binding var showLanding: Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -18,12 +22,15 @@ struct WebView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.websiteDataStore = WKWebsiteDataStore.default()
+        configuration.processPool = sharedProcessPool
 
         // Add message handlers
         let contentController = configuration.userContentController
         contentController.add(context.coordinator, name: "openDocumentPicker")
         contentController.add(context.coordinator, name: "shareFile")
         contentController.add(context.coordinator, name: "sendEmail")
+        contentController.add(context.coordinator, name: "persistSession")
+        contentController.add(context.coordinator, name: "showLanding")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.isOpaque = false
@@ -31,6 +38,7 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.backgroundColor = UIColor(red: 10/255, green: 15/255, blue: 28/255, alpha: 1)
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.uiDelegate = context.coordinator
+        webView.navigationDelegate = context.coordinator
 
         globalWebView = webView
 
@@ -44,7 +52,7 @@ struct WebView: UIViewRepresentable {
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    class Coordinator: NSObject, WKUIDelegate, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKUIDelegate, WKScriptMessageHandler, WKNavigationDelegate {
         var parent: WebView
 
         init(parent: WebView) {
@@ -82,6 +90,81 @@ struct WebView: UIViewRepresentable {
                         filename: filename
                     )
                 }
+            } else if message.name == "persistSession" {
+                // Store session in UserDefaults for persistence
+                if let sessionString = message.body as? String {
+                    if sessionString == "null" || sessionString.isEmpty {
+                        UserDefaults.standard.removeObject(forKey: "supabase_session")
+                    } else {
+                        UserDefaults.standard.set(sessionString, forKey: "supabase_session")
+                    }
+                }
+            } else if message.name == "showLanding" {
+                // Go back to landing page (logout)
+                DispatchQueue.main.async {
+                    self.parent.showLanding = true
+                }
+            }
+        }
+
+        // Inject stored session when page finishes loading
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Check for landing page action first
+            if let action = UserDefaults.standard.string(forKey: "landing_action") {
+                handleLandingAction(webView: webView, action: action)
+                // Clear the action so it doesn't repeat
+                UserDefaults.standard.removeObject(forKey: "landing_action")
+                return
+            }
+
+            // Otherwise restore existing session
+            if let sessionString = UserDefaults.standard.string(forKey: "supabase_session") {
+                let escapedSession = sessionString
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: "'", with: "\\'")
+                    .replacingOccurrences(of: "\n", with: "\\n")
+                let js = "if (typeof restoreNativeSession === 'function') { restoreNativeSession('\(escapedSession)'); }"
+                webView.evaluateJavaScript(js, completionHandler: nil)
+            }
+        }
+
+        // Handle login action from landing page
+        func handleLandingAction(webView: WKWebView, action: String) {
+            let email = UserDefaults.standard.string(forKey: "landing_email") ?? ""
+            let password = UserDefaults.standard.string(forKey: "landing_password") ?? ""
+            let company = UserDefaults.standard.string(forKey: "landing_company") ?? ""
+            let username = UserDefaults.standard.string(forKey: "landing_username") ?? ""
+
+            // Clear stored credentials
+            UserDefaults.standard.removeObject(forKey: "landing_email")
+            UserDefaults.standard.removeObject(forKey: "landing_password")
+            UserDefaults.standard.removeObject(forKey: "landing_company")
+            UserDefaults.standard.removeObject(forKey: "landing_username")
+
+            // Escape for JavaScript
+            let escapedEmail = email.replacingOccurrences(of: "'", with: "\\'")
+            let escapedPassword = password.replacingOccurrences(of: "'", with: "\\'")
+            let escapedCompany = company.replacingOccurrences(of: "'", with: "\\'")
+            let escapedUsername = username.replacingOccurrences(of: "'", with: "\\'")
+
+            var js = ""
+            switch action {
+            case "signIn":
+                js = "if (typeof nativeSignIn === 'function') { nativeSignIn('\(escapedEmail)', '\(escapedPassword)'); }"
+            case "createAccount":
+                js = "if (typeof nativeCreateAccount === 'function') { nativeCreateAccount('\(escapedEmail)', '\(escapedPassword)'); }"
+            case "joinTeam":
+                js = "if (typeof nativeJoinTeam === 'function') { nativeJoinTeam('\(escapedCompany)', '\(escapedUsername)', '\(escapedPassword)'); }"
+            case "appleSignIn":
+                js = "if (typeof nativeAppleSignIn === 'function') { nativeAppleSignIn(); }"
+            case "googleSignIn":
+                js = "if (typeof nativeGoogleSignIn === 'function') { nativeGoogleSignIn(); }"
+            default:
+                break
+            }
+
+            if !js.isEmpty {
+                webView.evaluateJavaScript(js, completionHandler: nil)
             }
         }
 
@@ -290,12 +373,13 @@ struct MailView: UIViewControllerRepresentable {
 }
 
 struct ContentView: View {
+    @Binding var showLanding: Bool
     @State private var showDocumentPicker = false
     @State private var emailData: EmailData? = nil
     @State private var showMailComposer = false
 
     var body: some View {
-        WebView(showDocumentPicker: $showDocumentPicker, emailData: $emailData)
+        WebView(showDocumentPicker: $showDocumentPicker, emailData: $emailData, showLanding: $showLanding)
             .ignoresSafeArea(.all, edges: .all)
             .sheet(isPresented: $showDocumentPicker) {
             DocumentPicker(isPresented: $showDocumentPicker)
@@ -331,5 +415,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(showLanding: .constant(false))
 }

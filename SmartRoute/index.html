@@ -2722,8 +2722,8 @@
         <div id="route-count-badge" style="position: absolute; top: -5px; right: -5px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-danger); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</div>
     </div>
 
-    <!-- Login Modal - Full screen opaque -->
-    <div id="login-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; pointer-events: auto;">
+    <!-- Login Modal - Full screen opaque (hidden by default, shown only when needed) -->
+    <div id="login-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; pointer-events: auto;">
         <div style="width: 100%; max-width: 360px;">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="margin: 0; font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SmartRoute</h2>
@@ -2753,6 +2753,11 @@
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary); font-size: 14px;">Don't have an account?</span>
                     <button type="button" id="create-account-btn" onclick="showBossSetup()" style="background: none; border: none; color: var(--accent-success); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 16px; min-height: 44px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; pointer-events: auto; -webkit-user-select: none; user-select: none; position: relative;">Create Account</button>
+                </div>
+
+                <!-- Employee Login Link -->
+                <div style="text-align: center; margin-top: 12px;">
+                    <button type="button" onclick="showEmployeeLogin()" style="background: none; border: none; color: var(--accent-warning); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 16px; min-height: 44px; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Joining a team?</button>
                 </div>
 
                 <!-- Dev Bypass - REMOVE BEFORE PRODUCTION -->
@@ -2785,6 +2790,11 @@
                     <input type="text" id="setup-name" placeholder="e.g. John Smith" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Company Code</label>
+                    <input type="text" id="setup-company" placeholder="e.g. PPD (short unique code)" autocapitalize="characters" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box; text-transform: uppercase;">
+                    <p style="margin: 6px 0 0 0; font-size: 11px; color: var(--text-muted);">Employees will use this to login</p>
+                </div>
+                <div style="margin-bottom: 16px;">
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Email</label>
                     <input type="email" id="setup-email" placeholder="your@email.com" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
                 </div>
@@ -2795,6 +2805,32 @@
                 <p id="setup-error" style="display: none; color: var(--accent-danger); font-size: 13px; margin: 0 0 15px 0; text-align: center;"></p>
                 <button type="button" id="submit-create-account-btn" onclick="createBossAccount()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Create Account</button>
                 <button type="button" onclick="cancelBossSetup()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Cancel</button>
+            </div>
+
+            <!-- Employee Login Form -->
+            <div id="employee-login-form" style="display: none;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#f59e0b"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <h3 style="margin: 0; font-size: 20px; color: var(--text-primary);">Employee Login</h3>
+                    <p style="margin: 8px 0 0 0; font-size: 13px; color: var(--text-secondary);">Sign in with the credentials your boss gave you</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Company Code</label>
+                    <input type="text" id="employee-login-company" placeholder="e.g. PPD" autocapitalize="characters" autocorrect="off" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box; text-transform: uppercase;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
+                    <input type="text" id="employee-login-username" placeholder="Enter username" autocapitalize="none" autocorrect="off" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
+                    <input type="password" id="employee-login-password" placeholder="Enter password" style="width: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 15px; font-family: inherit; box-sizing: border-box;">
+                </div>
+                <p id="employee-login-error" style="display: none; color: var(--accent-danger); font-size: 13px; margin: 0 0 15px 0; text-align: center;"></p>
+                <button type="button" id="employee-sign-in-btn" onclick="handleEmployeeLogin()" style="width: 100%; padding: 18px; border: none; border-radius: 14px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Sign In</button>
+                <button type="button" onclick="cancelEmployeeLogin()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 14px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">Back</button>
             </div>
         </div>
     </div>
@@ -2823,6 +2859,21 @@
                     <input type="password" id="new-employee-password" placeholder="Password" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); color: var(--text-primary); font-size: 14px; font-family: inherit; box-sizing: border-box;">
                 </div>
                 <button onclick="addEmployee()" style="width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--accent-success) 0%, #00b894 100%); color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;">Add Employee</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configure Account Modal -->
+    <div class="modal-overlay" id="configure-account-modal">
+        <div class="modal" style="text-align: center;">
+            <div style="width: 70px; height: 70px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+            <h3 style="margin: 0 0 12px 0; color: var(--text-primary); font-size: 20px;">Account Setup Required</h3>
+            <p style="margin: 0 0 24px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">You need to set up your company code before adding employees. This code will be used by your employees to log in.</p>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeConfigureAccountModal()" style="flex: 1; padding: 14px; border: 1px solid var(--border-color); border-radius: 12px; background: transparent; color: var(--text-secondary); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;">Dismiss</button>
+                <button onclick="goToProfileSettings()" style="flex: 1; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;">Configure</button>
             </div>
         </div>
     </div>
@@ -2921,32 +2972,509 @@
         // ============================================
         // SUPABASE CONFIGURATION
         // ============================================
-        // Set USE_SUPABASE to false to use localStorage (Supabase has ES6 compatibility issues with WKWebView)
-        var USE_SUPABASE = false;
+        var USE_SUPABASE = true;
+        var DEBUG_SESSION = false; // Set to true to enable debug alerts
 
         // Supabase credentials
         var SUPABASE_URL = 'https://lpemwqbqdidlatjnqvfu.supabase.co';
-        var SUPABASE_ANON_KEY = 'sb_publishable_y1jGzUjLtv9-FfCMSAm1EQ_ZdsTrWBZ';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwZW13cWJxZGlkbGF0am5xdmZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNzgzMTUsImV4cCI6MjA4Mzc1NDMxNX0.9EfeRGldXlNMWoxtMlTFsDi3nqPbNrj62B-faoQys7c';
 
-        // Initialize Supabase client
-        var supabase = null;
+        // Current session
+        var supabaseSession = null;
 
-        function initSupabase() {
+        // ============================================
+        // SUPABASE REST API (No SDK - ES5 Compatible)
+        // ============================================
+        var SupabaseAuth = {
+            // Sign up with email/password
+            signUp: function(email, password, metadata, callback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', SUPABASE_URL + '/auth/v1/signup', true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
 
-            // The Supabase UMD build exposes createClient on window.supabase
-            if (window.supabase && typeof window.supabase.createClient === 'function') {
-                try {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    return true;
-                } catch (e) {
-                    alert('Error creating client: ' + e.message);
-                    return false;
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: { message: 'Failed to parse response' } };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            callback(null, response);
+                        } else {
+                            callback(response.error || response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({
+                    email: email,
+                    password: password,
+                    data: metadata || {}
+                }));
+            },
+
+            // Sign in with email/password
+            signIn: function(email, password, callback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', SUPABASE_URL + '/auth/v1/token?grant_type=password', true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: { message: 'Failed to parse response' } };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            supabaseSession = {
+                                access_token: response.access_token,
+                                refresh_token: response.refresh_token,
+                                user: response.user
+                            };
+                            localStorage.setItem('supabase_session', JSON.stringify(supabaseSession));
+                            persistSessionToNative();
+                            callback(null, response);
+                        } else {
+                            callback(response.error || response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({
+                    email: email,
+                    password: password
+                }));
+            },
+
+            // Sign out
+            signOut: function(callback) {
+                supabaseSession = null;
+                localStorage.removeItem('supabase_session');
+                persistSessionToNative();
+                if (callback) callback(null);
+            },
+
+            // Get current session
+            getSession: function() {
+                if (supabaseSession) return supabaseSession;
+                var stored = localStorage.getItem('supabase_session');
+                if (stored) {
+                    try {
+                        supabaseSession = JSON.parse(stored);
+                        return supabaseSession;
+                    } catch (e) {
+                        return null;
+                    }
                 }
-            }
+                return null;
+            },
 
-            alert('createClient not found');
-            return false;
+            // Refresh the access token using refresh_token
+            refreshSession: function(callback) {
+                var session = SupabaseAuth.getSession();
+                if (!session || !session.refresh_token) {
+                    if (callback) callback({ message: 'No refresh token' }, null);
+                    return;
+                }
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: { message: 'Failed to parse response' } };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            supabaseSession = {
+                                access_token: response.access_token,
+                                refresh_token: response.refresh_token,
+                                user: response.user
+                            };
+                            localStorage.setItem('supabase_session', JSON.stringify(supabaseSession));
+                            persistSessionToNative();
+                            if (callback) callback(null, supabaseSession);
+                        } else {
+                            // Refresh failed - session is invalid
+                            supabaseSession = null;
+                            localStorage.removeItem('supabase_session');
+                            persistSessionToNative();
+                            if (callback) callback(response.error || response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({
+                    refresh_token: session.refresh_token
+                }));
+            },
+
+            // Update user metadata
+            updateUser: function(metadata, callback) {
+                var session = SupabaseAuth.getSession();
+                if (!session || !session.access_token) {
+                    if (callback) callback({ message: 'Not logged in' }, null);
+                    return;
+                }
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('PUT', SUPABASE_URL + '/auth/v1/user', true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: { message: 'Failed to parse response' } };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            // Update local session with new user data
+                            if (supabaseSession && response) {
+                                supabaseSession.user = response;
+                                localStorage.setItem('supabase_session', JSON.stringify(supabaseSession));
+                            }
+                            if (callback) callback(null, response);
+                        } else {
+                            if (callback) callback(response.error || response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify({
+                    data: metadata
+                }));
+            }
+        };
+
+        // Native session persistence (for iOS app)
+        var nativeSessionRestored = false;
+        var authInitialized = false;
+
+        function persistSessionToNative() {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.persistSession) {
+                var sessionStr = supabaseSession ? JSON.stringify(supabaseSession) : 'null';
+                window.webkit.messageHandlers.persistSession.postMessage(sessionStr);
+            }
         }
+
+        // Called by Swift when page loads to restore session
+        function restoreNativeSession(sessionStr) {
+            try {
+                if (sessionStr && sessionStr !== 'null') {
+                    var parsed = JSON.parse(sessionStr);
+                    if (parsed && parsed.refresh_token) {
+                        nativeSessionRestored = true;
+                        supabaseSession = parsed;
+                        localStorage.setItem('supabase_session', sessionStr);
+                        // If user is not logged in yet, trigger auth
+                        if (!currentUser) {
+                            initAuth();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('restoreNativeSession error:', e);
+            }
+        }
+
+        // Called by Swift for sign in from landing page
+        function nativeSignIn(email, password) {
+            if (!email || !password) return;
+
+            // Hide login modal immediately to prevent flash
+            document.getElementById('login-modal').style.display = 'none';
+
+            SupabaseAuth.signIn(email, password, function(error, data) {
+                if (error) {
+                    alert('Sign in failed: ' + (error.message || 'Invalid credentials'));
+                    return;
+                }
+
+                var user = data.user || {};
+                var metadata = user.user_metadata || {};
+
+                currentUser = {
+                    id: user.id,
+                    email: user.email || email,
+                    name: metadata.name || email.split('@')[0],
+                    role: metadata.role || 'boss',
+                    username: metadata.username || email.split('@')[0]
+                };
+
+                hideLoginModal();
+                updateUIForRole();
+                loadMasterAccounts(function() {
+                    loadData();
+                    renderAll();
+                });
+            });
+        }
+
+        // Called by Swift for create account from landing page
+        function nativeCreateAccount(email, password) {
+            if (!email || !password) return;
+
+            // Hide login modal immediately to prevent flash
+            document.getElementById('login-modal').style.display = 'none';
+
+            SupabaseAuth.signUp(email, password, { role: 'boss' }, function(error, data) {
+                if (error) {
+                    alert('Sign up failed: ' + (error.message || 'Could not create account'));
+                    return;
+                }
+
+                var user = data.user || {};
+
+                currentUser = {
+                    id: user.id,
+                    email: user.email || email,
+                    name: email.split('@')[0],
+                    role: 'boss',
+                    username: email.split('@')[0]
+                };
+
+                hideLoginModal();
+                updateUIForRole();
+                loadMasterAccounts(function() {
+                    loadData();
+                    renderAll();
+                });
+            });
+        }
+
+        // Called by Swift for Apple sign in
+        function nativeAppleSignIn() {
+            // Hide login modal immediately
+            document.getElementById('login-modal').style.display = 'none';
+
+            // Supabase OAuth with Apple
+            var redirectUrl = window.location.origin + '/auth/callback';
+            var authUrl = SUPABASE_URL + '/auth/v1/authorize?provider=apple&redirect_to=' + encodeURIComponent(redirectUrl);
+
+            // For native app, we need to handle this differently
+            // Show message that this requires setup
+            alert('Apple Sign In requires additional setup in Supabase dashboard.\n\nGo to Authentication > Providers > Apple and configure your Apple Developer credentials.');
+        }
+
+        // Called by Swift for Google sign in
+        function nativeGoogleSignIn() {
+            // Hide login modal immediately
+            document.getElementById('login-modal').style.display = 'none';
+
+            // Supabase OAuth with Google
+            var redirectUrl = window.location.origin + '/auth/callback';
+            var authUrl = SUPABASE_URL + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectUrl);
+
+            // For native app, we need to handle this differently
+            // Show message that this requires setup
+            alert('Google Sign In requires additional setup in Supabase dashboard.\n\nGo to Authentication > Providers > Google and configure your Google Cloud credentials.');
+        }
+
+        // Called by Swift for join team from landing page
+        function nativeJoinTeam(companyCode, username, password) {
+            if (!companyCode || !username || !password) return;
+
+            // Hide login modal immediately to prevent flash
+            document.getElementById('login-modal').style.display = 'none';
+
+            // Construct email from company code and username
+            var email = username.toLowerCase() + '@' + companyCode.toLowerCase() + '.employee';
+
+            SupabaseAuth.signIn(email, password, function(error, data) {
+                if (error) {
+                    alert('Join team failed: Invalid company code, username, or password');
+                    return;
+                }
+
+                var user = data.user || {};
+                var metadata = user.user_metadata || {};
+
+                if (metadata.role !== 'employee') {
+                    alert('This is not an employee account.');
+                    SupabaseAuth.signOut(function() {});
+                    return;
+                }
+
+                currentUser = {
+                    id: user.id,
+                    email: user.email || email,
+                    name: metadata.name || username,
+                    role: 'employee',
+                    username: metadata.username || username,
+                    bossId: metadata.boss_id || null
+                };
+
+                hideLoginModal();
+                updateUIForRole();
+                loadMasterAccounts(function() {
+                    loadData();
+                    renderAll();
+                });
+            });
+        }
+
+        // Database REST API
+        var SupabaseDB = {
+            // Query a table
+            select: function(table, query, callback) {
+                var session = SupabaseAuth.getSession();
+                if (!session || !session.access_token) {
+                    console.log('SupabaseDB.select: No valid session');
+                    callback({ message: 'No valid session' }, null);
+                    return;
+                }
+
+                var xhr = new XMLHttpRequest();
+                var url = SUPABASE_URL + '/rest/v1/' + table;
+                if (query) url += '?' + query;
+
+                xhr.open('GET', url, true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: 'Failed to parse response' };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            callback(null, response);
+                        } else {
+                            console.log('SupabaseDB.select error:', xhr.status, response);
+                            callback(response, null);
+                        }
+                    }
+                };
+
+                xhr.send();
+            },
+
+            // Insert into table
+            insert: function(table, data, callback) {
+                var session = SupabaseAuth.getSession();
+                if (!session || !session.access_token) {
+                    console.log('SupabaseDB.insert: No valid session');
+                    callback({ message: 'No valid session' }, null);
+                    return;
+                }
+
+                console.log('SupabaseDB.insert:', table, JSON.stringify(data));
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', SUPABASE_URL + '/rest/v1/' + table, true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('Prefer', 'return=representation');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: 'Failed to parse response' };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            console.log('SupabaseDB.insert success:', response);
+                            callback(null, response);
+                        } else {
+                            console.log('SupabaseDB.insert error:', xhr.status, response);
+                            callback(response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify(data));
+            },
+
+            // Update table
+            update: function(table, query, data, callback) {
+                var session = SupabaseAuth.getSession();
+                var xhr = new XMLHttpRequest();
+                xhr.open('PATCH', SUPABASE_URL + '/rest/v1/' + table + '?' + query, true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('Prefer', 'return=representation');
+                if (session && session.access_token) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+                }
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        var response;
+                        try {
+                            response = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            response = { error: 'Failed to parse response' };
+                        }
+
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            callback(null, response);
+                        } else {
+                            callback(response, null);
+                        }
+                    }
+                };
+
+                xhr.send(JSON.stringify(data));
+            },
+
+            // Delete from table
+            delete: function(table, query, callback) {
+                var session = SupabaseAuth.getSession();
+                var xhr = new XMLHttpRequest();
+                xhr.open('DELETE', SUPABASE_URL + '/rest/v1/' + table + '?' + query, true);
+                xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                if (session && session.access_token) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+                }
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            callback(null, { success: true });
+                        } else {
+                            var response;
+                            try {
+                                response = JSON.parse(xhr.responseText);
+                            } catch (e) {
+                                response = { error: 'Failed to parse response' };
+                            }
+                            callback(response, null);
+                        }
+                    }
+                };
+
+                xhr.send();
+            }
+        };
 
         // ============================================
         // SCROLL-SAFE CLICK DETECTION
@@ -2985,131 +3513,6 @@
             };
         }
 
-        // ============================================
-        // BACKEND ABSTRACTION LAYER
-        // ============================================
-        // These functions abstract localStorage vs Supabase operations
-        // When USE_SUPABASE is true, they will use Supabase instead
-
-        var Backend = {
-            // Auth functions
-            async signUp(email, password, userData) {
-                if (USE_SUPABASE && supabase) {
-                    var { data, error } = await supabase.auth.signUp({
-                        email,
-                        password,
-                        options: { data: userData }
-                    });
-                    if (error) throw error;
-                    return data;
-                } else {
-                    // Local mode - uses existing localStorage auth
-                    return { user: userData, session: null };
-                }
-            },
-
-            async signIn(email, password) {
-                if (USE_SUPABASE && supabase) {
-                    var { data, error } = await supabase.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-                    if (error) throw error;
-                    return data;
-                } else {
-                    // Local mode - handled by existing handleLogin()
-                    return null;
-                }
-            },
-
-            async signOut() {
-                if (USE_SUPABASE && supabase) {
-                    var { error } = await supabase.auth.signOut();
-                    if (error) throw error;
-                }
-                // Local cleanup always happens
-                localStorage.removeItem('smartRouteSession');
-                sessionStorage.removeItem('smartRouteSession');
-            },
-
-            async getSession() {
-                if (USE_SUPABASE && supabase) {
-                    var { data: { session } } = await supabase.auth.getSession();
-                    return session;
-                }
-                return null;
-            },
-
-            // Data functions - for future Supabase table operations
-            async saveRoutes(routes, folders, listId, folderId) {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase routes table upsert
-                    // var { error } = await supabase.from('routes').upsert(routes);
-                }
-                // Always save locally as backup/offline cache
-                localStorage.setItem('plowRouteDataV2', JSON.stringify({
-                    allLists: routes,
-                    allFolders: folders,
-                    currentListId: listId,
-                    currentFolderId: folderId
-                }));
-            },
-
-            async loadRoutes() {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase routes table fetch
-                    // var { data, error } = await supabase.from('routes').select('*');
-                }
-                // Fall back to localStorage
-                var saved = localStorage.getItem('plowRouteDataV2');
-                return saved ? JSON.parse(saved) : null;
-            },
-
-            async saveUsers(users) {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase users table upsert
-                }
-                localStorage.setItem('smartRouteUsers', JSON.stringify(users));
-            },
-
-            async loadUsers() {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase users table fetch
-                }
-                var saved = localStorage.getItem('smartRouteUsers');
-                return saved ? JSON.parse(saved) : {};
-            },
-
-            async saveReports(reports) {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase reports table upsert
-                }
-                localStorage.setItem('smartRouteEmployeeReports', JSON.stringify(reports));
-            },
-
-            async loadReports() {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase reports table fetch
-                }
-                var saved = localStorage.getItem('smartRouteEmployeeReports');
-                return saved ? JSON.parse(saved) : [];
-            },
-
-            async saveSettings(settings) {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase user_settings table upsert
-                }
-                localStorage.setItem('smartRouteSettings', JSON.stringify(settings));
-            },
-
-            async loadSettings() {
-                if (USE_SUPABASE && supabase) {
-                    // TODO: Implement Supabase user_settings table fetch
-                }
-                var saved = localStorage.getItem('smartRouteSettings');
-                return saved ? JSON.parse(saved) : null;
-            }
-        };
 
         // ============================================
         // APP DATA STRUCTURES
@@ -3274,61 +3677,46 @@
             return Object.keys(allUsers).length > 0;
         }
 
-        // Initialize auth on page load (Supabase)
+        // Initialize auth on page load
         function initAuth() {
-            // Check if Supabase client is ready
-            if (!supabase) {
-                // Supabase not ready, show login modal
-                showLoginModal();
-                return;
-            }
+            // Load users from localStorage first
+            loadUsers();
 
-            // Check for existing Supabase session
-            supabase.auth.getSession().then(function(result) {
-                if (result.data.session) {
-                    var user = result.data.session.user;
+            // Check for existing session
+            var session = SupabaseAuth.getSession();
+            if (session && session.refresh_token) {
+                // Refresh the session to ensure token is valid
+                SupabaseAuth.refreshSession(function(error, newSession) {
+                    if (error || !newSession) {
+                        // Refresh failed, session is invalid - show login
+                        showLoginModal();
+                        return;
+                    }
 
-                    // Fetch user profile
-                    supabase.from('profiles').select('*').eq('id', user.id).single().then(function(profileResult) {
-                        var profile = profileResult.data || {};
-                        currentUser = {
-                            id: user.id,
-                            email: user.email,
-                            name: profile.name || user.user_metadata.name || user.email.split('@')[0],
-                            role: profile.role || user.user_metadata.role || 'boss',
-                            boss_id: profile.boss_id
-                        };
+                    // Session refreshed successfully
+                    var user = newSession.user;
+                    var metadata = user.user_metadata || {};
 
-                        hideLoginModal();
-                        updateUIForRole();
-                    }).catch(function(err) {
-                        console.error('Profile fetch error:', err);
-                        // Still log in with basic info
-                        currentUser = {
-                            id: user.id,
-                            email: user.email,
-                            name: user.user_metadata.name || user.email.split('@')[0],
-                            role: user.user_metadata.role || 'boss'
-                        };
-                        hideLoginModal();
-                        updateUIForRole();
+                    currentUser = {
+                        id: user.id,
+                        email: user.email,
+                        name: metadata.name || user.email.split('@')[0],
+                        role: metadata.role || 'boss',
+                        username: user.email.split('@')[0]
+                    };
+
+                    hideLoginModal();
+                    updateUIForRole();
+                    // Load data now that user is authenticated
+                    loadMasterAccounts(function() {
+                        loadData();
+                        renderAll();
                     });
-                } else {
-                    // No session, show login
-                    showLoginModal();
-                }
-            }).catch(function(err) {
-                console.error('Session check error:', err);
+                });
+            } else {
+                // No session, show login
                 showLoginModal();
-            });
-
-            // Listen for auth state changes
-            supabase.auth.onAuthStateChange(function(event, session) {
-                if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    showLoginModal();
-                }
-            });
+            }
         }
 
         // Show login modal
@@ -3336,6 +3724,8 @@
             document.getElementById('login-modal').style.display = 'flex';
             document.getElementById('login-form').style.display = 'block';
             document.getElementById('boss-setup-form').style.display = 'none';
+            document.getElementById('employee-login-form').style.display = 'none';
+            document.getElementById('forgot-password-form').style.display = 'none';
             document.getElementById('login-error').style.display = 'none';
             // Hide app chrome
             document.getElementById('app-header').style.display = 'none';
@@ -3360,6 +3750,7 @@
         function showBossSetup() {
             document.getElementById('login-form').style.display = 'none';
             document.getElementById('forgot-password-form').style.display = 'none';
+            document.getElementById('employee-login-form').style.display = 'none';
             document.getElementById('boss-setup-form').style.display = 'block';
         }
 
@@ -3369,15 +3760,185 @@
             document.getElementById('login-form').style.display = 'block';
         }
 
-        // Create boss account (Supabase)
+        // Show employee login form
+        function showEmployeeLogin() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('forgot-password-form').style.display = 'none';
+            document.getElementById('boss-setup-form').style.display = 'none';
+            document.getElementById('employee-login-form').style.display = 'block';
+        }
+
+        // Cancel employee login
+        function cancelEmployeeLogin() {
+            document.getElementById('employee-login-form').style.display = 'none';
+            document.getElementById('employee-login-company').value = '';
+            document.getElementById('employee-login-username').value = '';
+            document.getElementById('employee-login-password').value = '';
+            document.getElementById('employee-login-error').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        // Handle employee login (username-based with company code)
+        function handleEmployeeLogin() {
+            var companyCode = document.getElementById('employee-login-company').value.trim().toUpperCase();
+            var username = document.getElementById('employee-login-username').value.trim().toLowerCase();
+            var password = document.getElementById('employee-login-password').value;
+            var errorEl = document.getElementById('employee-login-error');
+
+            if (!companyCode || !username || !password) {
+                errorEl.textContent = 'Please fill in all fields';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            var btn = document.getElementById('employee-sign-in-btn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+
+            // Convert username + company to email format for Supabase: john_ppd@emp.smartroute.co
+            var email = username + '_' + companyCode.toLowerCase() + '@emp.smartroute.co';
+
+            // Try Supabase first
+            if (USE_SUPABASE) {
+                SupabaseAuth.signIn(email, password, function(error, data) {
+                    if (error) {
+                        // Try localStorage fallback
+                        var emp = allUsers[username];
+                        if (emp && emp.role === 'employee') {
+                            if (emp.password === simpleHash(password) || emp.plainPassword === password) {
+                                currentUser = {
+                                    id: username,
+                                    email: emp.email || email,
+                                    name: emp.name || username,
+                                    role: 'employee',
+                                    username: username,
+                                    bossId: emp.bossId || null
+                                };
+                                hideLoginModal();
+                                updateUIForRole();
+                                document.getElementById('employee-login-company').value = '';
+                                document.getElementById('employee-login-username').value = '';
+                                document.getElementById('employee-login-password').value = '';
+                                btn.disabled = false;
+                                btn.textContent = 'Sign In';
+                                return;
+                            }
+                        }
+
+                        errorEl.textContent = 'Invalid company code, username, or password';
+                        errorEl.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                        return;
+                    }
+
+                    // Supabase login successful
+                    var user = data.user || {};
+                    var metadata = user.user_metadata || {};
+
+                    // Verify this is an employee account
+                    if (metadata.role !== 'employee') {
+                        errorEl.textContent = 'This is not an employee account. Use the main login.';
+                        errorEl.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                        SupabaseAuth.signOut(function() {});
+                        return;
+                    }
+
+                    currentUser = {
+                        id: user.id,
+                        email: user.email || email,
+                        name: metadata.name || username,
+                        role: 'employee',
+                        username: metadata.username || username,
+                        bossId: metadata.boss_id || null
+                    };
+
+                    // Save to localStorage for offline
+                    allUsers[username] = {
+                        email: email,
+                        name: currentUser.name,
+                        role: 'employee',
+                        username: username,
+                        password: simpleHash(password),
+                        plainPassword: password,
+                        supabaseId: user.id,
+                        bossId: metadata.boss_id || null
+                    };
+                    saveUsers();
+
+                    hideLoginModal();
+                    updateUIForRole();
+                    loadMasterAccounts(function() {
+                        loadData();
+                        renderAll();
+                    });
+                    document.getElementById('employee-login-company').value = '';
+                    document.getElementById('employee-login-username').value = '';
+                    document.getElementById('employee-login-password').value = '';
+                    errorEl.style.display = 'none';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                });
+            } else {
+                // localStorage only
+                var emp = allUsers[username];
+                if (emp && emp.role === 'employee') {
+                    if (emp.password === simpleHash(password) || emp.plainPassword === password) {
+                        currentUser = {
+                            id: username,
+                            email: emp.email || email,
+                            name: emp.name || username,
+                            role: 'employee',
+                            username: username
+                        };
+                        hideLoginModal();
+                        updateUIForRole();
+                        loadMasterAccounts(function() {
+                            loadData();
+                            renderAll();
+                        });
+                        document.getElementById('employee-login-username').value = '';
+                        document.getElementById('employee-login-password').value = '';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                        return;
+                    }
+                }
+
+                errorEl.textContent = 'Invalid username or password';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+
+        // Create boss account (Supabase REST API)
         function createBossAccount() {
             var name = document.getElementById('setup-name').value.trim();
+            var rawCompany = document.getElementById('setup-company').value.trim().toUpperCase();
             var email = document.getElementById('setup-email').value.trim().toLowerCase();
             var password = document.getElementById('setup-password').value;
             var errorEl = document.getElementById('setup-error');
 
-            if (!name || !email || !password) {
+            if (!name || !rawCompany || !email || !password) {
                 errorEl.textContent = 'Please fill in all fields';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // Sanitize company code - only allow letters and numbers
+            var companyCode = rawCompany.replace(/[^A-Z0-9]/g, '');
+
+            if (companyCode !== rawCompany) {
+                errorEl.textContent = 'Company code can only contain letters and numbers';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (companyCode.length < 2 || companyCode.length > 10) {
+                errorEl.textContent = 'Company code must be 2-10 characters';
                 errorEl.style.display = 'block';
                 return;
             }
@@ -3393,64 +3954,97 @@
             btn.disabled = true;
             btn.textContent = 'Creating...';
 
-            // Sign up with Supabase
-            supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        name: name,
-                        role: 'boss'
-                    }
-                }
-            }).then(function(result) {
-                if (result.error) {
-                    errorEl.textContent = result.error.message;
+            // Sign up with Supabase REST API
+            SupabaseAuth.signUp(email, password, { name: name, role: 'boss', company_code: companyCode }, function(error, data) {
+                if (error) {
+                    var errMsg = error.message || error.msg || error.error_description || JSON.stringify(error);
+                    errorEl.textContent = errMsg;
                     errorEl.style.display = 'block';
                     btn.disabled = false;
                     btn.textContent = 'Create Account';
                     return;
                 }
 
-                // Check if email confirmation is required
-                if (result.data.user && !result.data.session) {
-                    errorEl.style.color = 'var(--accent-success)';
-                    errorEl.textContent = 'Check your email to confirm your account!';
-                    errorEl.style.display = 'block';
-                    btn.disabled = false;
-                    btn.textContent = 'Create Account';
+                // Check if email confirmation is required (no access_token means needs confirmation)
+                if (data && data.id && !data.access_token) {
+                    // Auto-login after signup
+                    SupabaseAuth.signIn(email, password, function(loginErr, loginData) {
+                        if (loginErr) {
+                            errorEl.style.color = 'var(--accent-success)';
+                            errorEl.textContent = 'Account created! Please sign in.';
+                            errorEl.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = 'Create Account';
+                            cancelBossSetup();
+                            return;
+                        }
+
+                        // Login successful
+                        currentUser = {
+                            id: loginData.user.id,
+                            email: loginData.user.email,
+                            name: name,
+                            role: 'boss'
+                        };
+
+                        // Also save to localStorage for offline access
+                        allUsers[email.split('@')[0]] = {
+                            email: email,
+                            name: name,
+                            role: 'boss',
+                            password: simpleHash(password),
+                            plainPassword: password
+                        };
+                        saveUsers();
+
+                        hideLoginModal();
+                        updateUIForRole();
+                        alert('Boss account created! You are now logged in.');
+                    });
                     return;
                 }
 
-                // Auto-login successful
+                // Auto-login was included in signup response
                 currentUser = {
-                    id: result.data.user.id,
-                    email: result.data.user.email,
+                    id: data.user ? data.user.id : data.id,
+                    email: email,
                     name: name,
                     role: 'boss'
                 };
 
+                // Also save to localStorage for offline access
+                allUsers[email.split('@')[0]] = {
+                    email: email,
+                    name: name,
+                    role: 'boss',
+                    password: simpleHash(password),
+                    plainPassword: password
+                };
+                saveUsers();
+
                 hideLoginModal();
                 updateUIForRole();
                 alert('Boss account created! You are now logged in.');
-            }).catch(function(err) {
-                errorEl.textContent = err.message || 'Failed to create account';
-                errorEl.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Create Account';
             });
         }
 
-        // Handle login (localStorage fallback when Supabase disabled)
+        // Handle login (Supabase REST API with localStorage fallback)
         function handleLogin() {
-            var email = document.getElementById('login-email').value.trim().toLowerCase();
+            var emailInput = document.getElementById('login-email').value.trim().toLowerCase();
             var password = document.getElementById('login-password').value;
             var errorEl = document.getElementById('login-error');
 
-            if (!email || !password) {
-                errorEl.textContent = 'Please enter email and password';
+            if (!emailInput || !password) {
+                errorEl.textContent = 'Please enter email/username and password';
                 errorEl.style.display = 'block';
                 return;
+            }
+
+            // If no @ symbol, assume it's an employee username
+            var email = emailInput;
+            var isEmployeeUsername = emailInput.indexOf('@') === -1;
+            if (isEmployeeUsername) {
+                email = emailInput + '@emp.smartroute.co';
             }
 
             // Disable button while processing
@@ -3458,8 +4052,8 @@
             btn.disabled = true;
             btn.textContent = 'Signing in...';
 
-            // Use localStorage when Supabase is not available
-            if (!USE_SUPABASE || !supabase) {
+            // Use localStorage when Supabase is disabled
+            if (!USE_SUPABASE) {
                 // localStorage-based auth - find user by email
                 var foundUser = null;
                 for (var username in allUsers) {
@@ -3495,62 +4089,101 @@
                 return;
             }
 
-            // Sign in with Supabase
-            supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            }).then(function(result) {
-                if (result.error) {
-                    errorEl.textContent = result.error.message;
-                    errorEl.style.display = 'block';
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
+            // Sign in with Supabase REST API
+            SupabaseAuth.signIn(email, password, function(error, data) {
+                if (error) {
+                    // Try localStorage fallback
+                    var foundUser = null;
+                    for (var username in allUsers) {
+                        if (allUsers[username].email === email || username === email.split('@')[0]) {
+                            if (allUsers[username].password === simpleHash(password) || allUsers[username].plainPassword === password) {
+                                foundUser = allUsers[username];
+                                foundUser.username = username;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (foundUser) {
+                        currentUser = {
+                            id: foundUser.username,
+                            email: foundUser.email || email,
+                            name: foundUser.name,
+                            role: foundUser.role,
+                            username: foundUser.username
+                        };
+                        hideLoginModal();
+                        updateUIForRole();
+                        document.getElementById('login-email').value = '';
+                        document.getElementById('login-password').value = '';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                    } else {
+                        errorEl.textContent = error.message || 'Invalid email or password';
+                        errorEl.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                    }
                     return;
                 }
 
-                // Fetch user profile from profiles table
-                return supabase.from('profiles').select('*').eq('id', result.data.user.id).single().then(function(profileResult) {
-                    if (profileResult.error) {
-                        console.error('Profile fetch error:', profileResult.error);
-                    }
+                // Supabase login successful
+                var user = data.user || {};
+                var metadata = user.user_metadata || {};
 
-                    var profile = profileResult.data || {};
-                    currentUser = {
-                        id: result.data.user.id,
-                        email: result.data.user.email,
-                        name: profile.name || result.data.user.user_metadata.name || email.split('@')[0],
-                        role: profile.role || result.data.user.user_metadata.role || 'boss',
-                        boss_id: profile.boss_id
-                    };
+                // Get username from metadata (for employees) or from email
+                var username = metadata.username || email.split('@')[0];
 
-                    hideLoginModal();
-                    updateUIForRole();
+                currentUser = {
+                    id: user.id,
+                    email: user.email || email,
+                    name: metadata.name || username,
+                    role: metadata.role || 'boss',
+                    username: username,
+                    bossId: metadata.boss_id || null
+                };
 
-                    // Clear form
-                    document.getElementById('login-email').value = '';
-                    document.getElementById('login-password').value = '';
-                    errorEl.style.display = 'none';
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
+                // Also save to localStorage for offline access
+                allUsers[username] = {
+                    email: email,
+                    name: currentUser.name,
+                    role: currentUser.role,
+                    username: username,
+                    password: simpleHash(password),
+                    plainPassword: password,
+                    supabaseId: user.id,
+                    bossId: metadata.boss_id || null
+                };
+                saveUsers();
+
+                hideLoginModal();
+                updateUIForRole();
+                // Load data now that user is authenticated
+                loadMasterAccounts(function() {
+                    loadData();
+                    renderAll();
                 });
-            }).catch(function(err) {
-                errorEl.textContent = err.message || 'Failed to sign in';
-                errorEl.style.display = 'block';
+
+                // Clear form
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+                errorEl.style.display = 'none';
                 btn.disabled = false;
                 btn.textContent = 'Sign In';
             });
         }
 
-        // Logout (Supabase)
+        // Logout
         function logout() {
-            supabase.auth.signOut().then(function() {
+            SupabaseAuth.signOut(function() {
                 currentUser = null;
-                showLoginModal();
-                switchToTab('home');
-            }).catch(function(err) {
-                console.error('Logout error:', err);
-                currentUser = null;
-                showLoginModal();
+                // Notify Swift to go back to landing page
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.showLanding) {
+                    window.webkit.messageHandlers.showLanding.postMessage('logout');
+                } else {
+                    // Fallback to showing login modal if not in native app
+                    showLoginModal();
+                }
                 switchToTab('home');
             });
         }
@@ -3564,6 +4197,7 @@
             // Remove any touch-up route lists
             for (var listId in allLists) {
                 if (listId.indexOf('touchup_route_') === 0) {
+                    deleteListFromSupabase(listId);
                     delete allLists[listId];
                 }
             }
@@ -3716,8 +4350,33 @@
         // Employee Management Functions
         function openEmployeeModal() {
             closeAddMenu();
+
+            // Check if boss has company code configured
+            var session = SupabaseAuth.getSession();
+            var bossMetadata = session && session.user ? (session.user.user_metadata || {}) : {};
+            var companyCode = bossMetadata.company_code || '';
+
+            if (!companyCode && USE_SUPABASE) {
+                // Show configuration required modal
+                showConfigureAccountModal();
+                return;
+            }
+
             renderEmployeeList();
             document.getElementById('employee-modal').classList.add('active');
+        }
+
+        function showConfigureAccountModal() {
+            document.getElementById('configure-account-modal').classList.add('active');
+        }
+
+        function closeConfigureAccountModal() {
+            document.getElementById('configure-account-modal').classList.remove('active');
+        }
+
+        function goToProfileSettings() {
+            closeConfigureAccountModal();
+            openSettingsPage('profile');
         }
 
         function closeEmployeeModal() {
@@ -3730,43 +4389,60 @@
 
         function renderEmployeeList() {
             var container = document.getElementById('employee-list');
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Loading employees...</p>';
 
-            if (employees.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No employees yet. Add one below.</p>';
-                return;
-            }
+            // Fetch employees from Supabase
+            SupabaseDB.select('employees', '', function(error, employees) {
+                if (error) {
+                    container.innerHTML = '<p style="color: var(--accent-danger); font-size: 13px; text-align: center; padding: 20px;">Failed to load employees</p>';
+                    return;
+                }
 
-            container.innerHTML = employees.map(emp => {
-                var routeCount = (emp.assignedRoutes || []).length;
-                var routeNames = (emp.assignedRoutes || []).map(id => allLists[id]?.name || 'Unknown').join(', ');
-                return `
-                    <div style="background: var(--bg-secondary); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary);">${emp.name}</p>
-                                <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-secondary);">@${emp.username}</p>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button onclick="editEmployeeRoutes('${emp.username}')" style="padding: 8px 12px; border: 1px solid var(--accent-info); border-radius: 8px; background: transparent; color: var(--accent-info); font-size: 11px; font-weight: 500; cursor: pointer;">Routes</button>
-                                <button onclick="deleteEmployee('${emp.username}')" style="padding: 8px 12px; border: 1px solid var(--accent-danger); border-radius: 8px; background: transparent; color: var(--accent-danger); font-size: 11px; font-weight: 500; cursor: pointer;">Delete</button>
-                            </div>
-                        </div>
-                        <p style="margin: 10px 0 0 0; font-size: 11px; color: var(--text-muted);">
-                            ${routeCount > 0 ? `Assigned: ${routeNames}` : 'No routes assigned'}
-                        </p>
-                    </div>
-                `;
-            }).join('');
+                if (!employees || employees.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No employees yet. Add one below.</p>';
+                    return;
+                }
+
+                container.innerHTML = employees.map(function(emp) {
+                    var assignedRoutes = emp.assigned_routes || [];
+                    var routeCount = assignedRoutes.length;
+                    var routeNames = assignedRoutes.map(function(id) {
+                        return allLists[id] ? allLists[id].name : 'Unknown';
+                    }).join(', ');
+                    return '<div style="background: var(--bg-secondary); border-radius: 12px; padding: 14px; margin-bottom: 10px;">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                            '<div>' +
+                                '<p style="margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary);">' + emp.name + '</p>' +
+                                '<p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-secondary);">@' + emp.username + '</p>' +
+                            '</div>' +
+                            '<div style="display: flex; gap: 8px;">' +
+                                '<button onclick="editEmployeeRoutes(\'' + emp.id + '\')" style="padding: 8px 12px; border: 1px solid var(--accent-info); border-radius: 8px; background: transparent; color: var(--accent-info); font-size: 11px; font-weight: 500; cursor: pointer;">Routes</button>' +
+                                '<button onclick="deleteEmployee(\'' + emp.id + '\')" style="padding: 8px 12px; border: 1px solid var(--accent-danger); border-radius: 8px; background: transparent; color: var(--accent-danger); font-size: 11px; font-weight: 500; cursor: pointer;">Delete</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<p style="margin: 10px 0 0 0; font-size: 11px; color: var(--text-muted);">' +
+                            (routeCount > 0 ? 'Assigned: ' + routeNames : 'No routes assigned') +
+                        '</p>' +
+                    '</div>';
+                }).join('');
+            });
         }
 
         function addEmployee() {
             var name = document.getElementById('new-employee-name').value.trim();
-            var username = document.getElementById('new-employee-username').value.trim().toLowerCase();
+            var rawUsername = document.getElementById('new-employee-username').value.trim().toLowerCase();
             var password = document.getElementById('new-employee-password').value;
 
-            if (!name || !username || !password) {
+            if (!name || !rawUsername || !password) {
                 alert('Please fill in all fields');
+                return;
+            }
+
+            // Sanitize username - only allow letters, numbers, underscore, hyphen
+            var username = rawUsername.replace(/[^a-z0-9_-]/g, '');
+
+            if (username !== rawUsername) {
+                alert('Username can only contain letters, numbers, underscores, and hyphens');
                 return;
             }
 
@@ -3780,37 +4456,111 @@
                 return;
             }
 
-            if (password.length < 4) {
-                alert('Password must be at least 4 characters');
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
                 return;
             }
 
-            allUsers[username] = {
-                username: username,
-                password: simpleHash(password),
-                plainPassword: password, // Store for boss to view
-                role: 'employee',
-                name: name,
-                assignedRoutes: []
-            };
+            // Get boss's Supabase ID and company code
+            var session = SupabaseAuth.getSession();
+            var bossId = session && session.user ? session.user.id : null;
+            var bossMetadata = session && session.user ? (session.user.user_metadata || {}) : {};
+            var companyCode = bossMetadata.company_code || '';
 
-            saveUsers();
-            renderEmployeeList();
+            if (!companyCode) {
+                alert('Company code not found. Please log out and log back in.');
+                return;
+            }
 
-            // Clear form
-            document.getElementById('new-employee-name').value = '';
-            document.getElementById('new-employee-username').value = '';
-            document.getElementById('new-employee-password').value = '';
+            // Generate email for employee: username_companycode@emp.smartroute.co
+            var employeeEmail = username + '_' + companyCode.toLowerCase() + '@emp.smartroute.co';
 
-            alert(`Employee "${name}" created!`);
+            // Create in Supabase first
+            if (USE_SUPABASE && bossId) {
+                SupabaseAuth.signUp(employeeEmail, password, {
+                    name: name,
+                    role: 'employee',
+                    username: username,
+                    boss_id: bossId,
+                    company_code: companyCode
+                }, function(error, data) {
+                    if (error) {
+                        var errMsg = error.message || error.error_description || JSON.stringify(error);
+                        alert('Failed to create employee: ' + errMsg);
+                        return;
+                    }
+
+                    // Get user ID from response (handle different response formats)
+                    var userId = null;
+                    if (data && data.user && data.user.id) {
+                        userId = data.user.id;
+                    } else if (data && data.id) {
+                        userId = data.id;
+                    }
+
+                    // Insert into employees table in Supabase
+                    SupabaseDB.insert('employees', {
+                        auth_id: userId,
+                        boss_id: bossId,
+                        username: username,
+                        name: name,
+                        email: employeeEmail,
+                        company_code: companyCode,
+                        assigned_routes: []
+                    }, function(dbError, dbData) {
+                        if (dbError) {
+                            alert('Employee auth created but failed to save to database: ' + (dbError.message || JSON.stringify(dbError)));
+                            return;
+                        }
+
+                        renderEmployeeList();
+
+                        document.getElementById('new-employee-name').value = '';
+                        document.getElementById('new-employee-username').value = '';
+                        document.getElementById('new-employee-password').value = '';
+
+                        alert('Employee "' + name + '" created!\n\nLogin info for employee:\nCompany Code: ' + companyCode + '\nUsername: ' + username);
+                    });
+                });
+            } else {
+                // Fallback to localStorage only
+                allUsers[username] = {
+                    username: username,
+                    password: simpleHash(password),
+                    plainPassword: password,
+                    role: 'employee',
+                    name: name,
+                    assignedRoutes: []
+                };
+
+                saveUsers();
+                renderEmployeeList();
+
+                document.getElementById('new-employee-name').value = '';
+                document.getElementById('new-employee-username').value = '';
+                document.getElementById('new-employee-password').value = '';
+
+                alert('Employee "' + name + '" created!');
+            }
         }
 
-        function deleteEmployee(username) {
-            var emp = allUsers[username];
-            if (!emp) return;
+        function deleteEmployee(empId) {
+            if (!confirm('Delete this employee? They will no longer be able to log in.')) return;
 
-            if (confirm(`Delete employee "${emp.name}"? They will no longer be able to log in.`)) {
-                delete allUsers[username];
+            if (USE_SUPABASE) {
+                // Delete from Supabase employees table
+                SupabaseDB.delete('employees', 'id=eq.' + empId, function(error, data) {
+                    if (error) {
+                        alert('Failed to delete employee: ' + (error.message || JSON.stringify(error)));
+                        return;
+                    }
+                    renderEmployeeList();
+                });
+            } else {
+                // Fallback to localStorage
+                var emp = allUsers[empId];
+                if (!emp) return;
+                delete allUsers[empId];
                 saveUsers();
                 renderEmployeeList();
             }
@@ -3822,45 +4572,83 @@
         }
 
         // Route Assignment Functions
-        function openAssignRouteModal(preselectedEmployee = null) {
+        var cachedEmployees = []; // Cache for employees loaded from Supabase
+
+        function openAssignRouteModal(preselectedEmployee) {
+            if (preselectedEmployee === undefined) preselectedEmployee = null;
             closeAddMenu();
 
-            // Populate employee dropdown
             var select = document.getElementById('assign-employee-select');
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
-            select.innerHTML = '<option value="">Choose an employee...</option>' +
-                employees.map(emp => `<option value="${emp.username}" ${preselectedEmployee === emp.username ? 'selected' : ''}>${emp.name} (@${emp.username})</option>`).join('');
+            select.innerHTML = '<option value="">Loading employees...</option>';
 
-            // Populate routes list
-            renderAssignRoutesList(preselectedEmployee);
+            // Fetch employees from Supabase
+            if (USE_SUPABASE) {
+                SupabaseDB.select('employees', '', function(error, employees) {
+                    if (error) {
+                        select.innerHTML = '<option value="">Error loading employees</option>';
+                        return;
+                    }
+                    cachedEmployees = employees || [];
+                    populateEmployeeSelect(select, cachedEmployees, preselectedEmployee);
+                    renderAssignRoutesList(preselectedEmployee);
+                });
+            } else {
+                // Fallback to localStorage
+                cachedEmployees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
+                populateEmployeeSelect(select, cachedEmployees, preselectedEmployee);
+                renderAssignRoutesList(preselectedEmployee);
+            }
 
             // Add change listener
-            select.onchange = () => renderAssignRoutesList(select.value);
+            select.onchange = function() { renderAssignRoutesList(select.value); };
 
             document.getElementById('assign-route-modal').classList.add('active');
         }
 
-        function renderAssignRoutesList(selectedEmployee) {
-            var container = document.getElementById('assign-routes-list');
-            var emp = selectedEmployee ? allUsers[selectedEmployee] : null;
-            var assignedRoutes = emp ? (emp.assignedRoutes || []) : [];
+        function populateEmployeeSelect(select, employees, preselectedEmployee) {
+            var html = '<option value="">Choose an employee...</option>';
+            for (var i = 0; i < employees.length; i++) {
+                var emp = employees[i];
+                var empId = emp.id || emp.username;
+                var selected = preselectedEmployee === empId ? 'selected' : '';
+                html += '<option value="' + empId + '" ' + selected + '>' + emp.name + ' (@' + emp.username + ')</option>';
+            }
+            select.innerHTML = html;
+        }
 
-            var routes = Object.entries(allLists);
-            if (routes.length === 0) {
+        function renderAssignRoutesList(selectedEmployeeId) {
+            var container = document.getElementById('assign-routes-list');
+
+            // Find employee in cached list
+            var emp = null;
+            for (var i = 0; i < cachedEmployees.length; i++) {
+                var e = cachedEmployees[i];
+                if ((e.id || e.username) === selectedEmployeeId) {
+                    emp = e;
+                    break;
+                }
+            }
+            var assignedRoutes = emp ? (emp.assigned_routes || emp.assignedRoutes || []) : [];
+
+            var routeIds = Object.keys(allLists);
+            if (routeIds.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No routes available</p>';
                 return;
             }
 
-            container.innerHTML = routes.map(([id, list]) => {
-                var isAssigned = assignedRoutes.includes(id);
-                return `
-                    <label style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer;">
-                        <input type="checkbox" value="${id}" ${isAssigned ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent-primary);">
-                        <span style="font-size: 14px; color: var(--text-primary);">${list.name}</span>
-                        <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">${(list.addresses || []).length} stops</span>
-                    </label>
-                `;
-            }).join('');
+            var html = '';
+            for (var j = 0; j < routeIds.length; j++) {
+                var id = routeIds[j];
+                var list = allLists[id];
+                var isAssigned = assignedRoutes.indexOf(id) !== -1;
+                var addressCount = (list.addresses || []).length;
+                html += '<label style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer;">' +
+                    '<input type="checkbox" value="' + id + '" ' + (isAssigned ? 'checked' : '') + ' style="width: 18px; height: 18px; accent-color: var(--accent-primary);">' +
+                    '<span style="font-size: 14px; color: var(--text-primary);">' + list.name + '</span>' +
+                    '<span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">' + addressCount + ' stops</span>' +
+                    '</label>';
+            }
+            container.innerHTML = html;
         }
 
         function closeAssignRouteModal() {
@@ -3868,33 +4656,98 @@
         }
 
         function saveRouteAssignment() {
-            var username = document.getElementById('assign-employee-select').value;
-            if (!username) {
+            var empId = document.getElementById('assign-employee-select').value;
+            if (!empId) {
                 alert('Please select an employee');
                 return;
             }
 
             var checkboxes = document.querySelectorAll('#assign-routes-list input[type="checkbox"]:checked');
-            var assignedRoutes = Array.from(checkboxes).map(cb => cb.value);
+            var assignedRoutes = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                assignedRoutes.push(checkboxes[i].value);
+            }
 
-            allUsers[username].assignedRoutes = assignedRoutes;
-            saveUsers();
-
-            closeAssignRouteModal();
-            alert(`Routes assigned to ${allUsers[username].name}!`);
-        }
-
-        // Load user settings
-        function loadSettings() {
-            var saved = localStorage.getItem('smartRouteSettings');
-            if (saved) {
-                userSettings = { ...userSettings, ...JSON.parse(saved) };
+            if (USE_SUPABASE) {
+                // Update employee in Supabase
+                SupabaseDB.update('employees', 'id=eq.' + empId, { assigned_routes: assignedRoutes }, function(error, data) {
+                    if (error) {
+                        alert('Failed to save route assignment: ' + (error.message || JSON.stringify(error)));
+                        return;
+                    }
+                    closeAssignRouteModal();
+                    alert('Routes assigned successfully!');
+                });
+            } else {
+                // Fallback to localStorage
+                if (allUsers[empId]) {
+                    allUsers[empId].assignedRoutes = assignedRoutes;
+                    saveUsers();
+                }
+                closeAssignRouteModal();
+                alert('Routes assigned!');
             }
         }
 
-        // Save user settings
+        // Load user settings
+        function loadSettings(callback) {
+            if (!USE_SUPABASE || !currentUser) {
+                if (callback) callback();
+                return;
+            }
+
+            var session = SupabaseAuth.getSession();
+            var userId = session && session.user ? session.user.id : null;
+            if (!userId) {
+                if (callback) callback();
+                return;
+            }
+
+            SupabaseDB.select('settings', 'user_id=eq.' + userId, function(error, settings) {
+                if (!error && settings && settings.length > 0) {
+                    var saved = settings[0];
+                    userSettings.name = saved.name || userSettings.name;
+                    userSettings.company = saved.company || userSettings.company;
+                    userSettings.defaultStartLocation = saved.default_start_location || userSettings.defaultStartLocation;
+                    userSettings.defaultEndLocation = saved.default_end_location || userSettings.defaultEndLocation;
+                    userSettings.autoOptimize = saved.auto_optimize !== undefined ? saved.auto_optimize : userSettings.autoOptimize;
+                    userSettings.timezone = saved.timezone || userSettings.timezone;
+                    userSettings.services = saved.services || userSettings.services;
+                    userSettings.mapboxKey = saved.mapbox_key || userSettings.mapboxKey;
+                }
+                if (callback) callback();
+            });
+        }
+
+        // Save user settings to Supabase
         function saveSettingsToStorage() {
-            localStorage.setItem('smartRouteSettings', JSON.stringify(userSettings));
+            if (!USE_SUPABASE || !currentUser) return;
+
+            var session = SupabaseAuth.getSession();
+            var userId = session && session.user ? session.user.id : null;
+            if (!userId) return;
+
+            var payload = {
+                user_id: userId,
+                name: userSettings.name || '',
+                company: userSettings.company || '',
+                default_start_location: userSettings.defaultStartLocation || '',
+                default_end_location: userSettings.defaultEndLocation || '',
+                auto_optimize: userSettings.autoOptimize || false,
+                timezone: userSettings.timezone || 'America/New_York',
+                services: userSettings.services || [],
+                mapbox_key: userSettings.mapboxKey || ''
+            };
+
+            // Try update first, then insert if not exists
+            SupabaseDB.update('settings', 'user_id=eq.' + userId, payload, function(error, data) {
+                if (error || !data || data.length === 0) {
+                    // Insert new
+                    SupabaseDB.insert('settings', payload, function(err, result) {
+                        // Ignore errors
+                    });
+                }
+            });
         }
 
         // Current settings page being viewed
@@ -3926,9 +4779,23 @@
                 var servicesBadge = document.getElementById('services-count-badge');
                 if (servicesBadge) servicesBadge.textContent = servicesCount;
 
-                var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+                // Update employee badge count from Supabase
                 var employeesBadge = document.getElementById('employees-count-badge');
-                if (employeesBadge) employeesBadge.textContent = employees.length;
+                if (employeesBadge) {
+                    if (USE_SUPABASE) {
+                        employeesBadge.textContent = '...';
+                        SupabaseDB.select('employees', '', function(error, employees) {
+                            if (!error && employees) {
+                                employeesBadge.textContent = employees.length;
+                            } else {
+                                employeesBadge.textContent = '0';
+                            }
+                        });
+                    } else {
+                        var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
+                        employeesBadge.textContent = employees.length;
+                    }
+                }
 
                 // Show viewing-as-employee banner if applicable
                 var banner = document.getElementById('viewing-as-employee-banner');
@@ -4009,8 +4876,11 @@
                     `;
 
                 case 'profile':
+                    var session = SupabaseAuth.getSession();
+                    var metadata = session && session.user ? (session.user.user_metadata || {}) : {};
+                    var currentCompanyCode = metadata.company_code || '';
                     return `
-                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
                             <div class="settings-input-row">
                                 <label>Your Name</label>
                                 <input type="text" id="settings-name" value="${userSettings.name || ''}" placeholder="Enter your name">
@@ -4018,6 +4888,13 @@
                             <div class="settings-input-row" style="border-bottom: none;">
                                 <label>Company Name</label>
                                 <input type="text" id="settings-company" value="${userSettings.company || ''}" placeholder="Enter company name">
+                            </div>
+                        </div>
+                        <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+                            <div class="settings-input-row" style="border-bottom: none;">
+                                <label>Company Code</label>
+                                <input type="text" id="settings-company-code" value="${currentCompanyCode}" placeholder="e.g. PPD" style="text-transform: uppercase;" maxlength="10">
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--text-muted);">2-10 characters. Employees use this code to log in.</p>
                             </div>
                         </div>
                     `;
@@ -4160,6 +5037,42 @@
             if (currentSettingsPage === 'profile') {
                 userSettings.name = document.getElementById('settings-name').value.trim();
                 userSettings.company = document.getElementById('settings-company').value.trim();
+
+                // Get and validate company code
+                var companyCodeInput = document.getElementById('settings-company-code');
+                var rawCompanyCode = companyCodeInput ? companyCodeInput.value.trim().toUpperCase() : '';
+
+                // Sanitize company code
+                var companyCode = rawCompanyCode.replace(/[^A-Z0-9]/g, '');
+
+                if (companyCode && (companyCode.length < 2 || companyCode.length > 10)) {
+                    alert('Company code must be 2-10 characters');
+                    return;
+                }
+
+                if (companyCode && companyCode !== rawCompanyCode) {
+                    alert('Company code can only contain letters and numbers');
+                    return;
+                }
+
+                // Save company code to Supabase if it changed
+                if (USE_SUPABASE && companyCode) {
+                    var session = SupabaseAuth.getSession();
+                    var currentCode = session && session.user && session.user.user_metadata ? session.user.user_metadata.company_code : '';
+
+                    if (companyCode !== currentCode) {
+                        SupabaseAuth.updateUser({ company_code: companyCode }, function(error, data) {
+                            if (error) {
+                                alert('Failed to save company code: ' + (error.message || JSON.stringify(error)));
+                                return;
+                            }
+                            saveSettingsToStorage();
+                            closeSettingsPage();
+                        });
+                        return; // Wait for async callback
+                    }
+                }
+
                 saveSettingsToStorage();
                 closeSettingsPage();
             } else if (currentSettingsPage === 'routes') {
@@ -4416,9 +5329,35 @@
             alert(`Added "${servicesText}" to ${updatedCount} addresses.`);
         }
 
-        // Load from localStorage
+        // Load from Supabase (or localStorage fallback)
         function loadData() {
             loadSettings(); // Load user settings first
+
+            if (USE_SUPABASE && currentUser) {
+                // Load lists from Supabase
+                loadListsFromSupabase(function() {
+                    // Load current list data
+                    loadCurrentList();
+                    renderListDropdown();
+                });
+            } else {
+                // Fallback to localStorage
+                loadDataFromLocalStorage();
+                loadCurrentList();
+                renderListDropdown();
+            }
+
+            // Load employee reports from Supabase
+            loadEmployeeReportsFromSupabase();
+
+            // Load archived reports first (needed for daily auto-save)
+            loadArchivedReports();
+
+            // Load boss report (auto-saves to archives if new day)
+            loadBossReport();
+        }
+
+        function loadDataFromLocalStorage() {
             var saved = localStorage.getItem('plowRouteDataV2');
             if (saved) {
                 var data = JSON.parse(saved);
@@ -4447,22 +5386,188 @@
                 currentListId = 'default';
                 currentFolderId = null;
             }
+        }
 
-            // Load current list data
-            loadCurrentList();
-            renderListDropdown();
-
-            // Load employee reports
-            var savedReports = localStorage.getItem('smartRouteEmployeeReports');
-            if (savedReports) {
-                employeeReports = JSON.parse(savedReports);
+        // Load lists from Supabase
+        function loadListsFromSupabase(callback) {
+            // Check if user is an employee - need to load their assigned routes
+            if (currentUser && currentUser.role === 'employee') {
+                loadEmployeeAssignedLists(callback);
+                return;
             }
 
-            // Load archived reports first (needed for daily auto-save)
-            loadArchivedReports();
+            // Boss - load all their lists
+            SupabaseDB.select('lists', '', function(error, lists) {
+                if (error || !lists) {
+                    console.log('Error loading lists from Supabase:', error);
+                    loadDataFromLocalStorage();
+                    if (callback) callback();
+                    return;
+                }
 
-            // Load boss report (auto-saves to archives if new day)
-            loadBossReport();
+                processLoadedLists(lists, false);
+                if (callback) callback();
+            });
+        }
+
+        function loadEmployeeAssignedLists(callback) {
+            // First get the employee record to find their assigned routes
+            var username = currentUser.username || currentUser.email;
+            SupabaseDB.select('employees', 'username=eq.' + encodeURIComponent(username), function(error, employees) {
+                if (error || !employees || employees.length === 0) {
+                    console.log('Error finding employee record:', error);
+                    allLists = {};
+                    if (callback) callback();
+                    return;
+                }
+
+                var emp = employees[0];
+                var assignedRoutes = emp.assigned_routes || [];
+
+                if (assignedRoutes.length === 0) {
+                    // No routes assigned
+                    allLists = {};
+                    if (callback) callback();
+                    return;
+                }
+
+                // Build query for assigned list IDs
+                var idFilter = 'id=in.(' + assignedRoutes.join(',') + ')';
+                SupabaseDB.select('lists', idFilter, function(error, lists) {
+                    if (error || !lists) {
+                        console.log('Error loading assigned lists:', error);
+                        allLists = {};
+                        if (callback) callback();
+                        return;
+                    }
+
+                    processLoadedLists(lists, true);
+                    if (callback) callback();
+                });
+            });
+        }
+
+        function processLoadedLists(lists, isEmployee) {
+            // Convert Supabase rows to allLists format
+            allLists = {};
+            for (var i = 0; i < lists.length; i++) {
+                var list = lists[i];
+                allLists[list.id] = {
+                    name: list.name,
+                    addresses: list.addresses || [],
+                    currentIndex: 0,
+                    startLocation: list.start_location ? list.start_location.address : '',
+                    startAddressId: list.start_location ? list.start_location.startAddressId : null,
+                    endAddressId: list.start_location ? list.start_location.endAddressId : null,
+                    supabaseId: list.id
+                };
+            }
+
+            // If no lists and boss, create a default one
+            if (Object.keys(allLists).length === 0 && !isEmployee) {
+                var defaultId = 'default-' + Date.now();
+                allLists[defaultId] = { name: 'Main Route', addresses: [], currentIndex: 0, startLocation: '' };
+                currentListId = defaultId;
+                // Save default list to Supabase
+                saveListToSupabase(defaultId, allLists[defaultId]);
+            } else if (Object.keys(allLists).length > 0) {
+                // Set current list to first one if not set
+                var listIds = Object.keys(allLists);
+                if (!currentListId || !allLists[currentListId]) {
+                    currentListId = listIds[0];
+                }
+            }
+
+            // Sync all list addresses to master accounts (boss only)
+            if (!isEmployee) {
+                syncAllListAddressesToMaster();
+            }
+
+            // Load folders from localStorage (folders stay local for now)
+            var saved = localStorage.getItem('plowRouteDataV2');
+            if (saved) {
+                var data = JSON.parse(saved);
+                allFolders = data.folders || {};
+                currentFolderId = data.currentFolderId || null;
+            } else {
+                allFolders = {};
+                currentFolderId = null;
+            }
+        }
+
+        // Save a single list to Supabase
+        function saveListToSupabase(listId, listData, callback) {
+            if (!USE_SUPABASE || !currentUser) {
+                if (callback) callback();
+                return;
+            }
+
+            var session = SupabaseAuth.getSession();
+            var bossId = session && session.user ? session.user.id : null;
+
+            if (!bossId) {
+                if (callback) callback();
+                return;
+            }
+
+            // Check if this list already exists in Supabase (has a UUID format id)
+            var isExisting = listId && listId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+            var listPayload = {
+                boss_id: bossId,
+                name: listData.name || 'Unnamed Route',
+                addresses: listData.addresses || [],
+                start_location: {
+                    address: listData.startLocation || '',
+                    startAddressId: listData.startAddressId || null,
+                    endAddressId: listData.endAddressId || null
+                },
+                updated_at: new Date().toISOString()
+            };
+
+            if (isExisting) {
+                // Update existing list
+                SupabaseDB.update('lists', 'id=eq.' + listId, listPayload, function(error, data) {
+                    if (error) console.log('Error updating list:', error);
+                    if (callback) callback(error, data);
+                });
+            } else {
+                // Insert new list
+                SupabaseDB.insert('lists', listPayload, function(error, data) {
+                    if (error) {
+                        console.log('Error inserting list:', error);
+                    } else if (data && data[0] && data[0].id) {
+                        // Update local list ID to Supabase UUID
+                        var newId = data[0].id;
+                        allLists[newId] = allLists[listId];
+                        allLists[newId].supabaseId = newId;
+                        delete allLists[listId];
+                        if (currentListId === listId) {
+                            currentListId = newId;
+                        }
+                    }
+                    if (callback) callback(error, data);
+                });
+            }
+        }
+
+        // Delete a list from Supabase
+        function deleteListFromSupabase(listId, callback) {
+            if (!USE_SUPABASE) {
+                if (callback) callback();
+                return;
+            }
+
+            var isUUID = listId && listId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+            if (!isUUID) {
+                if (callback) callback();
+                return;
+            }
+
+            SupabaseDB.delete('lists', 'id=eq.' + listId, function(error, data) {
+                if (error) console.log('Error deleting list:', error);
+                if (callback) callback(error, data);
+            });
         }
 
         function loadCurrentList() {
@@ -4545,12 +5650,18 @@
                 routeTotalTime: existingList.routeTotalTime
             };
 
+            // Save to localStorage
             localStorage.setItem('plowRouteDataV2', JSON.stringify({
                 lists: allLists,
                 folders: allFolders,
                 currentListId: currentListId,
                 currentFolderId: currentFolderId
             }));
+
+            // Also save to Supabase
+            if (USE_SUPABASE && currentUser) {
+                saveListToSupabase(currentListId, allLists[currentListId]);
+            }
         }
 
         // Save lists directly without overwriting from global addresses array
@@ -4562,10 +5673,67 @@
                 currentListId: currentListId,
                 currentFolderId: currentFolderId
             }));
+
+            // Also save all lists to Supabase
+            if (USE_SUPABASE && currentUser) {
+                var listIds = Object.keys(allLists);
+                for (var i = 0; i < listIds.length; i++) {
+                    saveListToSupabase(listIds[i], allLists[listIds[i]]);
+                }
+            }
         }
 
         function saveEmployeeReports() {
-            localStorage.setItem('smartRouteEmployeeReports', JSON.stringify(employeeReports));
+            // No longer needed - individual reports saved to Supabase on submit
+        }
+
+        // Load employee reports from Supabase
+        function loadEmployeeReportsFromSupabase(callback) {
+            if (!USE_SUPABASE || !currentUser) {
+                if (callback) callback();
+                return;
+            }
+
+            // Boss loads all reports submitted to them
+            // Employee loads their own submitted reports
+            var isBoss = currentUser && currentUser.role === 'boss';
+            var session = SupabaseAuth.getSession();
+            var userId = session && session.user ? session.user.id : null;
+
+            if (!userId) {
+                if (callback) callback();
+                return;
+            }
+
+            var query = '';
+            if (isBoss) {
+                query = 'boss_id=eq.' + userId;
+            } else {
+                query = 'submitted_by=eq.' + userId;
+            }
+
+            SupabaseDB.select('reports', query + '&order=submitted_at.desc', function(error, reports) {
+                if (error || !reports) {
+                    employeeReports = [];
+                } else {
+                    // Map Supabase fields to local format
+                    employeeReports = reports.map(function(r) {
+                        return {
+                            id: r.id,
+                            employeeName: r.employee_name || '',
+                            employeeUsername: r.submitted_by,
+                            date: r.report_date,
+                            routeName: r.route_name || '',
+                            routeTime: r.route_time || 0,
+                            addresses: r.addresses || [],
+                            submittedAt: r.submitted_at
+                        };
+                    });
+                }
+                renderEmployeeReportsList();
+                renderSummaryEmployeeReports();
+                if (callback) callback();
+            });
         }
 
         function saveBossReport() {
@@ -7752,17 +8920,23 @@
             }
 
             var list = allLists[id];
-            if (!confirm(`Delete "${list.name}" and all its addresses? This cannot be undone.`)) {
+            if (!confirm('Delete "' + list.name + '" and all its addresses? This cannot be undone.')) {
                 return;
             }
 
+            // Delete from Supabase
+            deleteListFromSupabase(id);
+
             delete allLists[id];
 
-            // If we deleted the current list, switch to default
+            // If we deleted the current list, switch to first available
             if (currentListId === id) {
-                currentListId = 'default';
-                loadCurrentList();
-                renderAll();
+                var listIds = Object.keys(allLists);
+                currentListId = listIds.length > 0 ? listIds[0] : null;
+                if (currentListId) {
+                    loadCurrentList();
+                    renderAll();
+                }
             }
 
             saveData();
@@ -8421,32 +9595,40 @@
             var container = document.getElementById('manage-reports-list');
             if (!container) return;
 
-            var reports = JSON.parse(localStorage.getItem('smartRouteEmployeeReports') || '[]');
+            // Use the already loaded employeeReports array (from Supabase)
+            var countEl = document.getElementById('manage-reports-count');
+            if (countEl) countEl.textContent = employeeReports.length;
 
-            document.getElementById('manage-reports-count').textContent = reports.length;
-
-            if (reports.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 15px;">No employee reports yet</p>`;
+            if (employeeReports.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 15px;">No employee reports yet</p>';
                 return;
             }
 
-            container.innerHTML = reports.slice(0, 5).map((report, idx) => {
+            var html = '';
+            var reportsToShow = employeeReports.slice(0, 5);
+            for (var i = 0; i < reportsToShow.length; i++) {
+                var report = reportsToShow[i];
                 var date = new Date(report.submittedAt).toLocaleDateString();
-                return `
-                    <div style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">${report.employeeName}</p>
-                                <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">${report.listName} - ${date}</p>
-                            </div>
-                            <span style="font-size: 12px; color: var(--accent-success); font-weight: 600;">${report.doneCount} done</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                var doneCount = 0;
+                if (report.addresses) {
+                    for (var j = 0; j < report.addresses.length; j++) {
+                        if (report.addresses[j].status === 'done') doneCount++;
+                    }
+                }
+                html += '<div style="background: var(--bg-secondary); border-radius: 10px; padding: 12px; margin-bottom: 8px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                        '<div>' +
+                            '<p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);">' + report.employeeName + '</p>' +
+                            '<p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">' + report.routeName + ' - ' + date + '</p>' +
+                        '</div>' +
+                        '<span style="font-size: 12px; color: var(--accent-success); font-weight: 600;">' + doneCount + ' done</span>' +
+                    '</div>' +
+                '</div>';
+            }
+            container.innerHTML = html;
 
-            if (reports.length > 5) {
-                container.innerHTML += `<p style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 10px;">+${reports.length - 5} more reports</p>`;
+            if (employeeReports.length > 5) {
+                container.innerHTML += '<p style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 10px;">+' + (employeeReports.length - 5) + ' more reports</p>';
             }
         }
 
@@ -8533,88 +9715,101 @@
                 return;
             }
 
-            // Get all employees
-            var employees = Object.entries(allUsers).filter(([username, user]) => user.role === 'employee');
+            // Load employees and lists from Supabase for fresh data
+            if (USE_SUPABASE) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 10px;">Loading...</p>';
 
-            if (employees.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            countEl.textContent = `${employees.length} employee${employees.length !== 1 ? 's' : ''}`;
-
-            var html = '';
-            employees.forEach(([username, employee]) => {
-                var assignedRoutes = employee.assignedRoutes || [];
-
-                // Calculate total progress across all assigned routes
-                var totalAddresses = 0;
-                var totalDone = 0;
-                var activeRouteName = null;
-                var activeRouteProgress = null;
-
-                var currentAddress = null;
-
-                assignedRoutes.forEach(routeId => {
-                    var route = allLists[routeId];
-                    if (route && route.addresses) {
-                        var routeTotal = route.addresses.length;
-                        var routeDone = route.addresses.filter(a => a.status === 'done').length;
-                        totalAddresses += routeTotal;
-                        totalDone += routeDone;
-
-                        // Track the route with pending work as "active"
-                        if (routeDone < routeTotal && !activeRouteName) {
-                            activeRouteName = route.name;
-                            activeRouteProgress = routeTotal > 0 ? Math.round((routeDone / routeTotal) * 100) : 0;
-
-                            // Get current address (first pending address in this route)
-                            var currentIdx = route.currentIndex || 0;
-                            var pendingAddresses = route.addresses.filter(a => a.status === 'pending');
-                            if (pendingAddresses.length > 0) {
-                                var addr = route.addresses[currentIdx] && route.addresses[currentIdx].status === 'pending'
-                                    ? route.addresses[currentIdx]
-                                    : pendingAddresses[0];
-                                currentAddress = addr ? (addr.address.split(',')[0]) : null;
-                            }
-                        }
+                // First fetch employees
+                SupabaseDB.select('employees', '', function(error, employees) {
+                    if (error || !employees || employees.length === 0) {
+                        section.style.display = 'none';
+                        return;
                     }
+
+                    // Then fetch latest lists
+                    SupabaseDB.select('lists', '', function(listError, lists) {
+                        if (listError) lists = [];
+
+                        // Build a map of lists by ID
+                        var listsMap = {};
+                        for (var i = 0; i < lists.length; i++) {
+                            listsMap[lists[i].id] = lists[i];
+                        }
+
+                        section.style.display = 'block';
+                        countEl.textContent = employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+
+                        var html = '';
+                        for (var e = 0; e < employees.length; e++) {
+                            var employee = employees[e];
+                            var assignedRoutes = employee.assigned_routes || [];
+
+                            var totalAddresses = 0;
+                            var totalDone = 0;
+                            var activeRouteName = null;
+                            var currentAddress = null;
+
+                            for (var r = 0; r < assignedRoutes.length; r++) {
+                                var route = listsMap[assignedRoutes[r]];
+                                if (route && route.addresses) {
+                                    var routeTotal = route.addresses.length;
+                                    var routeDone = 0;
+                                    for (var a = 0; a < route.addresses.length; a++) {
+                                        if (route.addresses[a].status === 'done') routeDone++;
+                                    }
+                                    totalAddresses += routeTotal;
+                                    totalDone += routeDone;
+
+                                    if (routeDone < routeTotal && !activeRouteName) {
+                                        activeRouteName = route.name;
+                                        for (var p = 0; p < route.addresses.length; p++) {
+                                            if (route.addresses[p].status === 'pending') {
+                                                currentAddress = route.addresses[p].address.split(',')[0];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            var overallProgress = totalAddresses > 0 ? Math.round((totalDone / totalAddresses) * 100) : 0;
+                            var isComplete = totalAddresses > 0 && totalDone === totalAddresses;
+                            var statusColor = isComplete ? 'var(--accent-success)' : overallProgress > 50 ? 'var(--accent-primary)' : 'var(--accent-warning)';
+                            var empName = employee.name || employee.username;
+
+                            html += '<div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 8px;">' +
+                                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">' +
+                                    '<div style="display: flex; align-items: center; gap: 10px;">' +
+                                        '<div style="width: 36px; height: 36px; background: var(--bg-elevated); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">' +
+                                            '<span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">' + empName.charAt(0).toUpperCase() + '</span>' +
+                                        '</div>' +
+                                        '<div>' +
+                                            '<p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">' + empName + '</p>' +
+                                            '<p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">' + assignedRoutes.length + ' route' + (assignedRoutes.length !== 1 ? 's' : '') + ' assigned</p>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div style="text-align: right;">' +
+                                        '<span style="font-size: 18px; font-weight: 700; color: ' + statusColor + ';">' + overallProgress + '%</span>' +
+                                        (isComplete ? '<span style="display: block; font-size: 10px; color: var(--accent-success); font-weight: 600;">COMPLETE</span>' : '') +
+                                    '</div>' +
+                                '</div>' +
+                                '<div style="display: flex; align-items: center; gap: 8px;">' +
+                                    '<div style="flex: 1; height: 4px; background: var(--bg-elevated); border-radius: var(--radius-full); overflow: hidden;">' +
+                                        '<div style="width: ' + overallProgress + '%; height: 100%; background: ' + statusColor + '; border-radius: var(--radius-full); transition: width 0.3s;"></div>' +
+                                    '</div>' +
+                                    '<span style="font-size: 11px; color: var(--text-muted); font-weight: 500; min-width: 45px; text-align: right;">' + totalDone + '/' + totalAddresses + '</span>' +
+                                '</div>' +
+                                (activeRouteName ? '<p style="margin: 8px 0 0 0; font-size: 11px; color: var(--text-muted);"><span style="color: var(--text-secondary);">' + activeRouteName + '</span>' + (currentAddress ? ' - <span style="color: var(--text-primary);">' + currentAddress + '</span>' : '') + '</p>' : '') +
+                            '</div>';
+                        }
+
+                        container.innerHTML = html || '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No employees added yet</p>';
+                    });
                 });
-
-                var overallProgress = totalAddresses > 0 ? Math.round((totalDone / totalAddresses) * 100) : 0;
-                var isComplete = totalAddresses > 0 && totalDone === totalAddresses;
-                var statusColor = isComplete ? 'var(--accent-success)' : overallProgress > 50 ? 'var(--accent-primary)' : 'var(--accent-warning)';
-
-                html += `
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 36px; height: 36px; background: var(--bg-elevated); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
-                                    <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">${(employee.name || username).charAt(0).toUpperCase()}</span>
-                                </div>
-                                <div>
-                                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">${employee.name || username}</p>
-                                    <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">${assignedRoutes.length} route${assignedRoutes.length !== 1 ? 's' : ''} assigned</p>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <span style="font-size: 18px; font-weight: 700; color: ${statusColor};">${overallProgress}%</span>
-                                ${isComplete ? '<span style="display: block; font-size: 10px; color: var(--accent-success); font-weight: 600;">COMPLETE</span>' : ''}
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="flex: 1; height: 4px; background: var(--bg-elevated); border-radius: var(--radius-full); overflow: hidden;">
-                                <div style="width: ${overallProgress}%; height: 100%; background: ${statusColor}; border-radius: var(--radius-full); transition: width 0.3s;"></div>
-                            </div>
-                            <span style="font-size: 11px; color: var(--text-muted); font-weight: 500; min-width: 45px; text-align: right;">${totalDone}/${totalAddresses}</span>
-                        </div>
-                        ${activeRouteName ? `<p style="margin: 8px 0 0 0; font-size: 11px; color: var(--text-muted);"><span style="color: var(--text-secondary);">${activeRouteName}</span>${currentAddress ? ` - <span style="color: var(--text-primary);">${currentAddress}</span>` : ''}</p>` : ''}
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html || '<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No employees added yet</p>';
+            } else {
+                // Fallback to localStorage
+                section.style.display = 'none';
+            }
         }
 
         function renderHomeCurrentStop() {
@@ -8712,17 +9907,24 @@
 
         function renderFilesView() {
             // Reset to root navigation when entering Files view
-            navigateToFilesRoot();
+            try { navigateToFilesRoot(); } catch(e) { }
 
             // Populate list selector
             var selector = document.getElementById('edit-list-selector');
-            var listEntries = Object.entries(allLists);
-            selector.innerHTML = listEntries.map(([id, list]) => {
-                return `<option value="${id}" ${id === currentListId ? 'selected' : ''}>${list.name}</option>`;
-            }).join('');
+            if (selector) {
+                var listIds = Object.keys(allLists);
+                var html = '';
+                for (var i = 0; i < listIds.length; i++) {
+                    var id = listIds[i];
+                    var list = allLists[id];
+                    var selected = id === currentListId ? 'selected' : '';
+                    html += '<option value="' + id + '" ' + selected + '>' + list.name + '</option>';
+                }
+                selector.innerHTML = html;
+            }
 
             // Render addresses for editing
-            renderEditAddresses();
+            try { renderEditAddresses(); } catch(e) { }
 
             // Show Smart Folders for boss only
             var smartFoldersSection = document.getElementById('smart-folders-section');
@@ -9210,7 +10412,9 @@
                 return;
             }
             var currentList = allLists[currentListId];
-            if (confirm(`Delete list "${currentList.name}" and all its addresses?`)) {
+            if (confirm('Delete list "' + currentList.name + '" and all its addresses?')) {
+                // Delete from Supabase
+                deleteListFromSupabase(currentListId);
                 delete allLists[currentListId];
                 currentListId = 'default';
                 loadCurrentList();
@@ -9506,7 +10710,9 @@
             var list = allLists[listId];
             if (!list) return;
 
-            if (confirm(`Delete "${list.name}" and all its addresses? This cannot be undone.`)) {
+            if (confirm('Delete "' + list.name + '" and all its addresses? This cannot be undone.')) {
+                // Delete from Supabase
+                deleteListFromSupabase(listId);
                 delete allLists[listId];
 
                 if (currentListId === listId) {
@@ -11289,37 +12495,58 @@
                 return;
             }
 
-            var doneAddresses = addresses.filter(a => a.status === 'done' || a.status === 'skipped');
+            var doneAddresses = addresses.filter(function(a) { return a.status === 'done' || a.status === 'skipped'; });
             if (doneAddresses.length === 0) {
                 alert('No completed or skipped addresses to report.');
                 return;
             }
 
-            // Create report object
-            var report = {
-                id: Date.now().toString(),
-                employeeName: currentUser.name || currentUser.username,
-                employeeUsername: currentUser.username,
-                date: new Date().toLocaleDateString(),
-                routeName: currentList.name,
-                routeTime: routeTimerSeconds,
-                addresses: addresses.map(a => ({
-                    address: a.address,
-                    name: a.name || '',
-                    status: a.status,
-                    completedAt: a.completedAt,
-                    services: a.services || '',
-                    notes: a.notes || '',
-                    photos: a.photos || [],
-                    price: a.price || 0
-                })),
-                submittedAt: new Date().toISOString()
+            // Get boss_id from the list or from currentUser
+            var bossId = currentList.boss_id || currentUser.bossId;
+            if (!bossId) {
+                alert('Unable to determine boss for this report.');
+                return;
+            }
+
+            var session = SupabaseAuth.getSession();
+            var submittedBy = session && session.user ? session.user.id : currentUser.id;
+
+            // Create report payload for Supabase
+            var reportPayload = {
+                boss_id: bossId,
+                submitted_by: submittedBy,
+                employee_name: currentUser.name || currentUser.username,
+                report_date: new Date().toISOString().split('T')[0],
+                route_name: currentList.name,
+                route_time: routeTimerSeconds,
+                addresses: addresses.map(function(a) {
+                    return {
+                        address: a.address,
+                        name: a.name || '',
+                        status: a.status,
+                        completedAt: a.completedAt,
+                        services: a.services || '',
+                        notes: a.notes || '',
+                        photos: a.photos || [],
+                        price: a.price || 0
+                    };
+                })
             };
 
-            employeeReports.push(report);
-            saveEmployeeReports();
+            SupabaseDB.insert('reports', reportPayload, function(error, data) {
+                if (error) {
+                    alert('Failed to submit report: ' + (error.message || JSON.stringify(error)));
+                    return;
+                }
 
-            alert(`Report submitted successfully!\n\n${doneAddresses.filter(a => a.status === 'done').length} jobs completed\n${doneAddresses.filter(a => a.status === 'skipped').length} jobs skipped\n\nThe boss will review your report.`);
+                var doneCount = doneAddresses.filter(function(a) { return a.status === 'done'; }).length;
+                var skippedCount = doneAddresses.filter(function(a) { return a.status === 'skipped'; }).length;
+
+                alert('Report submitted successfully!\n\n' + doneCount + ' jobs completed\n' + skippedCount + ' jobs skipped\n\nThe boss will review your report.');
+
+                // Reload reports to show the new one
+                loadEmployeeReportsFromSupabase();
+            });
         }
 
         function viewEmployeeReport(reportId) {
@@ -11446,21 +12673,41 @@
 
             if (!confirm('Delete this employee report? This cannot be undone.')) return;
 
-            employeeReports = employeeReports.filter(r => r.id !== viewingReportId);
-            saveEmployeeReports();
+            // Delete from Supabase
+            SupabaseDB.delete('reports', 'id=eq.' + viewingReportId, function(error) {
+                if (error) {
+                    alert('Failed to delete report: ' + (error.message || JSON.stringify(error)));
+                    return;
+                }
 
-            closeViewEmployeeReportModal();
-            renderEmployeeReportsList();
+                // Remove from local array
+                employeeReports = employeeReports.filter(function(r) { return r.id !== viewingReportId; });
+
+                closeViewEmployeeReportModal();
+                renderEmployeeReportsList();
+                renderSummaryEmployeeReports();
+            });
         }
 
         function compileEmployeeReport() {
             if (!viewingReportId) return;
 
-            var report = employeeReports.find(r => r.id === viewingReportId);
+            var report = null;
+            for (var i = 0; i < employeeReports.length; i++) {
+                if (employeeReports[i].id === viewingReportId) {
+                    report = employeeReports[i];
+                    break;
+                }
+            }
             if (!report) return;
 
             // Add completed addresses from employee report to current list
-            var doneAddresses = report.addresses.filter(a => a.status === 'done');
+            var doneAddresses = [];
+            for (var j = 0; j < report.addresses.length; j++) {
+                if (report.addresses[j].status === 'done') {
+                    doneAddresses.push(report.addresses[j]);
+                }
+            }
 
             if (doneAddresses.length === 0) {
                 alert('No completed jobs to add.');
@@ -11469,12 +12716,13 @@
 
             // Create new list with employee's completed work
             var newListId = 'emp_' + Date.now();
-            var listName = `${report.employeeName} - ${report.date}`;
+            var listName = report.employeeName + ' - ' + report.date;
 
-            allLists[newListId] = {
-                name: listName,
-                addresses: doneAddresses.map((a, idx) => ({
-                    id: Date.now() + idx,
+            var mappedAddresses = [];
+            for (var k = 0; k < doneAddresses.length; k++) {
+                var a = doneAddresses[k];
+                mappedAddresses.push({
+                    id: Date.now() + k,
                     address: a.address,
                     name: a.name,
                     status: a.status,
@@ -11483,7 +12731,12 @@
                     notes: a.notes,
                     photos: a.photos,
                     price: a.price
-                })),
+                });
+            }
+
+            allLists[newListId] = {
+                name: listName,
+                addresses: mappedAddresses,
                 currentIndex: 0,
                 startLocation: '',
                 compiledFrom: report.id,
@@ -11494,7 +12747,7 @@
             saveData();
 
             // Mark as compiled by removing from pending reports
-            employeeReports = employeeReports.filter(r => r.id !== viewingReportId);
+            employeeReports = employeeReports.filter(function(r) { return r.id !== viewingReportId; });
             saveEmployeeReports();
 
             closeViewEmployeeReportModal();
@@ -12024,20 +13277,33 @@
             // Lists count
             var listsCount = Object.keys(allLists).length;
             var listsEl = document.getElementById('smart-folder-lists-count');
-            if (listsEl) listsEl.textContent = `${listsCount} route${listsCount !== 1 ? 's' : ''}`;
+            if (listsEl) listsEl.textContent = listsCount + ' route' + (listsCount !== 1 ? 's' : '');
 
             // Accounts count
             var accountsEl = document.getElementById('smart-folder-accounts-count');
-            if (accountsEl) accountsEl.textContent = `${masterAccounts.length} account${masterAccounts.length !== 1 ? 's' : ''}`;
+            if (accountsEl) accountsEl.textContent = masterAccounts.length + ' account' + (masterAccounts.length !== 1 ? 's' : '');
 
-            // Employees count
-            var employeeCount = Object.values(allUsers).filter(u => u.role === 'employee').length;
+            // Employees count from Supabase
             var employeesEl = document.getElementById('smart-folder-employees-count');
-            if (employeesEl) employeesEl.textContent = `${employeeCount} employee${employeeCount !== 1 ? 's' : ''}`;
+            if (employeesEl) {
+                if (USE_SUPABASE) {
+                    employeesEl.textContent = '...';
+                    SupabaseDB.select('employees', '', function(error, employees) {
+                        if (!error && employees) {
+                            employeesEl.textContent = employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+                        } else {
+                            employeesEl.textContent = '0 employees';
+                        }
+                    });
+                } else {
+                    var employeeCount = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; }).length;
+                    employeesEl.textContent = employeeCount + ' employee' + (employeeCount !== 1 ? 's' : '');
+                }
+            }
 
             // Reports count (archived storms)
             var reportsEl = document.getElementById('smart-folder-reports-count');
-            if (reportsEl) reportsEl.textContent = `${archivedReports.length} storm${archivedReports.length !== 1 ? 's' : ''}`;
+            if (reportsEl) reportsEl.textContent = archivedReports.length + ' storm' + (archivedReports.length !== 1 ? 's' : '');
         }
 
         // Helper function to get the correct files folder content container
@@ -12880,110 +14146,153 @@
         // =====================
 
         var assignRouteListId = null;
+        var assignRouteEmployees = []; // Cache employees for applyRouteAssignment
 
         function openAssignRouteModal(listId) {
             assignRouteListId = listId;
             var list = allLists[listId];
             if (!list) return;
 
-            // Get list of employees
-            var employees = [];
-            for (var username in allUsers) {
-                if (allUsers[username].role === 'employee') {
-                    employees.push(allUsers[username]);
-                }
-            }
-
-            // Check if route is already assigned
-            var currentlyAssigned = [];
-            for (var i = 0; i < employees.length; i++) {
-                var emp = employees[i];
-                if (emp.assignedRoutes && emp.assignedRoutes.indexOf(listId) !== -1) {
-                    currentlyAssigned.push(emp.username);
-                }
-            }
-
-            var modalHtml = '<div id="assign-route-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="if(event.target.id===\'assign-route-modal\')closeAssignRouteModal()">' +
-                '<div style="background: var(--bg-primary); border-radius: 20px; padding: 32px; width: 85%; max-width: 420px; max-height: 70vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">' +
-                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">' +
-                        '<h3 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary);">Assign Route</h3>' +
-                        '<button onclick="closeAssignRouteModal()" style="background: none; border: none; font-size: 32px; color: var(--text-muted); cursor: pointer; line-height: 1;">&times;</button>' +
-                    '</div>' +
-                    '<p style="margin: 0 0 24px 0; font-size: 16px; color: var(--text-secondary);">Assign <strong style="color: var(--text-primary);">' + list.name + '</strong> to:</p>';
-
-            if (employees.length === 0) {
-                modalHtml += '<p style="color: var(--text-muted); font-size: 15px; text-align: center; padding: 40px 0;">No employees found. Add employees in Settings.</p>';
-            } else {
-                modalHtml += '<div id="assign-route-employees" style="max-height: 350px; overflow-y: auto;">';
-                for (var j = 0; j < employees.length; j++) {
-                    var emp = employees[j];
-                    var isAssigned = currentlyAssigned.indexOf(emp.username) !== -1;
-                    modalHtml += '<label style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 14px; cursor: pointer; margin-bottom: 12px;">' +
-                        '<input type="checkbox" class="assign-route-checkbox" value="' + emp.username + '" ' + (isAssigned ? 'checked' : '') + ' style="width: 26px; height: 26px; accent-color: var(--accent-primary);">' +
-                        '<div>' +
-                            '<p style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">' + (emp.name || emp.username) + '</p>' +
-                            '<p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">@' + emp.username + '</p>' +
-                        '</div>' +
-                    '</label>';
-                }
-                modalHtml += '</div>';
-            }
-
-            modalHtml += '<div style="display: flex; gap: 14px; margin-top: 28px;">' +
-                    '<button onclick="closeAssignRouteModal()" style="flex: 1; padding: 18px; border: none; border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>' +
-                    '<button onclick="applyRouteAssignment()" style="flex: 1; padding: 18px; border: none; border-radius: 14px; background: var(--accent-primary); color: white; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>' +
-                '</div>' +
+            // Show loading modal first
+            var loadingHtml = '<div id="assign-route-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000;">' +
+                '<div style="background: var(--bg-primary); border-radius: 20px; padding: 32px; width: 85%; max-width: 420px; text-align: center;">' +
+                    '<p style="color: var(--text-primary);">Loading employees...</p>' +
                 '</div>' +
             '</div>';
+            document.body.insertAdjacentHTML('beforeend', loadingHtml);
 
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            // Load employees from Supabase
+            SupabaseDB.select('employees', '', function(error, employees) {
+                var modal = document.getElementById('assign-route-modal');
+                if (modal) modal.remove();
+
+                if (error) {
+                    alert('Error loading employees: ' + error);
+                    return;
+                }
+
+                assignRouteEmployees = employees || [];
+
+                var modalHtml = '<div id="assign-route-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="if(event.target.id===\'assign-route-modal\')closeAssignRouteModal()">' +
+                    '<div style="background: var(--bg-primary); border-radius: 20px; padding: 32px; width: 85%; max-width: 420px; max-height: 70vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">' +
+                            '<h3 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary);">Assign Route</h3>' +
+                            '<button onclick="closeAssignRouteModal()" style="background: none; border: none; font-size: 32px; color: var(--text-muted); cursor: pointer; line-height: 1;">&times;</button>' +
+                        '</div>' +
+                        '<p style="margin: 0 0 24px 0; font-size: 16px; color: var(--text-secondary);">Assign <strong style="color: var(--text-primary);">' + list.name + '</strong> to:</p>';
+
+                if (assignRouteEmployees.length === 0) {
+                    modalHtml += '<p style="color: var(--text-muted); font-size: 15px; text-align: center; padding: 40px 0;">No employees found. Add employees in Settings.</p>';
+                } else {
+                    modalHtml += '<div id="assign-route-employees" style="max-height: 350px; overflow-y: auto;">';
+                    for (var j = 0; j < assignRouteEmployees.length; j++) {
+                        var emp = assignRouteEmployees[j];
+                        var assignedRoutes = emp.assigned_routes || [];
+                        var isAssigned = assignedRoutes.indexOf(listId) !== -1;
+                        modalHtml += '<label style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 14px; cursor: pointer; margin-bottom: 12px;">' +
+                            '<input type="checkbox" class="assign-route-checkbox" data-emp-id="' + emp.id + '" ' + (isAssigned ? 'checked' : '') + ' style="width: 26px; height: 26px; accent-color: var(--accent-primary);">' +
+                            '<div>' +
+                                '<p style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">' + (emp.name || emp.username) + '</p>' +
+                                '<p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">@' + emp.username + '</p>' +
+                            '</div>' +
+                        '</label>';
+                    }
+                    modalHtml += '</div>';
+                }
+
+                modalHtml += '<div style="display: flex; gap: 14px; margin-top: 28px;">' +
+                        '<button onclick="closeAssignRouteModal()" style="flex: 1; padding: 18px; border: none; border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>' +
+                        '<button onclick="applyRouteAssignment()" style="flex: 1; padding: 18px; border: none; border-radius: 14px; background: var(--accent-primary); color: white; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>' +
+                    '</div>' +
+                    '</div>' +
+                '</div>';
+
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            });
         }
 
         function closeAssignRouteModal() {
             var modal = document.getElementById('assign-route-modal');
             if (modal) modal.remove();
             assignRouteListId = null;
+            assignRouteEmployees = [];
         }
 
         function applyRouteAssignment() {
             if (!assignRouteListId) return;
 
             var checkboxes = document.querySelectorAll('.assign-route-checkbox');
-            var selectedEmployees = [];
+            var assignedEmployeeIds = [];
+
+            // Collect assigned employee IDs
             for (var i = 0; i < checkboxes.length; i++) {
                 if (checkboxes[i].checked) {
-                    selectedEmployees.push(checkboxes[i].value);
+                    assignedEmployeeIds.push(checkboxes[i].getAttribute('data-emp-id'));
                 }
             }
 
-            // Update each employee's assignedRoutes
-            for (var username in allUsers) {
-                if (allUsers[username].role === 'employee') {
-                    var emp = allUsers[username];
-                    if (!emp.assignedRoutes) emp.assignedRoutes = [];
+            var updatesRemaining = checkboxes.length + 1; // +1 for list update
+            var assignedCount = assignedEmployeeIds.length;
 
-                    var routeIdx = emp.assignedRoutes.indexOf(assignRouteListId);
-                    var shouldBeAssigned = selectedEmployees.indexOf(username) !== -1;
+            // Update the list's assigned_employees in Supabase
+            SupabaseDB.update('lists', 'id=eq.' + assignRouteListId, { assigned_employees: assignedEmployeeIds }, function(error, data) {
+                updatesRemaining--;
+                if (updatesRemaining === 0) {
+                    finishAssignment();
+                }
+            });
 
-                    if (shouldBeAssigned && routeIdx === -1) {
-                        // Add route to employee
-                        emp.assignedRoutes.push(assignRouteListId);
-                    } else if (!shouldBeAssigned && routeIdx !== -1) {
-                        // Remove route from employee
-                        emp.assignedRoutes.splice(routeIdx, 1);
+            // Update each employee's assigned_routes in Supabase
+            for (var i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i];
+                var empId = checkbox.getAttribute('data-emp-id');
+                var isChecked = checkbox.checked;
+
+                // Find the employee in our cached list
+                var emp = null;
+                for (var j = 0; j < assignRouteEmployees.length; j++) {
+                    if (assignRouteEmployees[j].id === empId) {
+                        emp = assignRouteEmployees[j];
+                        break;
                     }
                 }
+
+                if (!emp) {
+                    updatesRemaining--;
+                    if (updatesRemaining === 0) finishAssignment();
+                    continue;
+                }
+
+                var assignedRoutes = emp.assigned_routes ? emp.assigned_routes.slice() : [];
+                var routeIdx = assignedRoutes.indexOf(assignRouteListId);
+
+                if (isChecked && routeIdx === -1) {
+                    // Add route
+                    assignedRoutes.push(assignRouteListId);
+                } else if (!isChecked && routeIdx !== -1) {
+                    // Remove route
+                    assignedRoutes.splice(routeIdx, 1);
+                }
+
+                // Update in Supabase
+                (function(empId, routes) {
+                    SupabaseDB.update('employees', 'id=eq.' + empId, { assigned_routes: routes }, function(error, data) {
+                        updatesRemaining--;
+                        if (updatesRemaining === 0) {
+                            finishAssignment();
+                        }
+                    });
+                })(empId, assignedRoutes);
             }
 
-            saveUsers();
-
-            var listName = allLists[assignRouteListId] ? allLists[assignRouteListId].name : 'Route';
-            closeAssignRouteModal();
-
-            if (selectedEmployees.length > 0) {
-                alert(listName + ' assigned to ' + selectedEmployees.length + ' employee(s)');
-            } else {
-                alert(listName + ' unassigned from all employees');
+            function finishAssignment() {
+                var listName = allLists[assignRouteListId] ? allLists[assignRouteListId].name : 'Route';
+                closeAssignRouteModal();
+                if (assignedCount > 0) {
+                    alert(listName + ' assigned to ' + assignedCount + ' employee(s)');
+                } else {
+                    alert(listName + ' unassigned from all employees');
+                }
             }
         }
 
@@ -13087,7 +14396,10 @@
             var list = allLists[listId];
             if (!list) return;
 
-            if (!confirm(`Delete "${list.name}"? This cannot be undone.`)) return;
+            if (!confirm('Delete "' + list.name + '"? This cannot be undone.')) return;
+
+            // Delete from Supabase
+            deleteListFromSupabase(listId);
 
             delete allLists[listId];
 
@@ -13598,51 +14910,69 @@
         });
 
         function renderEmployeesFolderInline(contentEl) {
-            var employees = Object.values(allUsers).filter(u => u.role === 'employee');
+            // Show loading state
+            contentEl.innerHTML = '<p style="color: var(--text-muted); padding: 20px; text-align: center;">Loading employees...</p>';
 
-            var html = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 18px; color: var(--text-primary);">Employees</h3>
-                        <p style="margin: 0; font-size: 13px; color: var(--text-muted);">${employees.length} employee${employees.length !== 1 ? 's' : ''}</p>
-                    </div>
-                </div>
-            `;
+            // Fetch employees from Supabase
+            if (USE_SUPABASE) {
+                SupabaseDB.select('employees', '', function(error, employees) {
+                    if (error) {
+                        contentEl.innerHTML = '<p style="color: var(--accent-danger); padding: 20px; text-align: center;">Error loading employees</p>';
+                        return;
+                    }
+
+                    employees = employees || [];
+                    renderEmployeesFolderContent(contentEl, employees);
+                });
+            } else {
+                // Fallback to localStorage
+                var employees = Object.values(allUsers).filter(function(u) { return u.role === 'employee'; });
+                renderEmployeesFolderContent(contentEl, employees);
+            }
+        }
+
+        function renderEmployeesFolderContent(contentEl, employees) {
+            var html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">' +
+                '<div>' +
+                '<h3 style="margin: 0 0 4px 0; font-size: 18px; color: var(--text-primary);">Employees</h3>' +
+                '<p style="margin: 0; font-size: 13px; color: var(--text-muted);">' + employees.length + ' employee' + (employees.length !== 1 ? 's' : '') + '</p>' +
+                '</div>' +
+                '</div>';
 
             // Add Employee Section
-            html += `
-                <div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
-                    <p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Add Employee</p>
-                    <input type="text" id="folder-add-emp-name" placeholder="Display name..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">
-                    <input type="text" id="folder-add-emp-username" placeholder="Username (for login)..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">
-                    <input type="password" id="folder-add-emp-password" placeholder="Password..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">
-                    <button onclick="addEmployeeFromFolder()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">+ Add Employee</button>
-                </div>
-            `;
+            html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 15px;">' +
+                '<p style="margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Add Employee</p>' +
+                '<input type="text" id="folder-add-emp-name" placeholder="Display name..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
+                '<input type="text" id="folder-add-emp-username" placeholder="Username (for login)..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
+                '<input type="password" id="folder-add-emp-password" placeholder="Password..." style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 8px;">' +
+                '<button onclick="addEmployeeFromFolder()" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--accent-success); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">+ Add Employee</button>' +
+                '</div>';
 
             if (employees.length === 0) {
                 html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 30px; text-align: center;"><p style="margin: 0; color: var(--text-muted); font-size: 13px;">No employees yet.<br><br>Add your first employee above.</p></div>';
             } else {
-                employees.forEach(emp => {
-                    var assignedCount = emp.assignedRoutes ? emp.assignedRoutes.length : 0;
-                    html += `
-                        <div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <span style="font-size: 14px; font-weight: 600; color: #f59e0b;">${(emp.name || emp.username).charAt(0).toUpperCase()}</span>
-                                </div>
-                                <div>
-                                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">${emp.name || emp.username}</p>
-                                    <p style="margin: 1px 0 0 0; font-size: 11px; color: var(--text-muted);">@${emp.username} • ${assignedCount} route${assignedCount !== 1 ? 's' : ''}</p>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 6px;">
-                                <button onclick="editEmployeeFromFolder('${emp.username}')" style="padding: 6px 12px; border: none; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); font-size: 11px; font-weight: 600; cursor: pointer;">Edit</button>
-                                <button onclick="deleteEmployeeFromFolder('${emp.username}')" style="padding: 6px 10px; border: none; border-radius: 6px; background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); font-size: 11px; cursor: pointer;">×</button>
-                            </div>
-                        </div>
-                    `;
-                });
+                for (var i = 0; i < employees.length; i++) {
+                    var emp = employees[i];
+                    var assignedRoutes = emp.assigned_routes || emp.assignedRoutes || [];
+                    var assignedCount = assignedRoutes.length;
+                    var empId = emp.id || emp.username;
+                    var empName = emp.name || emp.username;
+                    html += '<div style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">' +
+                        '<div style="display: flex; align-items: center; gap: 10px;">' +
+                        '<div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">' +
+                        '<span style="font-size: 14px; font-weight: 600; color: #f59e0b;">' + empName.charAt(0).toUpperCase() + '</span>' +
+                        '</div>' +
+                        '<div>' +
+                        '<p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);">' + empName + '</p>' +
+                        '<p style="margin: 1px 0 0 0; font-size: 11px; color: var(--text-muted);">@' + emp.username + ' • ' + assignedCount + ' route' + (assignedCount !== 1 ? 's' : '') + '</p>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div style="display: flex; gap: 6px;">' +
+                        '<button onclick="editEmployeeFromFolder(\'' + emp.username + '\')" style="padding: 6px 12px; border: none; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); font-size: 11px; font-weight: 600; cursor: pointer;">Edit</button>' +
+                        '<button onclick="deleteEmployeeFromFolder(\'' + empId + '\')" style="padding: 6px 10px; border: none; border-radius: 6px; background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); font-size: 11px; cursor: pointer;">×</button>' +
+                        '</div>' +
+                        '</div>';
+                }
             }
 
             contentEl.innerHTML = html;
@@ -13654,23 +14984,36 @@
             var passwordInput = document.getElementById('folder-add-emp-password');
 
             var name = nameInput.value.trim();
-            var username = usernameInput.value.trim().toLowerCase();
+            var rawUsername = usernameInput.value.trim().toLowerCase();
             var password = passwordInput.value;
 
             if (!name) {
                 alert('Please enter a display name');
                 return;
             }
-            if (!username) {
+            if (!rawUsername) {
                 alert('Please enter a username');
+                return;
+            }
+
+            // Sanitize username - only allow letters, numbers, underscore, hyphen
+            var username = rawUsername.replace(/[^a-z0-9_-]/g, '');
+
+            if (username !== rawUsername) {
+                alert('Username can only contain letters, numbers, underscores, and hyphens');
+                return;
+            }
+
+            if (username.length < 3) {
+                alert('Username must be at least 3 characters');
                 return;
             }
             if (!password) {
                 alert('Please enter a password');
                 return;
             }
-            if (password.length < 4) {
-                alert('Password must be at least 4 characters');
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
                 return;
             }
 
@@ -13680,18 +15023,85 @@
                 return;
             }
 
-            // Create new employee
-            allUsers[username] = {
-                username: username,
-                password: password, // In production, this should be hashed
-                role: 'employee',
-                name: name,
-                assignedRoutes: []
-            };
+            // Get boss's Supabase ID and company code
+            var session = SupabaseAuth.getSession();
+            var bossId = session && session.user ? session.user.id : null;
+            var bossMetadata = session && session.user ? (session.user.user_metadata || {}) : {};
+            var companyCode = bossMetadata.company_code || '';
 
-            saveUsers();
-            renderEmployeesFolderInline(getFilesFolderContentEl());
-            updateSmartFolderCounts();
+            if (!companyCode) {
+                alert('Company code not found. Please log out and log back in.');
+                return;
+            }
+
+            // Generate email for employee: username_companycode@emp.smartroute.co
+            var employeeEmail = username + '_' + companyCode.toLowerCase() + '@emp.smartroute.co';
+
+            // Create in Supabase first
+            if (USE_SUPABASE && bossId) {
+                SupabaseAuth.signUp(employeeEmail, password, {
+                    name: name,
+                    role: 'employee',
+                    username: username,
+                    boss_id: bossId,
+                    company_code: companyCode
+                }, function(error, data) {
+                    if (error) {
+                        var errMsg = error.message || error.error_description || JSON.stringify(error);
+                        alert('Failed to create employee: ' + errMsg);
+                        return;
+                    }
+
+                    // Get user ID from response (handle different response formats)
+                    var userId = null;
+                    if (data && data.user && data.user.id) {
+                        userId = data.user.id;
+                    } else if (data && data.id) {
+                        userId = data.id;
+                    }
+
+                    // Insert into employees table in Supabase
+                    SupabaseDB.insert('employees', {
+                        auth_id: userId,
+                        boss_id: bossId,
+                        username: username,
+                        name: name,
+                        email: employeeEmail,
+                        company_code: companyCode,
+                        assigned_routes: []
+                    }, function(dbError, dbData) {
+                        if (dbError) {
+                            alert('Employee auth created but failed to save to database: ' + (dbError.message || JSON.stringify(dbError)));
+                            return;
+                        }
+
+                        nameInput.value = '';
+                        usernameInput.value = '';
+                        passwordInput.value = '';
+                        renderEmployeesFolderInline(getFilesFolderContentEl());
+                        updateSmartFolderCounts();
+                        alert('Employee "' + name + '" created!\n\nLogin info for employee:\nCompany Code: ' + companyCode + '\nUsername: ' + username);
+                    });
+                });
+            } else {
+                // Fallback to localStorage only
+                allUsers[username] = {
+                    username: username,
+                    password: simpleHash(password),
+                    plainPassword: password,
+                    role: 'employee',
+                    name: name,
+                    assignedRoutes: []
+                };
+
+                saveUsers();
+                nameInput.value = '';
+                usernameInput.value = '';
+                passwordInput.value = '';
+                renderEmployeesFolderInline(getFilesFolderContentEl());
+                updateSmartFolderCounts();
+                alert('Employee "' + name + '" created!');
+            }
         }
 
         function editEmployeeFromFolder(username) {
@@ -13699,16 +15109,28 @@
             editEmployee(username);
         }
 
-        function deleteEmployeeFromFolder(username) {
-            var emp = allUsers[username];
-            if (!emp) return;
+        function deleteEmployeeFromFolder(empId) {
+            if (!confirm('Delete this employee? This cannot be undone.')) return;
 
-            if (!confirm(`Delete employee "${emp.name || username}"? This cannot be undone.`)) return;
-
-            delete allUsers[username];
-            saveUsers();
-            renderEmployeesFolderInline(getFilesFolderContentEl());
-            updateSmartFolderCounts();
+            if (USE_SUPABASE) {
+                // Delete from Supabase employees table
+                SupabaseDB.delete('employees', 'id=eq.' + empId, function(error, data) {
+                    if (error) {
+                        alert('Failed to delete employee: ' + (error.message || JSON.stringify(error)));
+                        return;
+                    }
+                    renderEmployeesFolderInline(getFilesFolderContentEl());
+                    updateSmartFolderCounts();
+                });
+            } else {
+                // Fallback to localStorage
+                var emp = allUsers[empId];
+                if (!emp) return;
+                delete allUsers[empId];
+                saveUsers();
+                renderEmployeesFolderInline(getFilesFolderContentEl());
+                updateSmartFolderCounts();
+            }
         }
 
         function renderReportsFolderInline(contentEl) {
@@ -14084,36 +15506,191 @@
         // LIVE UPDATES SYSTEM (Master Account Tracking)
         // =====================
 
-        // Load master accounts from localStorage
-        function loadMasterAccounts() {
-            var saved = localStorage.getItem('smartRouteMasterAccounts');
-            if (saved) {
-                masterAccounts = JSON.parse(saved);
+        // Load master accounts from Supabase
+        function loadMasterAccounts(callback) {
+            if (!USE_SUPABASE || !currentUser) {
+                masterAccounts = [];
+                if (callback) callback();
+                return;
+            }
+
+            SupabaseDB.select('master_accounts', '', function(error, accounts) {
+                if (error || !accounts) {
+                    masterAccounts = [];
+                } else {
+                    // Map Supabase fields to local format
+                    masterAccounts = accounts.map(function(a) {
+                        var hasIncomplete = a.incomplete_services && a.incomplete_services.length > 0;
+                        return {
+                            id: a.id,
+                            boss_id: a.boss_id,
+                            address: a.address,
+                            name: a.name || '',
+                            services: a.services || [],
+                            status: a.status || 'pending',
+                            completedAt: a.completed_at,
+                            completedBy: a.completed_by,
+                            lastUpdatedBy: a.last_updated_by,
+                            lastUpdatedAt: a.last_updated_at,
+                            notes: a.notes || '',
+                            photos: a.photos || [],
+                            completedServices: a.completed_services || [],
+                            incompleteServices: a.incomplete_services || [],
+                            hasIncompleteServices: hasIncomplete || a.status === 'touch_up'
+                        };
+                    });
+                }
+                if (callback) callback();
+            });
+        }
+
+        // Save master accounts to Supabase
+        function saveMasterAccounts() {
+            // This is now handled by individual save/update calls
+            // Keeping for backward compatibility but it's a no-op
+        }
+
+        // Save single master account to Supabase
+        function saveMasterAccountToSupabase(account, callback) {
+            if (!USE_SUPABASE || !currentUser) {
+                if (callback) callback();
+                return;
+            }
+
+            var session = SupabaseAuth.getSession();
+            var bossId = session && session.user ? session.user.id : null;
+            if (!bossId) {
+                if (callback) callback();
+                return;
+            }
+
+            var payload = {
+                boss_id: bossId,
+                address: account.address,
+                name: account.name || '',
+                services: account.services || [],
+                status: account.status || 'pending',
+                completed_at: account.completedAt || null,
+                completed_by: account.completedBy || null,
+                last_updated_by: account.lastUpdatedBy || null,
+                last_updated_at: account.lastUpdatedAt || new Date().toISOString(),
+                notes: account.notes || '',
+                photos: account.photos || [],
+                completed_services: account.completedServices || [],
+                incomplete_services: account.incompleteServices || []
+            };
+
+            if (account.id && account.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i)) {
+                // Update existing
+                SupabaseDB.update('master_accounts', 'id=eq.' + account.id, payload, callback);
+            } else {
+                // Insert new
+                SupabaseDB.insert('master_accounts', payload, function(error, data) {
+                    if (!error && data && data[0]) {
+                        account.id = data[0].id;
+                    }
+                    if (callback) callback(error, data);
+                });
             }
         }
 
-        // Save master accounts to localStorage
-        function saveMasterAccounts() {
-            localStorage.setItem('smartRouteMasterAccounts', JSON.stringify(masterAccounts));
+        // Normalize address for comparison (standardize abbreviations)
+        function normalizeAddress(addr) {
+            if (!addr) return '';
+            var normalized = addr.trim().toLowerCase();
+
+            // Standardize street suffixes
+            var suffixes = {
+                ' ave$': ' avenue', ' ave,': ' avenue,', ' ave ': ' avenue ',
+                ' st$': ' street', ' st,': ' street,', ' st ': ' street ',
+                ' rd$': ' road', ' rd,': ' road,', ' rd ': ' road ',
+                ' dr$': ' drive', ' dr,': ' drive,', ' dr ': ' drive ',
+                ' ln$': ' lane', ' ln,': ' lane,', ' ln ': ' lane ',
+                ' ct$': ' court', ' ct,': ' court,', ' ct ': ' court ',
+                ' cir$': ' circle', ' cir,': ' circle,', ' cir ': ' circle ',
+                ' blvd$': ' boulevard', ' blvd,': ' boulevard,', ' blvd ': ' boulevard ',
+                ' pl$': ' place', ' pl,': ' place,', ' pl ': ' place ',
+                ' pkwy$': ' parkway', ' pkwy,': ' parkway,', ' pkwy ': ' parkway ',
+                ' hwy$': ' highway', ' hwy,': ' highway,', ' hwy ': ' highway ',
+                ' trl$': ' trail', ' trl,': ' trail,', ' trl ': ' trail ',
+                ' ter$': ' terrace', ' ter,': ' terrace,', ' ter ': ' terrace ',
+                ' way$': ' way', ' way,': ' way,', ' way ': ' way '
+            };
+
+            for (var abbr in suffixes) {
+                normalized = normalized.replace(new RegExp(abbr, 'gi'), suffixes[abbr]);
+            }
+
+            // Remove extra spaces
+            normalized = normalized.replace(/\s+/g, ' ').trim();
+
+            return normalized;
+        }
+
+        // Check if string looks like a valid street address (has a number)
+        function isValidStreetAddress(addr) {
+            if (!addr) return false;
+            var trimmed = addr.trim();
+
+            // Must start with a number (street number)
+            if (!/^\d+/.test(trimmed)) return false;
+
+            // Must have at least 2 parts (number + street name)
+            var parts = trimmed.split(/[\s,]+/);
+            if (parts.length < 2) return false;
+
+            // Street name part should be at least 2 characters
+            if (parts[1].length < 2) return false;
+
+            return true;
+        }
+
+        // Check if two addresses match (normalized comparison)
+        function addressesMatch(addr1, addr2) {
+            var norm1 = normalizeAddress(addr1);
+            var norm2 = normalizeAddress(addr2);
+
+            if (norm1 === norm2) return true;
+
+            // Also check if street number and first word of street name match
+            var parts1 = norm1.split(/[\s,]+/);
+            var parts2 = norm2.split(/[\s,]+/);
+
+            if (parts1.length >= 2 && parts2.length >= 2) {
+                // Same street number and same first word of street name
+                if (parts1[0] === parts2[0] && parts1[1] === parts2[1]) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // Sync address to master list (add if not duplicate)
         function syncAddressToMaster(address, name, services) {
             if (!address) return false;
-            var addrLower = address.trim().toLowerCase();
 
-            // Check if already exists in master
+            // Skip if not a valid street address (filters out town names like "Cranston")
+            if (!isValidStreetAddress(address)) {
+                console.log('syncAddressToMaster: Skipping invalid address:', address);
+                return false;
+            }
+
+            // Check if already exists in master (using smart matching)
             var exists = masterAccounts.some(function(acc) {
-                return acc.address && acc.address.trim().toLowerCase() === addrLower;
+                return acc.address && addressesMatch(acc.address, address);
             });
 
             if (!exists) {
-                masterAccounts.push({
+                var newAccount = {
                     address: address.trim(),
                     name: name || '',
                     services: Array.isArray(services) ? services : (services ? [services] : []),
                     status: 'pending'
-                });
+                };
+                masterAccounts.push(newAccount);
+                // Save to Supabase
+                saveMasterAccountToSupabase(newAccount);
                 return true;
             }
             return false;
@@ -14122,18 +15699,39 @@
         // Sync multiple addresses to master list, returns count of new addresses added
         function syncAddressesToMaster(addressArray) {
             var addedCount = 0;
-            addressArray.forEach(function(addr) {
+            for (var i = 0; i < addressArray.length; i++) {
+                var addr = addressArray[i];
                 var address = typeof addr === 'string' ? addr : (addr.address || '');
                 var name = typeof addr === 'string' ? '' : (addr.name || '');
                 var services = typeof addr === 'string' ? [] : (addr.services || []);
                 if (syncAddressToMaster(address, name, services)) {
                     addedCount++;
                 }
-            });
-            if (addedCount > 0) {
-                saveMasterAccounts();
             }
             return addedCount;
+        }
+
+        // Sync ALL addresses from ALL lists to master accounts
+        function syncAllListAddressesToMaster() {
+            if (!USE_SUPABASE || !currentUser) return;
+
+            var isBoss = currentUser && currentUser.role === 'boss';
+            if (!isBoss) return;
+
+            var totalAdded = 0;
+            var listIds = Object.keys(allLists);
+
+            for (var i = 0; i < listIds.length; i++) {
+                var list = allLists[listIds[i]];
+                if (list && list.addresses && list.addresses.length > 0) {
+                    var added = syncAddressesToMaster(list.addresses);
+                    totalAdded += added;
+                }
+            }
+
+            if (totalAdded > 0) {
+                console.log('Synced ' + totalAdded + ' new addresses to master accounts');
+            }
         }
 
         // Open master list upload modal
@@ -14399,10 +15997,10 @@
             filterTabs.style.display = 'block';
 
             // Calculate stats
-            var doneCount = masterAccounts.filter(a => a.status === 'done').length;
-            var skippedCount = masterAccounts.filter(a => a.status === 'skipped').length;
-            var pendingCount = masterAccounts.filter(a => a.status === 'pending').length;
-            var incompleteCount = masterAccounts.filter(a => a.hasIncompleteServices).length;
+            var doneCount = masterAccounts.filter(function(a) { return a.status === 'done'; }).length;
+            var skippedCount = masterAccounts.filter(function(a) { return a.status === 'skipped'; }).length;
+            var pendingCount = masterAccounts.filter(function(a) { return a.status === 'pending'; }).length;
+            var incompleteCount = masterAccounts.filter(function(a) { return a.hasIncompleteServices || a.status === 'touch_up'; }).length;
             var totalCount = masterAccounts.length;
             var completedCount = doneCount + skippedCount;
             var progressPercent = Math.round((completedCount / totalCount) * 100);
@@ -14520,7 +16118,7 @@
 
             // Apply filter
             if (liveFilterStatus === 'incomplete') {
-                filteredAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices; });
+                filteredAccounts = masterAccounts.filter(function(a) { return a.hasIncompleteServices || a.status === 'touch_up'; });
             } else if (liveFilterStatus !== 'all') {
                 filteredAccounts = masterAccounts.filter(function(a) { return a.status === liveFilterStatus; });
             }
@@ -14532,12 +16130,14 @@
                 return;
             }
 
-            // Sort: incomplete first (if showing all), pending next, then by last update time (newest first)
+            // Sort: incomplete/touch_up first (if showing all), pending next, then by last update time (newest first)
             filteredAccounts.sort(function(a, b) {
                 // Incomplete services at the top when viewing all
                 if (liveFilterStatus === 'all') {
-                    if (a.hasIncompleteServices && !b.hasIncompleteServices) return -1;
-                    if (!a.hasIncompleteServices && b.hasIncompleteServices) return 1;
+                    var aIncomplete = a.hasIncompleteServices || a.status === 'touch_up';
+                    var bIncomplete = b.hasIncompleteServices || b.status === 'touch_up';
+                    if (aIncomplete && !bIncomplete) return -1;
+                    if (!aIncomplete && bIncomplete) return 1;
                 }
                 if (a.status === 'pending' && b.status !== 'pending') return -1;
                 if (a.status !== 'pending' && b.status === 'pending') return 1;
@@ -14548,7 +16148,7 @@
             });
 
             container.innerHTML = filteredAccounts.map(function(account) {
-                var hasIncomplete = account.hasIncompleteServices && account.incompleteServices && account.incompleteServices.length > 0;
+                var hasIncomplete = account.hasIncompleteServices || account.status === 'touch_up';
                 var statusColor = hasIncomplete ? 'var(--accent-warning)' :
                                    account.status === 'done' ? 'var(--accent-success)' :
                                    account.status === 'skipped' ? 'var(--accent-danger)' : 'var(--accent-info)';
@@ -14625,7 +16225,7 @@
             var container = document.getElementById('live-account-content');
             if (!container) return;
 
-            var hasIncomplete = account.hasIncompleteServices && account.incompleteServices && account.incompleteServices.length > 0;
+            var hasIncomplete = account.hasIncompleteServices || account.status === 'touch_up';
             var statusColor = hasIncomplete ? 'var(--accent-warning)' :
                                account.status === 'done' ? 'var(--accent-success)' :
                                account.status === 'skipped' ? 'var(--accent-danger)' : 'var(--accent-info)';
@@ -14730,61 +16330,126 @@
 
         // Sync employee job completion to master accounts list
         function syncToMasterAccounts(address, status, photos, notes, services, employeeName, completedServices, incompleteServices) {
-            if (masterAccounts.length === 0) return;
+            if (!USE_SUPABASE) return;
 
-            // Find matching account in master list by address
-            var normalizedAddr = address.trim().toLowerCase();
-            var matchingAccount = masterAccounts.find(function(m) {
-                var mAddr = m.address.trim().toLowerCase();
-                return mAddr === normalizedAddr ||
-                    mAddr.indexOf(normalizedAddr) !== -1 ||
-                    normalizedAddr.indexOf(mAddr) !== -1;
-            });
-
-            if (matchingAccount) {
-                matchingAccount.status = status;
-                matchingAccount.lastUpdatedBy = employeeName;
-                matchingAccount.lastUpdatedAt = new Date().toISOString();
-                if (status === 'done' || status === 'skipped') {
-                    matchingAccount.completedAt = new Date().toISOString();
-                    matchingAccount.completedBy = employeeName;
-                }
-
-                // Merge photos
-                if (photos && photos.length > 0) {
-                    var existingPhotos = matchingAccount.photos || [];
-                    matchingAccount.photos = existingPhotos.concat(photos);
-                }
-
-                // Update notes if provided
-                if (notes) {
-                    matchingAccount.notes = matchingAccount.notes ?
-                        matchingAccount.notes + '\n' + notes : notes;
-                }
-
-                // Update services if provided
-                if (services) {
-                    matchingAccount.services = services;
-                }
-
-                // Track completed and incomplete services
-                if (completedServices && completedServices.length > 0) {
-                    matchingAccount.completedServices = completedServices;
-                }
-                if (incompleteServices && incompleteServices.length > 0) {
-                    matchingAccount.incompleteServices = incompleteServices;
-                    matchingAccount.hasIncompleteServices = true;
-                    // Auto-add to daily touch-up list
-                    addToDailyTouchUpList(matchingAccount, incompleteServices, employeeName);
-                } else {
-                    matchingAccount.incompleteServices = [];
-                    matchingAccount.hasIncompleteServices = false;
-                    // Remove from daily touch-up list if services now complete
-                    removeFromDailyTouchUpList(matchingAccount.address);
-                }
-
-                saveMasterAccounts();
+            // Get boss_id from current list
+            var bossId = null;
+            if (currentListId && allLists[currentListId]) {
+                bossId = allLists[currentListId].boss_id;
             }
+            // If employee, get boss_id from currentUser
+            if (!bossId && currentUser && currentUser.bossId) {
+                bossId = currentUser.bossId;
+            }
+
+            // For boss, use own user id
+            if (!bossId && currentUser && currentUser.role === 'boss') {
+                var session = SupabaseAuth.getSession();
+                bossId = session && session.user ? session.user.id : null;
+            }
+
+            if (!bossId) {
+                console.log('syncToMasterAccounts: No boss_id found');
+                return;
+            }
+
+            // Query Supabase directly to find matching master_account
+            SupabaseDB.select('master_accounts', 'boss_id=eq.' + bossId, function(error, accounts) {
+                if (error || !accounts) {
+                    console.log('syncToMasterAccounts: Error loading accounts');
+                    return;
+                }
+
+                // Find matching account by address (using smart matching)
+                var matchingAccount = null;
+                for (var i = 0; i < accounts.length; i++) {
+                    if (addressesMatch(accounts[i].address, address)) {
+                        matchingAccount = accounts[i];
+                        break;
+                    }
+                }
+
+                if (matchingAccount) {
+                    // Determine actual status - if incomplete services, mark as touch_up
+                    var actualStatus = status;
+                    if (incompleteServices && incompleteServices.length > 0) {
+                        actualStatus = 'touch_up';
+                    }
+
+                    // Build update payload
+                    var updatePayload = {
+                        status: actualStatus,
+                        last_updated_by: employeeName,
+                        last_updated_at: new Date().toISOString()
+                    };
+
+                    if (status === 'done' || status === 'skipped') {
+                        updatePayload.completed_at = new Date().toISOString();
+                        updatePayload.completed_by = employeeName;
+                    }
+
+                    // Merge photos
+                    if (photos && photos.length > 0) {
+                        var existingPhotos = matchingAccount.photos || [];
+                        updatePayload.photos = existingPhotos.concat(photos);
+                    }
+
+                    // Update notes if provided
+                    if (notes) {
+                        updatePayload.notes = matchingAccount.notes ?
+                            matchingAccount.notes + '\n' + notes : notes;
+                    }
+
+                    // Update services if provided
+                    if (services) {
+                        updatePayload.services = services;
+                    }
+
+                    // Track completed and incomplete services
+                    if (completedServices && completedServices.length > 0) {
+                        updatePayload.completed_services = completedServices;
+                    }
+                    if (incompleteServices && incompleteServices.length > 0) {
+                        updatePayload.incomplete_services = incompleteServices;
+                    } else {
+                        updatePayload.incomplete_services = [];
+                    }
+
+                    // Update in Supabase
+                    SupabaseDB.update('master_accounts', 'id=eq.' + matchingAccount.id, updatePayload, function(err) {
+                        if (err) {
+                            console.log('syncToMasterAccounts: Error updating', err);
+                        } else {
+                            console.log('syncToMasterAccounts: Updated ' + address + ' to ' + status);
+
+                            // Also update local array if boss
+                            if (currentUser && currentUser.role === 'boss') {
+                                for (var j = 0; j < masterAccounts.length; j++) {
+                                    if (masterAccounts[j].id === matchingAccount.id) {
+                                        masterAccounts[j].status = status;
+                                        masterAccounts[j].lastUpdatedBy = employeeName;
+                                        masterAccounts[j].lastUpdatedAt = updatePayload.last_updated_at;
+                                        if (updatePayload.completed_at) {
+                                            masterAccounts[j].completedAt = updatePayload.completed_at;
+                                            masterAccounts[j].completedBy = employeeName;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Handle incomplete services touch-up list
+                    if (incompleteServices && incompleteServices.length > 0) {
+                        addToDailyTouchUpList(matchingAccount, incompleteServices, employeeName);
+                    } else {
+                        removeFromDailyTouchUpList(matchingAccount.address);
+                    }
+                } else {
+                    console.log('syncToMasterAccounts: No matching account for ' + address);
+                }
+            });
         }
 
         // =====================
@@ -15267,10 +16932,15 @@
 
         // Clean up temporary touch up lists (called when resetting for new storm)
         function cleanupTouchUpLists() {
-            var touchUpListIds = Object.keys(allLists).filter(id => allLists[id].isTouchUpList || allLists[id].isTemporary);
-            touchUpListIds.forEach(id => {
-                delete allLists[id];
-            });
+            var allListIds = Object.keys(allLists);
+            for (var i = 0; i < allListIds.length; i++) {
+                var id = allListIds[i];
+                var list = allLists[id];
+                if (list && (list.isTouchUpList || list.isTemporary)) {
+                    deleteListFromSupabase(id);
+                    delete allLists[id];
+                }
+            }
             window.activeTouchUpLists = [];
             window.touchUpMasterLists = [];
             localStorage.removeItem('smartRouteTouchUpMasterLists');
@@ -15855,6 +17525,7 @@
         // Show forgot password form
         function showForgotPassword() {
             document.getElementById('login-form').style.display = 'none';
+            document.getElementById('employee-login-form').style.display = 'none';
             document.getElementById('forgot-password-form').style.display = 'block';
             document.getElementById('forgot-password-result').style.display = 'none';
             document.getElementById('forgot-username').value = '';
