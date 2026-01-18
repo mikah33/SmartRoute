@@ -39,20 +39,33 @@ struct LoadingView: View {
     func startAuthFlow() {
         let biometricEnabled = UserDefaults.standard.bool(forKey: "biometric_enabled")
         let hasSession = UserDefaults.standard.string(forKey: "supabase_session") != nil
+        var hasKeychainCredentials = KeychainManager.shared.hasStoredCredentials()
+
+        // Migrate credentials from UserDefaults to Keychain if needed
+        if biometricEnabled && !hasKeychainCredentials {
+            if let email = UserDefaults.standard.string(forKey: "biometric_email"),
+               let password = UserDefaults.standard.string(forKey: "biometric_password"),
+               !email.isEmpty, !password.isEmpty {
+                let migrated = KeychainManager.shared.saveCredentials(email: email, password: password)
+                hasKeychainCredentials = migrated
+            }
+        }
 
         // Timeout - never get stuck
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
             if !self.authCompleted {
                 self.authCompleted = true
                 self.navigateToLanding()
             }
         }
 
-        if biometricEnabled {
+        // If biometric enabled and we have Keychain credentials, authenticate
+        if biometricEnabled && hasKeychainCredentials {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.doPasscodeAuth()
+                self.doKeychainAuth()
             }
         } else if hasSession {
+            // Has session but no biometric - go straight to app
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 if !self.authCompleted {
                     self.authCompleted = true
@@ -60,6 +73,7 @@ struct LoadingView: View {
                 }
             }
         } else {
+            // No session - go to landing
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 if !self.authCompleted {
                     self.authCompleted = true
@@ -69,41 +83,24 @@ struct LoadingView: View {
         }
     }
 
-    func doPasscodeAuth() {
+    func doKeychainAuth() {
         guard !authCompleted else { return }
 
-        let context = LAContext()
+        // Read from Keychain - triggers passcode/Face ID
+        KeychainManager.shared.readCredentials { email, password, error in
+            guard !self.authCompleted else { return }
+            self.authCompleted = true
 
-        context.evaluatePolicy(
-            .deviceOwnerAuthentication,
-            localizedReason: "Unlock SmartRoute"
-        ) { success, error in
-            DispatchQueue.main.async {
-                guard !self.authCompleted else { return }
-                self.authCompleted = true
-
-                if success {
-                    self.handleAuthSuccess()
-                } else {
-                    self.navigateToLanding()
-                }
+            if let email = email, let password = password {
+                // Store credentials for auto-login
+                UserDefaults.standard.set("signIn", forKey: "landing_action")
+                UserDefaults.standard.set(email, forKey: "landing_email")
+                UserDefaults.standard.set(password, forKey: "landing_password")
+                self.navigateToApp()
+            } else {
+                // Auth failed or cancelled - go to landing
+                self.navigateToLanding()
             }
-        }
-    }
-
-    func handleAuthSuccess() {
-        let hasSession = UserDefaults.standard.string(forKey: "supabase_session") != nil
-
-        if hasSession {
-            navigateToApp()
-        } else if let email = UserDefaults.standard.string(forKey: "biometric_email"),
-                  let password = UserDefaults.standard.string(forKey: "biometric_password") {
-            UserDefaults.standard.set("signIn", forKey: "landing_action")
-            UserDefaults.standard.set(email, forKey: "landing_email")
-            UserDefaults.standard.set(password, forKey: "landing_password")
-            navigateToApp()
-        } else {
-            navigateToLanding()
         }
     }
 

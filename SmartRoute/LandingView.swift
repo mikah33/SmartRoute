@@ -447,7 +447,19 @@ struct LandingView: View {
             return
         }
 
-        // Store credentials for biometric login
+        // Store credentials in Keychain with Face ID protection
+        let keychainSuccess = KeychainManager.shared.saveCredentials(
+            email: credentials.email,
+            password: credentials.password
+        )
+
+        if keychainSuccess {
+            print("DEBUG: Credentials saved to Keychain with Face ID protection")
+        } else {
+            print("DEBUG: Failed to save to Keychain, falling back to UserDefaults")
+        }
+
+        // Also store in UserDefaults as backup
         UserDefaults.standard.set(credentials.email, forKey: "biometric_email")
         UserDefaults.standard.set(credentials.password, forKey: "biometric_password")
         UserDefaults.standard.set(true, forKey: "biometric_enabled")
