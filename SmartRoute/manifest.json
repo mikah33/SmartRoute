@@ -1,0 +1,17 @@
+{
+    "name": "SmartRoute",
+    "short_name": "SmartRoute",
+    "description": "Smart route planning for your business",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+            "sizes": "1024x1024",
+            "type": "image/png"
+        }
+    ]
+}

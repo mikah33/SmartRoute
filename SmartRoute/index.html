@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SmartRoute</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SmartRoute">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
     <!-- Supabase disabled - uses localStorage instead -->
@@ -6938,92 +6943,29 @@
 
                 updateStatus('Calculating best route...');
 
-                // Step 3: Handle priority addresses - they should come first but still be optimized
-                var priorityIndices = [];
-                var normalIndices = [];
+                // Step 3: Build priority flags array for weighted optimization
+                // priorityFlags[0] = false (start location)
+                // priorityFlags[1..n] = true/false for each address
+                var priorityFlags = [false]; // Index 0 is start
+                var priorityCount = 0;
 
                 valid.forEach(function(v, idx) {
-                    if (v.address.priority === true) {
-                        priorityIndices.push(idx);
-                    } else {
-                        normalIndices.push(idx);
-                    }
+                    var isPriority = v.address.priority === true;
+                    priorityFlags.push(isPriority);
+                    if (isPriority) priorityCount++;
                 });
 
-                console.log('=== PRIORITY HANDLING ===');
-                console.log('Priority addresses: ' + priorityIndices.length + ', Normal: ' + normalIndices.length);
-
-                var optimizedIndices;
-
-                if (priorityIndices.length > 0 && normalIndices.length > 0) {
-                    // Build sub-matrices for priority and normal addresses
-                    // First optimize priority addresses from start
-                    var priorityMatrixSize = priorityIndices.length + 1;
-                    var priorityMatrix = [];
-
-                    // Build priority matrix (start + priority addresses only)
-                    for (var i = 0; i <= priorityIndices.length; i++) {
-                        priorityMatrix[i] = [];
-                        for (var j = 0; j <= priorityIndices.length; j++) {
-                            if (i === 0 && j === 0) {
-                                priorityMatrix[i][j] = 0;
-                            } else if (i === 0) {
-                                // From start to priority address
-                                priorityMatrix[i][j] = distanceMatrix[0][priorityIndices[j-1] + 1];
-                            } else if (j === 0) {
-                                // From priority address to start
-                                priorityMatrix[i][j] = distanceMatrix[priorityIndices[i-1] + 1][0];
-                            } else {
-                                // Between priority addresses
-                                priorityMatrix[i][j] = distanceMatrix[priorityIndices[i-1] + 1][priorityIndices[j-1] + 1];
-                            }
-                        }
-                    }
-
-                    // Solve TSP for priority addresses (returns 0-based indices)
-                    var priorityOrder = solveTSP(priorityMatrix, priorityIndices.length);
-                    var orderedPriority = priorityOrder.map(function(i) { return priorityIndices[i]; });
-
-                    console.log('Priority order:', orderedPriority.map(function(i) { return valid[i].address.address; }));
-
-                    // Now optimize normal addresses starting from last priority address
-                    var lastPriorityIdx = orderedPriority[orderedPriority.length - 1];
-
-                    // Build normal matrix with last priority as "start"
-                    var normalMatrixSize = normalIndices.length + 1;
-                    var normalMatrix = [];
-
-                    for (var i = 0; i <= normalIndices.length; i++) {
-                        normalMatrix[i] = [];
-                        for (var j = 0; j <= normalIndices.length; j++) {
-                            if (i === 0 && j === 0) {
-                                normalMatrix[i][j] = 0;
-                            } else if (i === 0) {
-                                // From last priority to normal address
-                                normalMatrix[i][j] = distanceMatrix[lastPriorityIdx + 1][normalIndices[j-1] + 1];
-                            } else if (j === 0) {
-                                // From normal address to last priority
-                                normalMatrix[i][j] = distanceMatrix[normalIndices[i-1] + 1][lastPriorityIdx + 1];
-                            } else {
-                                // Between normal addresses
-                                normalMatrix[i][j] = distanceMatrix[normalIndices[i-1] + 1][normalIndices[j-1] + 1];
-                            }
-                        }
-                    }
-
-                    // Solve TSP for normal addresses (returns 0-based indices)
-                    var normalOrder = solveTSP(normalMatrix, normalIndices.length);
-                    var orderedNormal = normalOrder.map(function(i) { return normalIndices[i]; });
-
-                    console.log('Normal order:', orderedNormal.map(function(i) { return valid[i].address.address; }));
-
-                    // Combine: priority first, then normal
-                    optimizedIndices = orderedPriority.concat(orderedNormal);
-                } else {
-                    // All same priority - just run normal TSP
-                    // solveTSP already returns 0-based indices
-                    optimizedIndices = solveTSP(distanceMatrix, valid.length);
+                console.log('=== PRIORITY WEIGHTED OPTIMIZATION ===');
+                console.log('Priority addresses: ' + priorityCount + ' of ' + valid.length);
+                if (priorityCount > 0) {
+                    console.log('Priority addresses will be weighted toward beginning of route');
+                    console.log('But route efficiency is still optimized (no passing addresses to reach priority)');
                 }
+
+                // Solve TSP with priority weighting
+                // Priority addresses get position penalties, biasing them toward the front
+                // But the algorithm still finds efficient routes - won't skip nearby addresses
+                var optimizedIndices = solveTSP(distanceMatrix, valid.length, priorityFlags);
 
                 // Step 3.5: Force addresses at same location to be grouped together
                 // This handles duplicate addresses that should be consecutive
@@ -7199,12 +7141,21 @@
         // Solve TSP to find minimum TOTAL drive time route
         // For small lists (<= 10), try all permutations for optimal solution
         // For larger lists, use nearest neighbor + intensive 2-opt
-        function solveTSP(matrix, numAddresses) {
+        // priorityFlags: optional array where priorityFlags[i] = true if address i (1-indexed) is priority
+        // priorityWeight: seconds of penalty per position for priority addresses (default 90 = 1.5 min per position)
+        function solveTSP(matrix, numAddresses, priorityFlags, priorityWeight) {
             // matrix[0] = start location
             // matrix[1..n] = addresses
+            // priorityFlags[1..n] = true if that address is priority (0 is start, ignored)
+
+            priorityWeight = priorityWeight || 90; // Default 1.5 minutes per position penalty
 
             console.log('=== TSP SOLVER DEBUG ===');
             console.log(`Finding optimal route for ${numAddresses} addresses...`);
+            if (priorityFlags) {
+                var priorityCount = priorityFlags.filter(function(f) { return f === true; }).length;
+                console.log(`Priority addresses: ${priorityCount}, Weight: ${priorityWeight}s per position`);
+            }
 
             // Calculate total route time for a given order
             function calcRouteTime(route) {
@@ -7215,8 +7166,29 @@
                 return total;
             }
 
+            // Calculate weighted route score (time + priority position penalties)
+            function calcWeightedScore(route) {
+                var driveTime = calcRouteTime(route);
+
+                // If no priority flags, just return drive time
+                if (!priorityFlags) return driveTime;
+
+                // Add position penalty for each priority address
+                // Earlier positions (lower index) = lower penalty
+                var priorityPenalty = 0;
+                for (var i = 0; i < route.length; i++) {
+                    var addrIdx = route[i]; // 1-indexed address
+                    if (priorityFlags[addrIdx] === true) {
+                        // Penalty increases with position
+                        priorityPenalty += priorityWeight * i;
+                    }
+                }
+
+                return driveTime + priorityPenalty;
+            }
+
             var bestRoute = [];
-            var bestTime = Infinity;
+            var bestScore = Infinity;
 
             if (numAddresses <= 8) {
                 // For small lists, try ALL permutations to find true optimal
@@ -7228,9 +7200,9 @@
                 // Generate all permutations
                 function permute(arr, start = 0) {
                     if (start === arr.length - 1) {
-                        var time = calcRouteTime(arr);
-                        if (time < bestTime) {
-                            bestTime = time;
+                        var score = calcWeightedScore(arr);
+                        if (score < bestScore) {
+                            bestScore = score;
                             bestRoute = [...arr];
                         }
                         return;
@@ -7248,6 +7220,16 @@
                 // For larger lists, use multiple starting points + aggressive 2-opt
                 console.log('Using heuristic search (large list)...');
 
+                // For nearest neighbor, prioritize priority addresses when distances are similar
+                function getEffectiveDistance(fromIdx, toIdx) {
+                    var baseDist = matrix[fromIdx][toIdx];
+                    // If target is priority, reduce effective distance to favor visiting it sooner
+                    if (priorityFlags && priorityFlags[toIdx] === true) {
+                        baseDist = baseDist * 0.7; // 30% bonus for priority addresses
+                    }
+                    return baseDist;
+                }
+
                 // Try starting from each address to find best initial route
                 for (var startIdx = 1; startIdx <= numAddresses; startIdx++) {
                     // Nearest neighbor from this starting point
@@ -7258,10 +7240,11 @@
 
                     while (unvisited.length > 0) {
                         var nearestIdx = 0;
-                        var nearestDist = matrix[current][unvisited[0]];
+                        var nearestDist = getEffectiveDistance(current, unvisited[0]);
                         for (var i = 1; i < unvisited.length; i++) {
-                            if (matrix[current][unvisited[i]] < nearestDist) {
-                                nearestDist = matrix[current][unvisited[i]];
+                            var dist = getEffectiveDistance(current, unvisited[i]);
+                            if (dist < nearestDist) {
+                                nearestDist = dist;
                                 nearestIdx = i;
                             }
                         }
@@ -7270,7 +7253,7 @@
                         unvisited.splice(nearestIdx, 1);
                     }
 
-                    // Apply 2-opt until no improvement
+                    // Apply 2-opt until no improvement (using weighted score)
                     var improved = true;
                     while (improved) {
                         improved = false;
@@ -7282,7 +7265,7 @@
                                 segment.reverse();
                                 newRoute.splice(i, 0, ...segment);
 
-                                if (calcRouteTime(newRoute) < calcRouteTime(route)) {
+                                if (calcWeightedScore(newRoute) < calcWeightedScore(route)) {
                                     for (var k = 0; k < route.length; k++) route[k] = newRoute[k];
                                     improved = true;
                                 }
@@ -7290,14 +7273,14 @@
                         }
                     }
 
-                    var time = calcRouteTime(route);
-                    if (time < bestTime) {
-                        bestTime = time;
+                    var score = calcWeightedScore(route);
+                    if (score < bestScore) {
+                        bestScore = score;
                         bestRoute = [...route];
                     }
                 }
 
-                // Also try Or-opt (moving single nodes)
+                // Also try Or-opt (moving single nodes) using weighted score
                 var improved = true;
                 while (improved) {
                     improved = false;
@@ -7309,9 +7292,9 @@
                             var insertPos = j > i ? j - 1 : j;
                             newRoute.splice(insertPos, 0, node);
 
-                            if (calcRouteTime(newRoute) < calcRouteTime(bestRoute)) {
+                            if (calcWeightedScore(newRoute) < calcWeightedScore(bestRoute)) {
                                 bestRoute = newRoute;
-                                bestTime = calcRouteTime(bestRoute);
+                                bestScore = calcWeightedScore(bestRoute);
                                 improved = true;
                             }
                         }
@@ -7321,7 +7304,8 @@
 
             // Log the result
             console.log('=== OPTIMAL ROUTE FOUND ===');
-            console.log(`Total drive time: ${Math.round(bestTime / 60)} minutes`);
+            var actualDriveTime = calcRouteTime(bestRoute);
+            console.log(`Total drive time: ${Math.round(actualDriveTime / 60)} minutes`);
             var logPrev = 0;
             bestRoute.forEach((stop, i) => {
                 var segmentTime = matrix[logPrev][stop];

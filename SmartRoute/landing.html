@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SmartRoute">
+    <link rel="apple-touch-icon" href="Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png">
+    <title>SmartRoute - Smart Route Planning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 27px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+
+        .install-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 16px 48px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
+        }
+
+        .install-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 32px 24px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            font-size: 22px;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .modal p {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .step {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .step-text {
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .share-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+
+        .modal-close {
+            margin-top: 20px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .features {
+            margin-top: 48px;
+            text-align: left;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            font-size: 18px;
+        }
+
+        .feature-text {
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .footer {
+            margin-top: 48px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" alt="SmartRoute Logo" class="logo" onerror="this.style.background='linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; this.style.display='block';">
+
+        <h1>SmartRoute</h1>
+        <p class="tagline">Smart route planning for your business</p>
+
+        <button class="install-btn" onclick="showInstallModal()">
+            Install App
+        </button>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <span class="feature-text">Optimize routes automatically</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📍</div>
+                <span class="feature-text">Track addresses and services</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">👥</div>
+                <span class="feature-text">Boss & employee sync</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <span class="feature-text">Daily work reports</span>
+            </div>
+        </div>
+
+        <p class="footer">Version 1.0</p>
+    </div>
+
+    <!-- Install Instructions Modal -->
+    <div class="modal-overlay" id="installModal">
+        <div class="modal">
+            <h2>Install SmartRoute</h2>
+
+            <div id="iosInstructions">
+                <p>Add SmartRoute to your home screen for the best experience:</p>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <span class="step-text">Tap the <strong>Share</strong> button
+                        <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+                        </svg>
+                        at the bottom of Safari
+                    </span>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <span class="step-text">Scroll down and tap <strong>"Add to Home Screen"</strong></span>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <span class="step-text">Tap <strong>"Add"</strong> in the top right</span>
+                </div>
+
+                <p style="margin-top: 16px; font-size: 13px; color: #64748b;">
+                    The app will appear on your home screen and work like a native app!
+                </p>
+            </div>
+
+            <div id="androidInstructions" style="display: none;">
+                <p>Add SmartRoute to your home screen:</p>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <span class="step-text">Tap the <strong>menu</strong> (3 dots) in your browser</span>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <span class="step-text">Tap <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></span>
+                </div>
+            </div>
+
+            <div id="desktopInstructions" style="display: none;">
+                <p>For the best experience, open this page on your iPhone or iPad in Safari, then tap "Install App".</p>
+
+                <p style="margin-top: 16px; font-size: 13px; color: #64748b;">
+                    SmartRoute is designed for mobile devices.
+                </p>
+            </div>
+
+            <button class="modal-close" onclick="hideInstallModal()">Got it</button>
+        </div>
+    </div>
+
+    <script>
+        function showInstallModal() {
+            var modal = document.getElementById('installModal');
+            var iosInstr = document.getElementById('iosInstructions');
+            var androidInstr = document.getElementById('androidInstructions');
+            var desktopInstr = document.getElementById('desktopInstructions');
+
+            // Detect platform
+            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            var isAndroid = /Android/.test(navigator.userAgent);
+            var isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+
+            // Check if already installed as PWA
+            if (window.navigator.standalone === true) {
+                alert('SmartRoute is already installed! Look for it on your home screen.');
+                return;
+            }
+
+            // Show appropriate instructions
+            iosInstr.style.display = 'none';
+            androidInstr.style.display = 'none';
+            desktopInstr.style.display = 'none';
+
+            if (isIOS) {
+                iosInstr.style.display = 'block';
+            } else if (isAndroid) {
+                androidInstr.style.display = 'block';
+            } else {
+                desktopInstr.style.display = 'block';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function hideInstallModal() {
+            document.getElementById('installModal').classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('installModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideInstallModal();
+            }
+        });
+
+        // If already in standalone mode, redirect to main app
+        if (window.navigator.standalone === true) {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
